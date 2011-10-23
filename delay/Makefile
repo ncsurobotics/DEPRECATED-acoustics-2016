@@ -3,12 +3,12 @@ LIBSEAWOLF_INCLUDE_DIR=../libseawolf/include
 LIBSEAWOLF_LIB_DIR=../libseawolf/lib
 
 CC= bfin-linux-uclibc-gcc
-CFLAGS= -g --std=gnu99 -Wall -pedantic -Wmissing-prototypes -I$(LIBSEAWOLF_INCLUDE_DIR)
+CFLAGS= -g --std=gnu99 -Wall -pedantic -Wmissing-prototypes -I../include/
 LDFLAGS= -lbfdsp -lm
 
 # Enable the use of libseawolf (when not in testing)
-#CFLAGS+= -DUSE_LIBSEAWOLF
-#LDFLAGS= -L$(LIBSEAWOLF_LIB_DIR) -lseawolf -lbfdsp -lm
+#CFLAGS+= -DUSE_LIBSEAWOLF -I$(LIBSEAWOLF_INCLUDE_DIR)
+#LDFLAGS+= -L$(LIBSEAWOLF_LIB_DIR) -lseawolf
 
 BIN_DIR= $(PWD)/bin
 BIN_NAME= acoustics-bfin

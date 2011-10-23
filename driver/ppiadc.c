@@ -35,6 +35,8 @@
 #include <linux/mm.h>
 #include <linux/module.h>
 
+#include "acoustics-common.h"
+
 /**
  * \defgroup ppiadc PPI ADC Driver
  * \ingroup kernelspace
@@ -47,31 +49,15 @@
 /* Major number of the device */
 #define PPI_CHR_MAJOR 157
 
-/* Number of conversion requests to generate per second */
-#define ADC_CONVST_PER_SEC (96 * 1024)
-
-/* Number of samples from each channel to store in a single buffer */
-#define SAMPLES_PER_CHANNEL (8 * 1024)
-
-/* Number of bytes used for a single sample on a single channel */
-#define BYTES_PER_SAMPLE 2
-
-/* Number of channels */
-#define CHANNELS 4
-
-#define BUFFER_SIZE (SAMPLES_PER_CHANNEL * CHANNELS * BYTES_PER_SAMPLE)
-
 /* Number of buffers for the DMA engine to use. This should always be 2 */
 #define BUFFER_COUNT 2
 
-/* Frequency to run the PPI port at (PPI_CLK) */
-#define PPI_CLK_FREQ 30000000
-
-/* See Blackfin Hardware Reference Manual 3.2, page 7-27, "PPI Control Register" */
-#define PPI_MODE 0xe80c
-
-/* ADC power enable tied to pin 14 */
-#define ENABLE_PIN GPIO_PF14
+/* See Blackfin Hardware Reference Manual 3.2, page 7-27, "PPI Control Register"
+ * 
+ * Sample on falling edge of PPICLK, frame sync on rising edge, 16-bit data,
+ * non-ITU 656 data with 1 external frame sync.
+ */
+#define PPI_MODE 0x780C
 
 static irqreturn_t buffer_full_handler(int irq, void* data);
 static int page_alloc_order(size_t size);
@@ -81,13 +67,11 @@ static ssize_t ppi_chr_write(struct file* filp, const char __user* buffer, size_
 static int ppi_chr_open(struct inode* i, struct file* filp);
 static int ppi_chr_release(struct inode* i, struct file* filp);
 
-static int timers_init(void);
 static int ppi_init(void);
 static int dma_init(void);
 static int device_init(void);
 static int __init ppi_adc_init(void);
 
-static void timers_close(void);
 static void ppi_close(void);
 static void dma_close(void);
 static void device_close(void);
@@ -101,6 +85,7 @@ static unsigned short ppi_pins[] = {P_PPI0_D0, P_PPI0_D1,
                                     P_PPI0_D8, P_PPI0_D9,
                                     P_PPI0_D10, P_PPI0_D11,
                                     P_PPI0_D12, P_PPI0_D13,
+                                    P_PPI0_D14, P_PPI0_D15,
                                     P_PPI0_CLK, P_PPI0_FS1,
                                     0};
 
@@ -163,6 +148,11 @@ static int page_alloc_order(size_t size) {
 }
 
 static ssize_t ppi_chr_read(struct file* filp, char __user* buffer, size_t count, loff_t* offset) {
+    if(bfin_read_PPI_STATUS() != 0) {
+        printk(KERN_WARNING DRIVER_NAME ": PPI error. PPI_STATUS (%d)\n", bfin_read_PPI_STATUS());
+        bfin_write_PPI_STATUS(0);
+    }
+
     if(sizeof(current_buffer_pointer) != count) {
         return -EINVAL;
     }
@@ -215,20 +205,9 @@ static ssize_t ppi_chr_write(struct file* filp, const char __user* buffer, size_
 }
 
 static int ppi_chr_open(struct inode* i, struct file* filp) {
-    volatile unsigned long s = 0;
-    unsigned long n = get_sclk() / 30;
-
     /* Reset global values */
     current_buffer_index = 0;
     current_buffer_pointer = 0;
-
-    /* Turn on ADC */
-    gpio_set_value(ENABLE_PIN, 1);
-
-    /* -- timing loop -- */
-    while(s < n) {
-        s++;
-    }
 
     /* Enable DMA */
     enable_dma(CH_PPI);
@@ -236,19 +215,10 @@ static int ppi_chr_open(struct inode* i, struct file* filp) {
     /* Enable PPI */
     bfin_write_PPI_CONTROL(bfin_read_PPI_CONTROL() | PORT_EN);
 
-    /* Enable CONVST timer */
-    enable_gptimers(TIMER1bit);
-
     return 0;
 }
 
 static int ppi_chr_release(struct inode* i, struct file* filp) {
-    /* Turn off power */
-    gpio_set_value(ENABLE_PIN, 0);
-
-    /* Disable CONVST clock */
-    disable_gptimers(TIMER1bit);
-
     /* Disable PPI */
     bfin_write_PPI_CONTROL(bfin_read_PPI_CONTROL() & (~PORT_EN));
 
@@ -258,43 +228,16 @@ static int ppi_chr_release(struct inode* i, struct file* filp) {
     return 0;
 }
 
-static int timers_init(void) {
-    unsigned long ppi_clk_period_sclk = get_sclk() / PPI_CLK_FREQ;
-    unsigned long adc_convst_period_sclk = get_sclk() / ADC_CONVST_PER_SEC;
-
-    /* Timer 2 drives the PPI clock and timer 1 drives the convst clock for the adc */
-    peripheral_request(P_TMR1, DRIVER_NAME);
-    peripheral_request(P_TMR2, DRIVER_NAME);
-    
-    /* Configure timers for PWM */
-    set_gptimer_config(TIMER1_id, TIMER_MODE_PWM | TIMER_PERIOD_CNT);
-    set_gptimer_config(TIMER2_id, TIMER_MODE_PWM | TIMER_PERIOD_CNT);
-
-    /* For the convst clock, use ADC_CONVST_PER_SEC and a 10% duty cycle */
-    set_gptimer_period(TIMER1_id, adc_convst_period_sclk);
-    set_gptimer_pwidth(TIMER1_id, adc_convst_period_sclk / 4);
-
-    /* For the PPI clock, set the period as given by PPI_CLK_FREQ and use a
-       fixed 50% duty cycle */
-    set_gptimer_period(TIMER2_id, ppi_clk_period_sclk);
-    set_gptimer_pwidth(TIMER2_id, ppi_clk_period_sclk / 2);
-
-    /* Enable PPI clk timer */
-    enable_gptimers(TIMER2bit);
-
-    return 0;
-}
-
 static int ppi_init(void) {
     /* Request peripheral pins for PPI */
     peripheral_request_list(ppi_pins, DRIVER_NAME);
 
     /* No delay between frame sync and read */
-    bfin_write_PPI_DELAY(2);
+    bfin_write_PPI_DELAY(0);
     
     /* Read one sample per frame sync (the number given for COUNT is always one
        less than the desired count) */
-    bfin_write_PPI_COUNT(0);
+    bfin_write_PPI_COUNT(3);
     bfin_write_PPI_STATUS(0);
 
     /* PPI control mode (assert on falling edge, 14 data bits, general purpose
@@ -331,10 +274,10 @@ static int dma_init(void) {
     /* Set DMA configuration */
     set_dma_start_addr(CH_PPI, dma_buffer);
     set_dma_config(CH_PPI, (DMAFLOW_AUTO | WNR | RESTART | DI_EN | WDSIZE_16 | DMA2D | DI_SEL));
-    set_dma_x_count(CH_PPI, SAMPLES_PER_CHANNEL * CHANNELS);
-    set_dma_x_modify(CH_PPI, BYTES_PER_SAMPLE);
+    set_dma_x_count(CH_PPI, SAMPLES_PER_BUFFER * CHANNELS);
+    set_dma_x_modify(CH_PPI, SAMPLE_SIZE);
     set_dma_y_count(CH_PPI, BUFFER_COUNT);
-    set_dma_y_modify(CH_PPI, BYTES_PER_SAMPLE);
+    set_dma_y_modify(CH_PPI, SAMPLE_SIZE);
     set_dma_callback(CH_PPI, &buffer_full_handler, NULL);
 
     return 0;
@@ -351,21 +294,14 @@ static int device_init(void) {
 static int __init ppi_adc_init(void) {
     int ret;
     
-    ret = timers_init();
-    if(ret) {
-        return ret;
-    }
-
     ret = dma_init();
     if(ret) {
-        timers_close();
         return ret;
     }
 
     ret = ppi_init();
     if(ret) {
         dma_close();
-        timers_close();
         return ret;
     }
     
@@ -373,30 +309,16 @@ static int __init ppi_adc_init(void) {
     if(ret) {
         ppi_close();
         dma_close();
-        timers_close();
         return ret;
     }
 
-    /* Request IO pin */
-    gpio_request(ENABLE_PIN, DRIVER_NAME);
-    gpio_direction_output(ENABLE_PIN, 1);
-
     /* Disable everything */
-    gpio_set_value(ENABLE_PIN, 0);
-    disable_gptimers(TIMER1bit);
     disable_dma(CH_PPI);
     bfin_write_PPI_CONTROL(bfin_read_PPI_CONTROL() & (~PORT_EN));
 
     SSYNC();
 
     return 0;
-}
-
-static void timers_close(void) {
-    /* Disable timers and free the pins */
-    disable_gptimers(TIMER1bit|TIMER2bit);
-    peripheral_free(P_TMR1);
-    peripheral_free(P_TMR2);
 }
 
 static void ppi_close(void) {
@@ -418,9 +340,6 @@ static void __exit ppi_adc_close(void) {
     device_close();
     ppi_close();
     dma_close();
-    timers_close();
-
-    gpio_free(ENABLE_PIN);
 }
 
 MODULE_LICENSE("GPL");

@@ -12,21 +12,21 @@
 #define ACOUSTICS_DEBUG
 
 /** If defined, enable profiling (prints timing information for blocks) */
-#define ACOUSTICS_PROFILE
+//#define ACOUSTICS_PROFILE
 
 /** If defined, dump channel data pre and post filtering */
-//#define ACOUSTICS_DUMP (DUMP(A) | DUMP(B) | DUMP(C) | DUMP(D))
-
-/** If defined, use libseawolf to store the computed delay values */
-//#define USE_LIBSEAWOLF
+#define ACOUSTICS_DUMP (DUMP(A) | DUMP(B) | DUMP(C) | DUMP(D))
 
 /** \} */
 
-#include "seawolf.h"
+#ifdef USE_LIBSEAWOLF
+# include "seawolf.h"
+#endif
 
 #include <fcntl.h>
 #include <stdbool.h>
 #include <stdio.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
@@ -46,8 +46,11 @@
  * \{
  */
 
+/* Convert the unsigned sample to a signed, fract16 */
+#define CONVERT_SAMPLE(v) ((fract16)((v) - (1 << 15)))
+
 /** Circular buffers for each channel */
-static adcsample* cir_buff[CHANNELS];
+static fract16* cir_buff[CHANNELS];
 
 /** Current (write) offset in the circular buffers */
 static unsigned int cir_buff_offset;
@@ -102,7 +105,7 @@ Timer* t;
 
 /* Misc */
 static unsigned int i, j;
-static adcsample* temp_buff;
+static fract16* temp_buff;
 
 /* Dump fract16 data to a flat file */
 #ifdef ACOUSTICS_DUMP
@@ -136,12 +139,14 @@ static void init(char* coefs_file_name) {
     /* Load coefficients from .cof file */
     coefs = load_coefs(coefs_file_name, &fir_coef_count);
 
+    printf("Successfully opened %d tap filter\n", fir_coef_count);
+
     /* Initialize delay lines for FIR filters */
-    fir_delay[A] = calloc(sizeof(adcsample), fir_coef_count);
-    fir_delay[B] = calloc(sizeof(adcsample), fir_coef_count);
-    fir_delay[C] = calloc(sizeof(adcsample), fir_coef_count);
-    fir_delay[D] = calloc(sizeof(adcsample), fir_coef_count);
-    fir_delay_trig = calloc(sizeof(adcsample), fir_coef_count);
+    fir_delay[A] = calloc(sizeof(fract16), fir_coef_count);
+    fir_delay[B] = calloc(sizeof(fract16), fir_coef_count);
+    fir_delay[C] = calloc(sizeof(fract16), fir_coef_count);
+    fir_delay[D] = calloc(sizeof(fract16), fir_coef_count);
+    fir_delay_trig = calloc(sizeof(fract16), fir_coef_count);
 
     /* FIR state macros */
     fir_init(fir_state[A], coefs, fir_delay[A], fir_coef_count, 0);
@@ -151,33 +156,15 @@ static void init(char* coefs_file_name) {
     fir_init(fir_state_trig, coefs, fir_delay_trig, fir_coef_count, 0);
 
     /* Circular buffers per channel */
-    cir_buff[A] = calloc(sizeof(adcsample), BUFFER_SIZE_CHANNEL);
-    cir_buff[B] = calloc(sizeof(adcsample), BUFFER_SIZE_CHANNEL);
-    cir_buff[C] = calloc(sizeof(adcsample), BUFFER_SIZE_CHANNEL);
-    cir_buff[D] = calloc(sizeof(adcsample), BUFFER_SIZE_CHANNEL);
+    cir_buff[A] = calloc(sizeof(fract16), CIR_BUFFER_SIZE);
+    cir_buff[B] = calloc(sizeof(fract16), CIR_BUFFER_SIZE);
+    cir_buff[C] = calloc(sizeof(fract16), CIR_BUFFER_SIZE);
+    cir_buff[D] = calloc(sizeof(fract16), CIR_BUFFER_SIZE);
 
     /* Temporary buffer used in linearization of circular buffers, to store
        output of the FIR filter applied to trigger samples, and to store the
        result from correlation */
-    temp_buff = calloc(sizeof(adcsample), BUFFER_SIZE_CHANNEL * 2);
-}
-
-/**
- * \brief Convert a signed 14 value to a signed 16 bit value
- *
- * Convert a signed 14 value to a signed 16 bit value
- *
- * \param v The 14 bit signed value
- * \return An 16 bit extended version of the given number
- */
-static inline short expand_complement(short v) {
-    if(v & (1 << 13)) {
-        /* Negative value */
-        return -(((1 << 14) - 1) & ((~v) + 1));
-    } else {
-        /* Already positive */
-        return v;
-    }
+    temp_buff = calloc(sizeof(fract16), CIR_BUFFER_SIZE * 2);
 }
 
 /**
@@ -194,8 +181,8 @@ static void record_ping(void) {
     int state = READING;
     unsigned int extra_reads = EXTRA_READS;
     bool cir_buff_full = false;
-    short* current_buffer = NULL;
-    short* current_buffer_copy;
+    unsigned short* current_buffer = NULL;
+    unsigned short* current_buffer_copy;
 
     /* Place write offset back to beginning of the circular buffer */
     cir_buff_offset = 0x00;
@@ -204,7 +191,7 @@ static void record_ping(void) {
     write(driver_f, &RESET_FLAG, 1);
     
     /* Clear out the delay line */
-    memset(fir_delay_trig, 0, sizeof(adcsample) * fir_coef_count);
+    memset(fir_delay_trig, 0, sizeof(fract16) * fir_coef_count);
 
     while(state != DONE) {
         /* Wait for the ADC driver to fill a buffer and return its address */
@@ -218,28 +205,28 @@ static void record_ping(void) {
         /* Copy data out of driver. The data stored by the driver has samples
            interleaved, so we must un-interleave them when copying them out */
         current_buffer_copy = current_buffer + 0;
-        for(i = 0, j = cir_buff_offset; i < SAMPLES_PER_CHUNK; i++, j++, current_buffer_copy += CHANNELS) {
-            cir_buff[A][j] = expand_complement(*current_buffer_copy);
+        for(i = 0, j = cir_buff_offset; i < SAMPLES_PER_BUFFER; i++, j++, current_buffer_copy += CHANNELS) {
+            cir_buff[A][j] = CONVERT_SAMPLE(*current_buffer_copy);
         }
 
         current_buffer_copy = current_buffer + 1;
-        for(i = 0, j = cir_buff_offset; i < SAMPLES_PER_CHUNK; i++, j++, current_buffer_copy += CHANNELS) {
-            cir_buff[B][j] = expand_complement(*current_buffer_copy);
+        for(i = 0, j = cir_buff_offset; i < SAMPLES_PER_BUFFER; i++, j++, current_buffer_copy += CHANNELS) {
+            cir_buff[B][j] = CONVERT_SAMPLE(*current_buffer_copy);
         }
 
         current_buffer_copy = current_buffer + 2;
-        for(i = 0, j = cir_buff_offset; i < SAMPLES_PER_CHUNK; i++, j++, current_buffer_copy += CHANNELS) {
-            cir_buff[C][j] = expand_complement(*current_buffer_copy);
+        for(i = 0, j = cir_buff_offset; i < SAMPLES_PER_BUFFER; i++, j++, current_buffer_copy += CHANNELS) {
+            cir_buff[C][j] = CONVERT_SAMPLE(*current_buffer_copy);
         }
 
         current_buffer_copy = current_buffer + 3;
-        for(i = 0, j = cir_buff_offset; i < SAMPLES_PER_CHUNK; i++, j++, current_buffer_copy += CHANNELS) {
-            cir_buff[D][j] = expand_complement(*current_buffer_copy);
+        for(i = 0, j = cir_buff_offset; i < SAMPLES_PER_BUFFER; i++, j++, current_buffer_copy += CHANNELS) {
+            cir_buff[D][j] = CONVERT_SAMPLE(*current_buffer_copy);
         }
 
         if(state == READING) {
             /* Run the FIR filter on the current sample from channel A */
-            fir_fr16(cir_buff[TRIGGER_CHANNEL] + cir_buff_offset, temp_buff, SAMPLES_PER_CHUNK, &fir_state_trig);
+            fir_fr16(cir_buff[TRIGGER_CHANNEL] + cir_buff_offset, temp_buff, SAMPLES_PER_BUFFER, &fir_state_trig);
 
             for(i = 0; i < AVG_COUNT; i++) {
                 signal_mean += temp_buff[i];
@@ -248,10 +235,10 @@ static void record_ping(void) {
 
             /* If the circular buffer is full, check the current sample for the trigger */
             if(cir_buff_full) {
-                for(i = 0; i < SAMPLES_PER_CHUNK; i++) {
+                for(i = 0; i < SAMPLES_PER_BUFFER; i++) {
                     if(temp_buff[i] - signal_mean > TRIGGER_VALUE) {
                         /* Store the index of the trigger point as it will be once the buffers are linearized */
-                        trigger_point = (SAMPLES_PER_CHUNK * (BUFFER_CHUNK_COUNT - 1 - EXTRA_READS)) + i + TRIGGER_POINT_OFFSET;
+                        trigger_point = (SAMPLES_PER_BUFFER * (CIR_BUFFER_KBUFFER_COUNT - 1 - EXTRA_READS)) + i + TRIGGER_POINT_OFFSET;
                         state = TRIGGERED;
                         break;
                     }
@@ -262,8 +249,8 @@ static void record_ping(void) {
         /* Increment the offset into the circular buffer -- if we are going to
            be back to 0 within EXTRA_READS then set the buffer as filled to
            indicate that we have a full buffers worth of data */
-        cir_buff_offset = (cir_buff_offset + SAMPLES_PER_CHUNK) % BUFFER_SIZE_CHANNEL;
-        if((cir_buff_offset + SAMPLES_PER_CHUNK + (EXTRA_READS * SAMPLES_PER_CHUNK)) % BUFFER_SIZE_CHANNEL == 0) {
+        cir_buff_offset = (cir_buff_offset + SAMPLES_PER_BUFFER) % CIR_BUFFER_SIZE;
+        if((cir_buff_offset + SAMPLES_PER_BUFFER + (EXTRA_READS * SAMPLES_PER_BUFFER)) % CIR_BUFFER_SIZE == 0) {
             cir_buff_full = true;
         }
         
@@ -297,9 +284,9 @@ static void record_ping(void) {
  */
 static void linearize_buffers(void) {
     for(int channel = A; channel <= D; channel++) {
-        memcpy(temp_buff, cir_buff[channel] + cir_buff_offset, sizeof(adcsample) * (BUFFER_SIZE_CHANNEL - cir_buff_offset));
-        memcpy(temp_buff + (BUFFER_SIZE_CHANNEL - cir_buff_offset), cir_buff[channel], sizeof(adcsample) * cir_buff_offset);
-        memcpy(cir_buff[channel], temp_buff, sizeof(adcsample) * BUFFER_SIZE_CHANNEL);
+        memcpy(temp_buff, cir_buff[channel] + cir_buff_offset, sizeof(fract16) * (CIR_BUFFER_SIZE - cir_buff_offset));
+        memcpy(temp_buff + (CIR_BUFFER_SIZE - cir_buff_offset), cir_buff[channel], sizeof(fract16) * cir_buff_offset);
+        memcpy(cir_buff[channel], temp_buff, sizeof(fract16) * CIR_BUFFER_SIZE);
     }
 }
 
@@ -325,10 +312,10 @@ static void center_buffer(fract16* buffer, int size) {
 }
 
 static void center_buffers(void) {
-    center_buffer(cir_buff[A], BUFFER_SIZE_CHANNEL);
-    center_buffer(cir_buff[B], BUFFER_SIZE_CHANNEL);
-    center_buffer(cir_buff[C], BUFFER_SIZE_CHANNEL);
-    center_buffer(cir_buff[D], BUFFER_SIZE_CHANNEL);
+    center_buffer(cir_buff[A], CIR_BUFFER_SIZE);
+    center_buffer(cir_buff[B], CIR_BUFFER_SIZE);
+    center_buffer(cir_buff[C], CIR_BUFFER_SIZE);
+    center_buffer(cir_buff[D], CIR_BUFFER_SIZE);
 }
 
 /** 
@@ -340,12 +327,12 @@ static void center_buffers(void) {
  */
 static void filter_buffers(void) {
     for(int channel = A; channel <= D; channel++) {
-        memset(fir_delay[channel], 0, sizeof(adcsample) * fir_coef_count);
-        fir_fr16(cir_buff[channel], temp_buff, BUFFER_SIZE_CHANNEL, &fir_state[channel]);
-        memcpy(cir_buff[channel], temp_buff, sizeof(adcsample) * BUFFER_SIZE_CHANNEL);
+        memset(fir_delay[channel], 0, sizeof(fract16) * fir_coef_count);
+        fir_fr16(cir_buff[channel], temp_buff, CIR_BUFFER_SIZE, &fir_state[channel]);
+        memcpy(cir_buff[channel], temp_buff, sizeof(fract16) * CIR_BUFFER_SIZE);
         
         /* Center and scale the signal */
-        center_buffer(cir_buff[channel], BUFFER_SIZE_CHANNEL);
+        center_buffer(cir_buff[channel], CIR_BUFFER_SIZE);
 
         /* Remove invalid data points from when the FIR filter is ramping up */
         for(int i = fir_coef_count; i >= 0; i--) {
@@ -379,7 +366,7 @@ static int locate_growth_points(fract16* buffer, int noise_mag, float* scalers, 
         mags[i] = (int) noise_mag * scalers[i];
     }
 
-    for(int i = 0; i < BUFFER_SIZE_CHANNEL && mag_i < count; i++) {
+    for(int i = 0; i < CIR_BUFFER_SIZE && mag_i < count; i++) {
         if(buffer[i] > high) {
             high = buffer[i];
         } else if(buffer[i] < low) {
@@ -592,16 +579,16 @@ int main(int argc, char** argv) {
 #ifdef ACOUSTICS_DUMP
         TIME_PRE(t, "Dumping raw buffers...");
         if(ACOUSTICS_DUMP & 1) {
-            dump(cir_buff[A], BUFFER_SIZE_CHANNEL, "dump_a_raw.txt");
+            dump(cir_buff[A], CIR_BUFFER_SIZE, "dump_a_raw.txt");
         }
         if(ACOUSTICS_DUMP & 2) {
-            dump(cir_buff[B], BUFFER_SIZE_CHANNEL, "dump_b_raw.txt");
+            dump(cir_buff[B], CIR_BUFFER_SIZE, "dump_b_raw.txt");
         }
         if(ACOUSTICS_DUMP & 4) {
-            dump(cir_buff[C], BUFFER_SIZE_CHANNEL, "dump_c_raw.txt");
+            dump(cir_buff[C], CIR_BUFFER_SIZE, "dump_c_raw.txt");
         }
         if(ACOUSTICS_DUMP & 8) {
-            dump(cir_buff[D], BUFFER_SIZE_CHANNEL, "dump_d_raw.txt");
+            dump(cir_buff[D], CIR_BUFFER_SIZE, "dump_d_raw.txt");
         }
         TIME_POST(t);
 #endif
@@ -615,16 +602,16 @@ int main(int argc, char** argv) {
 #ifdef ACOUSTICS_DUMP
         TIME_PRE(t, "Dumping filtered buffers...");
         if(ACOUSTICS_DUMP & 1) {
-            dump(cir_buff[A], BUFFER_SIZE_CHANNEL, "dump_a_filtered.txt");
+            dump(cir_buff[A], CIR_BUFFER_SIZE, "dump_a_filtered.txt");
         }
         if(ACOUSTICS_DUMP & 2) {
-            dump(cir_buff[B], BUFFER_SIZE_CHANNEL, "dump_b_filtered.txt");
+            dump(cir_buff[B], CIR_BUFFER_SIZE, "dump_b_filtered.txt");
         }
         if(ACOUSTICS_DUMP & 4) {
-            dump(cir_buff[C], BUFFER_SIZE_CHANNEL, "dump_c_filtered.txt");
+            dump(cir_buff[C], CIR_BUFFER_SIZE, "dump_c_filtered.txt");
         }
         if(ACOUSTICS_DUMP & 8) {
-            dump(cir_buff[D], BUFFER_SIZE_CHANNEL, "dump_d_filtered.txt");
+            dump(cir_buff[D], CIR_BUFFER_SIZE, "dump_d_filtered.txt");
         }
         TIME_POST(t);
 #endif

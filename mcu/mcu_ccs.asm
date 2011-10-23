@@ -37,7 +37,7 @@ main:
     ;     P1.5 - PPICLK
     mov.b #010001b, r15 
     mov.b #101110b, r14
-    mov.b #000110b, r13
+    mov.b #001110b, r13
     mov.b #110010b, r12
     mov.b #010010b, r11
     mov.b #110101b, r10

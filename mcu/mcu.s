@@ -44,7 +44,7 @@ main:
     */
     mov.b #0b010001, r15 
     mov.b #0b101110, r14
-    mov.b #0b000110, r13
+    mov.b #0b001110, r13
     mov.b #0b110010, r12
     mov.b #0b010010, r11
     mov.b #0b110101, r10

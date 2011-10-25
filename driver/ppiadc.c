@@ -7,23 +7,24 @@
  * Memory scheme
  *
  * Samples from the ADC are interleaved
+ *   A B C D A B C D A B C D A...
  *
- * DMA ping-pongs between two 64kB buffers. This size of this buffer is
+ * DMA ping-pongs between two 80kB buffers. This size of this buffer is
  * determined as follows,
  *
- * 8192 samples, 2 bytes (14 bit) per sample, 4 channels
+ * 10240 samples, 2 bytes (16 bit) per sample, 4 channels
  *
- * 8192 * 2 * 4 = 64kB
+ * 10240 * 2 * 4 = 80kB
  *
  * Two of these buffers are populated by the DMA engine in an alternating,
- * "ping-pong" fashion
+ * "ping-pong" fashion. When one buffers fills it becomes available for a client
+ * application to use. Since this buffer will be overwritten, the user-space
+ * application must copy the data to user-space.
  */
 
 #include <asm/blackfin.h>
 #include <asm/cacheflush.h>
 #include <asm/dma.h>
-#include <asm/gpio.h>
-#include <asm/gptimers.h>
 #include <asm/portmux.h>
 #include <asm/uaccess.h>
 

@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import time
+import random
 
 def eq(a, b, err=1e-5):
     return (abs(a - b) < err)
@@ -67,19 +68,19 @@ def mlat(receivers, delays, V=1497.0):
     z_0 = (N / (2*M)) + ((N / (2*M))**2 - (O/M))**0.5
     x_0 = G*z_0 + H
     y_0 = I*z_0 + J
-    err_0 = solution_error(receivers, delays, (x_0, y_0, z_0), V)
+    sol_0 = (x_0, y_0, z_0)
+    err_0 = solution_error(receivers, delays, sol_0, V)
 
     z_1 = (N / (2*M)) - ((N / (2*M))**2 - (O/M))**0.5
     x_1 = G*z_1 + H
     y_1 = I*z_1 + J
-    err_1 = solution_error(receivers, delays, (x_1, y_1, z_1), V)
-
-    print "YO", (x_0, y_0, z_0), (x_1, y_1, z_1)
+    sol_1 = (x_1, y_1, z_1)
+    err_1 = solution_error(receivers, delays, sol_1, V)
 
     if err_0 < err_1:
-        return (x_0, y_0, z_0)
+        return sol_0, sol_1
     else:
-        return (x_1, y_1, z_1)
+        return sol_1, sol_0
 
 def solution_error(receivers, delays, solution, V=1497.0):
     t = 4 * [0]
@@ -123,7 +124,7 @@ def test_0():
     delay["kl"] = (t[2] - t[3])
 
     t_0 = time.time()
-    x, y, z = mlat(receivers, delay)
+    x, y, z = mlat(receivers, delay)[0]
     t_1 = time.time()
     
     print "Solution should be approximately (2, 2, 1)"
@@ -149,7 +150,7 @@ def test_1():
     delay["kl"] = (t[2] - t[3])
 
     t_0 = time.time()
-    x, y, z = mlat(receivers, delay, 2.99792458e8)
+    x, y, z = mlat(receivers, delay, 2.99792458e8)[0]
     t_1 = time.time()
     
     print "Solution should be approximately (0, 638000, 0)"
@@ -158,6 +159,65 @@ def test_1():
                              int(round(z/100)*100))
     print "Time to find solution: %0.6f" % (t_1 - t_0,)
 
+def dist(a, b):
+    return ((a[0] - b[0])**2 + (a[1] - b[1])**2 + (a[2] - b[2])**2)**0.5
+
+def gen_tests(n=100, V=1497.0):
+    receivers = [(0., 0., 0.),
+                 (1., 2., 0.),
+                 (-1., 2., 0.),
+                 (0., 1., 1.)]
+
+    corr_noise_mag = 20e-6
+    scale = 100
+
+    x_i, y_i, z_i = map(float, receivers[0])
+    x_j, y_j, z_j = map(float, receivers[1])
+    x_k, y_k, z_k = map(float, receivers[2])
+    x_l, y_l, z_l = map(float, receivers[3])
+
+    random.seed()
+    good = 0
+
+    for i in range(0, n):
+        x, y, z = [(2 * random.random() - 1) * 10 for j in range(0, 3)]
+
+        # Compute actual time delays
+        t_i = ((x - x_i)**2 + (y - y_i)**2 + (z - z_i)**2) ** 0.5 / V
+        t_j = ((x - x_j)**2 + (y - y_j)**2 + (z - z_j)**2) ** 0.5 / V
+        t_k = ((x - x_k)**2 + (y - y_k)**2 + (z - z_k)**2) ** 0.5 / V
+        t_l = ((x - x_l)**2 + (y - y_l)**2 + (z - z_l)**2) ** 0.5 / V
+
+        delay = dict()
+        delay["ij"] = (t_i - t_j)
+        delay["ik"] = (t_i - t_k)
+        delay["kj"] = (t_k - t_j)
+        delay["kl"] = (t_k - t_l)
+
+        if corr_noise_mag:
+            delay["ij"] += (corr_noise_mag * random.normalvariate(0, 0.2))
+            delay["ik"] += (corr_noise_mag * random.normalvariate(0, 0.2))
+            delay["kj"] += (corr_noise_mag * random.normalvariate(0, 0.2))
+            delay["kl"] += (corr_noise_mag * random.normalvariate(0, 0.2))
+
+        try:
+            solutions = mlat(receivers, delay, V)
+        except:
+            print "(%d) COULD NOT COMPUTE" % (i,)
+            continue
+        err = 1
+
+        if dist(solutions[0], (x, y, z)) > err and dist(solutions[1], (x, y, z)) > err:
+            print "(%d) WARNING:" % (i,)
+            print "Expected: (%5.2f, %5.2f, %5.2f)" % (x, y, z)
+            print "Computed: (%5.2f, %5.2f, %5.2f)" % solutions[0]
+            print "          (%5.2f, %5.2f, %5.2f)" % solutions[1]
+            print
+        else:
+            good += 1
+    print "Done (%.2f)" % (float(good) / n)
+
 if __name__ == "__main__":
-    test_0()
-    test_1()
+    gen_tests(1000)
+    #test_0()
+    #test_1()

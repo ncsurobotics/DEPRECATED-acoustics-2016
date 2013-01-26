@@ -8,6 +8,11 @@
  * \{
  */
 
+/** Cross platform safety for Pi */
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
+
 /** If defined enable debugging code */
 #define ACOUSTICS_DEBUG
 
@@ -98,6 +103,8 @@ static int delay_AC;
 
 /** Computed delay (in samples) of signal arrival from channel B to D */
 static int delay_BD;
+
+static double angle_direction = 0;
 
 #ifdef ACOUSTICS_PROFILE
 Timer* t;
@@ -477,6 +484,35 @@ static void correlate_buffers(void) {
 }
 #endif
 
+static void calculate_angle(void) {
+    if(delay_AC == 0 && delay_BD == 0){
+        printf("Both delay_AC and delay_BD = 0; must be on point");
+    }
+    else if (delay_AC == 0) {
+        if (delay_BD > 0) {
+            angle_direction = 90;
+        }
+        else angle_direction = -90;
+    }
+    else if (delay_BD == 0) {
+        if (delay_AC > 0) {
+            angle_direction = 0;
+        }
+	else {
+            angle_direction = 180;
+        }
+    }
+    else {
+        angle_direction = atan(((double)delay_BD)/delay_AC)*(180/M_PI);
+	if (delay_AC <0&&delay_BD<0) {
+            angle_direction -= 180;
+        }
+	if (delay_AC < 0 && delay_BD > 0) {
+	    angle_direction += 180;
+	}
+    }
+}
+
 /**
  * \brief Output the delays
  *
@@ -496,6 +532,8 @@ static void data_out(void) {
     printf("delay_AC: %d \n", delay_AC);
     printf("delay_BD: %d \n", delay_BD);
 #endif
+
+    printf("angle_direction = %f degrees CW from pinger 1\n", angle_direction);
 }
 
 /**
@@ -620,6 +658,7 @@ int main(int argc, char** argv) {
         correlate_buffers();
         TIME_POST(t);
 
+	calculate_angle();
         data_out();
 
 #ifdef ACOUSTICS_DUMP

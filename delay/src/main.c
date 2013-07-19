@@ -54,6 +54,12 @@
 /* Convert the unsigned sample to a signed, fract16 */
 #define CONVERT_SAMPLE(v) ((fract16)((v) - (1 << 15)))
 
+#define IDEAL_SAMPLE_SIZE 203
+
+static fract16* ideal;
+
+static fract32 magnitude;
+
 /** Circular buffers for each channel */
 static fract16* cir_buff[CHANNELS];
 
@@ -148,6 +154,8 @@ static void init(char* coefs_file_name) {
 
     printf("Successfully opened %d tap filter\n", fir_coef_count);
 
+    ideal = calloc(sizeof(fract16), IDEAL_SAMPLE_SIZE);
+
     /* Initialize delay lines for FIR filters */
     fir_delay[A] = calloc(sizeof(fract16), fir_coef_count);
     fir_delay[B] = calloc(sizeof(fract16), fir_coef_count);
@@ -174,6 +182,14 @@ static void init(char* coefs_file_name) {
     temp_buff = calloc(sizeof(fract16), CIR_BUFFER_SIZE * 2);
 }
 
+void populate_ideal_signal() {
+    double time = 0;
+    for(i = 0; i <= IDEAL_SAMPLE_SIZE; i++){
+        ideal[i] = float_to_fr16(cos(2*M_PI*22000*time));
+        time= time + (1./SAMPLES_PER_SECOND);
+    }
+}
+
 /**
  * \brief Interact with the PPI/ADC driver to collect a "ping" sample
  *
@@ -190,6 +206,7 @@ static void record_ping(void) {
     bool cir_buff_full = false;
     unsigned short* current_buffer = NULL;
     unsigned short* current_buffer_copy;
+    magnitude = 0;
 
     /* Place write offset back to beginning of the circular buffer */
     cir_buff_offset = 0x00;
@@ -243,9 +260,9 @@ static void record_ping(void) {
             /* If the circular buffer is full, check the current sample for the trigger */
             if(cir_buff_full) {
                 for(i = 0; i < SAMPLES_PER_BUFFER; i++) {
-                    if(temp_buff[i] - signal_mean > TRIGGER_VALUE) {
+                    if(magnitude > TRIGGER_VALUE) {
                         /* Store the index of the trigger point as it will be once the buffers are linearized */
-                        trigger_point = (SAMPLES_PER_BUFFER * (CIR_BUFFER_KBUFFER_COUNT - 1 - EXTRA_READS)) + i + TRIGGER_POINT_OFFSET;
+                        crosscor_max(cir_buff[A],ideal,CORR_RANGE+IDEAL_SAMPLE_SIZE,-CORR_LAG_MAX,CORR_LAG_MAX);
                         state = TRIGGERED;
                         break;
                     }
@@ -437,7 +454,7 @@ static void correlate_buffers(void) {
  * \param max_lag The largest lag value to check
  * \return The lag corresponding to the largest numerical correlation
  */
-static int crosscor_max(fract16* a, fract16* b, int size, int min_lag, int max_lag) {
+int crosscor_max(fract16* a, fract16* b, int size, int min_lag, int max_lag) {
     fract32* c = malloc(sizeof(fract32) * (max_lag - min_lag));
     fract32 max_y;
     int max_x;
@@ -457,6 +474,8 @@ static int crosscor_max(fract16* a, fract16* b, int size, int min_lag, int max_l
             max_y = c[i];
         }
     }
+
+    magnitude = max_y;
 
     free(c);
     return max_x + min_lag;
@@ -672,6 +691,7 @@ int main(int argc, char** argv) {
 
     /* Free all allocated buffers */
     free(coefs);
+    free(ideal);
     free(fir_delay[A]);
     free(fir_delay[B]);
     free(fir_delay[C]);

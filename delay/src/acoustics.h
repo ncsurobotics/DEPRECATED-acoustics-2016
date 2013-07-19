@@ -104,4 +104,5 @@ int find_max_cmplx(complex_fract16* w, int size);
 void multiply(complex_fract16* in1, complex_fract16* in2, complex_fract16* out, int size);
 void conjugate(complex_fract16* w, int size);
 
+void populate_ideal_signal();
 #endif // #ifndef __SEAWOLF3_ACOUSTICS_INCLUDE_H

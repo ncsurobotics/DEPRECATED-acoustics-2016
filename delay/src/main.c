@@ -262,9 +262,9 @@ static void record_ping(void) {
             /* If the circular buffer is full, check the current sample for the trigger */
             if(cir_buff_full) {
                 for(i = 0; i < SAMPLES_PER_BUFFER; i++) {
+                    crosscor_max(cir_buff[A],ideal,CORR_RANGE+IDEAL_SAMPLE_SIZE,-CORR_LAG_MAX,CORR_LAG_MAX);
                     if(magnitude > TRIGGER_VALUE) {
                         /* Store the index of the trigger point as it will be once the buffers are linearized */
-                        crosscor_max(cir_buff[A],ideal,CORR_RANGE+IDEAL_SAMPLE_SIZE,-CORR_LAG_MAX,CORR_LAG_MAX);
                         state = TRIGGERED;
                         break;
                     }

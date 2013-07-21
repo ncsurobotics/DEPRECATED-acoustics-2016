@@ -1,7 +1,7 @@
 #!/bin/sh
 
-LIBSEAWOLF_INSTALL=${LIBSEAWOLF_INSTALL:-../libseawolf}
-SERVER_IP=${SERVER_IP:-192.168.1.126}
+LIBSEAWOLF_INSTALL=${LIBSEAWOLF_INSTALL:-~/libseawolf/src}
+SERVER_IP=${SERVER_IP:-192.168.1.85}
 
 # Ensure build is up to date
 make
@@ -20,7 +20,7 @@ mkdir acoustics/lib;
 
 # Copy binaries
 cp bin/acoustics-bfin ../driver/ppiadc.ko acoustics;
-cp ${LIBSEAWOLF_INSTALL}/lib/libseawolf.so* acoustics/lib;
+cp ${LIBSEAWOLF_INSTALL}/libseawolf.so* acoustics/lib;
 
 # Generate config files and scripts
 cat <<EOF > acoustics/seawolf.conf

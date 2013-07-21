@@ -39,7 +39,7 @@
 #define CIR_BUFFER_SIZE (SAMPLES_PER_BUFFER * CIR_BUFFER_KBUFFER_COUNT)
 
 /** Minimum triggering value (raw value) */
-#define TRIGGER_VALUE ((short)(70))
+#define TRIGGER_VALUE ((float)(.0001))
 
 /** Number of samples to offset the position of the trigger by. This is used to
     better center the trigger in the sample */
@@ -105,4 +105,5 @@ void multiply(complex_fract16* in1, complex_fract16* in2, complex_fract16* out, 
 void conjugate(complex_fract16* w, int size);
 
 void populate_ideal_signal();
+int crosscor_max(fract16* a, fract16* b, int size, int min_lag, int max_lag);
 #endif // #ifndef __SEAWOLF3_ACOUSTICS_INCLUDE_H

@@ -41,6 +41,8 @@
 #include <math_bf.h>
 #include <complex_bf.h>
 #include <stats.h>
+#include <fract2float_conv.h>
+
 
 #include "acoustics.h"
 
@@ -476,6 +478,7 @@ int crosscor_max(fract16* a, fract16* b, int size, int min_lag, int max_lag) {
     }
 
     magnitude = max_y;
+    printf("%f",(fr32_to_float(magnitude)));
 
     free(c);
     return max_x + min_lag;

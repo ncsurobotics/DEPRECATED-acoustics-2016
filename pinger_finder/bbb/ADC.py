@@ -426,7 +426,7 @@ class ADS7865():
             self.set_sample_len(1e3)
             self.update_sample_rate(300e3)
             self.update_threshold(1)
-            self.ez_config(4)
+            self.ez_config(5)
             
         elif sel == 1:
             """Secondary competition config. This is the goto place for

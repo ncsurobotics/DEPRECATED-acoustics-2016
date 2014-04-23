@@ -30,6 +30,8 @@ BASE_DIR = path.dirname(path.dirname(path.realpath(__file__)))
 #### Settings ##################################
 ################################################
 
+DEBUG_DISABLE_FREQUENCY_DETECTION = False
+
 WORLD_ORIGIN = np.array([[0, 0, 0]])
 PINGER_CYCLE_TIME = 2  # seconds
 
@@ -273,6 +275,11 @@ class Acoustics():
                         # correct pinger was not detected. Recapturing sample.
                         # time.sleep(2)
                         next_state = 'sample_capture'
+                        if DEBUG_DISABLE_FREQUENCY_DETECTION:
+                            print("warning!"*10)
+                            print("[acoustics.py]: frequency detection disabled!")
+                            print("Be sure to set DEBUG_DISABLE_FREQUENCY_DETECTION to False during competition")
+                            next_state = 'exit' #override. setting state to exit send the sample for analysis regardless of what frequency it is.
                 else:
                     # No peaks detected at all
                     print("acoustics: Woah!!! no data peaks detected, check yourself.")
@@ -423,7 +430,7 @@ class Acoustics():
             # Data was captured. Update buffer.
             (dynamic_ss, raw_vpp) = self.compute_last_signal_strength()
             self.data_buffer = (result, time.time(),dynamic_ss,raw_vpp)
-            import pdb;pdb.set_trace()
+            #import pdb;pdb.set_trace()
             update_occured = True
             
             # Record data that says a ping was captured

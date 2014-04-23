@@ -166,12 +166,13 @@ def compute_time_diff(target_freq, fs, a, b):
 
 """
 Computes the relative delay times for each hydrophone pair"""
-def compute_relative_delay_times(adc, target_freq, array, c, pattern=None, elem2adc=[]):
+def compute_relative_delay_times(adc, target_freq, array, c, pattern=None, elem2adc=None):
     
     """
     args: 
         dict_set-- a list integers wheras element at index n is supposed
         to represent the ADC channel corresponding to hydrophone n."""
+
     def check_if_one_to_one(dict_set):
         used = []
         for item in dict_set:
@@ -209,9 +210,10 @@ def compute_relative_delay_times(adc, target_freq, array, c, pattern=None, elem2
     # assign adc 2 hydrophone-element mappings. if not specified just go
     # with 1-by-1 to the ADC.
     if pattern==None:
+        elem2adc = []
         for i in range(n_ch):
             adc_ch = i
-            elem2adc[i] = adc_ch
+            elem2adc.append(adc_ch)
     
 
     # Check if user has ADC Configured correctly

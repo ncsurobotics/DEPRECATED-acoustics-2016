@@ -170,18 +170,22 @@ class Acoustics():
                 # if timer_expired: next_state = exit/fail
                 # if !timer_expired: next_state = sample_capture
         """
-        # begins process by initiating a sample capture and initializing
-        # loop counter and timer
-        next_state = 'sample_capture'
+        # begins process by initializing loop counter and timer
         loop_counter = 0
-        watchdog_timer = 0 # seconds
+        watchdog_timer = 0 # seconds 
         
-        # BEGIN LOOP
-       
+        # adjust sampling parameters (condition) if a sample captures has been
+        # previously performed. Otherwise, just perform a sample capture.
+        if self.adc.y != None: next_state='condition'
+        else: next_state='sample_capture'   
         
         while (next_state != 'exit'):
 
-            if next_state == 'sample_capture':
+            if next_state == 'condition':
+                self.condition(passive=True)
+                next_state='sample_capture'  
+            
+            elif next_state == 'sample_capture':
                 y = self.adc.get_data()
                 
                 if self.adc.TOF == 1:
@@ -268,11 +272,12 @@ class Acoustics():
                     + 'quiting pinger sense loop/machine.')
                     
             # Try to adjust for any problems before leaving this loop
-            if next_state == 'exit': self.condition(passive=True)
+            if next_state == 'exit': 
+                pass
                 
             # Increment loop counter
             loop_counter += 1
-            # END OF LOOP
+            # ^^ END OF LOOP
             
         return y # is None if signal does not pass criteria
         
@@ -409,10 +414,8 @@ class Acoustics():
         self.valid_signal_flg = False
         
         # Basic variables
-        ovr_head = 0.1
         max_vpp = 4.5
-        min_vpp = 2 * self.adc.threshold * (1 + ovr_head)
-        max_gain = self.filt.get_n_gain_states()
+        min_vpp = 2 * self.adc.threshold * 1.1 # 10% overhead at min
         
         # check if autoupdate is on
         if self.auto_update is False:
@@ -425,72 +428,76 @@ class Acoustics():
         # (detour) log data if applicable
         self.logger.process(self.adc, self.filt)
         
-        # grab some metasample data
-        vpp = np.amax(self.adc.y[0]) - np.amin(self.adc.y[0])
-        print("acoustics.py: pp is %.2f, min_vpp is %.2f" % (vpp, min_vpp))
-        old_gain = self.filt.Gval + 1   # V/V
-        raw_vpp = vpp / old_gain        # Volts
+        # grab some sample metadata
+        vpp = np.amax(adc_tools.meas_vpp(self.adc))
+        print("acoustics.py: signal vpp is %.2f, min_vpp is %.2f" % (vpp, min_vpp))
+        old_gain_LTC = self.filt.Gval + 1   # V/V
+        old_gain_ADC = self.adc.digital_gain
+        old_gain_total = old_gain_LTC*old_gain_ADC
+        raw_vpp = vpp / old_gain_total       # Volts
         
         
         i = 0
-        found_gain = False
-        if vpp < min_vpp:
+        change_gain_flag = False
+        if  vpp < min_vpp:
             # Signal is too weak. Determine a new gain value to boost
             # the signal in order to put it inside the window we'd like.
-            # If the signal never falls in the window, we'll just use maximum
-            # gain.
-            while (i+old_gain < max_gain):
-                i += 1
-                if raw_vpp * (old_gain+i) >= min_vpp:
-                    
-                    # Raise flag saying signal is valid
-                    self.valid_signal_flg = True
-                    
-                    # exit section
-                    break
-                    
-            # This will be the new analog gain value. If the break
-            # Gain will be set to the maximum V/V value, but the
-            # valid_signal_flg will remain set to false.
-            new_gain = old_gain + i
+            new_gain_total = min_vpp/raw_vpp
+            change_gain_flag = True
                     
         elif vpp > max_vpp:
             # Signal is too strong. Determine a new gain value to attenuate
             # the signal in orer to put it inside the window we'd like.
-            # If the signal never fall in the window, we'll just use minimum
-            # gain.
-            while (old_gain-i > 1):
-                i += 1
-                if raw_vpp * (old_gain-i) <= max_vpp:
-                    
-                    # Raise flag saying signal is valid
-                    self.valid_signal_flg = True
-                    
-                    # exit section
-                    break
-                    
-            # This will be the new analog gain value. If the break
-            # statement is not passed, then gain will be set to
-            # the minimum V/V value, but the valid_signal_flg will
-            # remain set to false.
-            new_gain = old_gain-i
+            new_gain_total = max_vpp/raw_vpp
+            change_gain_flag = True
                 
         else:
-            # Analog system gain is incapable of achieving desired system gain
-            self.valid_signal_flg = True
-            new_gain = old_gain
+            # Current gain is appropiate. Do nothing and move on.
+            pass
             
-            # Space reserved for digital gain code if necessary
-            # # <<>>> # #
-            # "May need to write function to artificially reduce
-            # threshold value for the PRU assembly code, as a sort of means
-            # to maintain consistent behavior while allowing the trigger to
-            # work properly.
+        if change_gain_flag:
+            self.change_gain(new_gain_total)
             
-            return
-            
-        self.filt.gain_mode(new_gain-1)
+        return
 
+    def change_gain(self, desired_gain):
+        LTC_gain = None
+        digital_gain = None
+        max_filt_gain = self.filt.get_n_gain_states()
+        
+        if desired_gain > max_filt_gain:
+            # Desired gain is above the capability of the analog electronics.
+            # max out the analog gain.
+            LTC_gain = max_filt_gain
+            
+            # Determine how much additional digital gain is needed
+            digital_gain = desired_gain / LTC_gain
+            
+        elif desired_gain < 1:
+            # Desired gain is beneath the capability of the analog electronics.
+            # set the analog gain to unity
+            LTC_gain = 1
+            
+            # Determine how much additional compensation is needed
+            digital_gain = desired_gain / LTC_gain
+            
+            
+        else:
+            # Desired gain is within the capability of the analog electronics.
+            # Set analog gain accordingly
+            LTC_gain = int(round(desired_gain)) 
+            
+            # Set digital gain to unity
+            digital_gain = 1
+            
+        # END LOGIC: LTC and digital gain have been determined
+        
+        # update analog gain
+        self.filt.gain_mode(LTC_gain-1)
+        
+        # update digital gain
+        self.adc.update_digital_gain(digital_gain)
+    
     def plot_recent(self, fourier=False):
         """Shows the user a plot of the most recent data that
         was collected.
@@ -507,6 +514,10 @@ class Acoustics():
         else:
             t_ax = get_t_axis(self.primary_fig)
             quickplot2.main(self.adc, [t_ax], recent=True)
+            
+        t_ax.set_title('Fs = %.2f kHz, ' % (self.adc.sample_rate/1000)
+            + 'LTC_Gain = %d, ' % (self.filt.Gval+1)
+            + 'ADC_Gain = %.1f' % self.adc.digital_gain)
             
         self.plt.pause(0.1)
         

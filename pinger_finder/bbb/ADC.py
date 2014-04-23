@@ -229,6 +229,7 @@ class ADS7865():
         # Any other variables that will later be relevent
         self.TOF = None
         self.TRG_CH = None
+        self.y = None
         
 
     ############################
@@ -442,7 +443,7 @@ class ADS7865():
             self.update_deadband_ms(0)
             self.set_sample_len(1e3)
             self.update_sample_rate(700e3)
-            self.update_threshold(.1)
+            self.update_threshold(2)
             self.ez_config(0)
 
         elif sel == 102:
@@ -592,7 +593,7 @@ class ADS7865():
         
         # Update threshold attribute to adjust self.corrected_threshold
         # to a value respresenting the new digital gain value
-        update_threshold(self.threshold)
+        self.update_threshold(self.threshold)
     
     def set_sample_len(self, sl):
         """ Sets the sample length
@@ -986,7 +987,7 @@ class ADC_Tools():
         
         # Compute the vpp for each channel
         for ch in range(ADC.n_channels):
-            vpp.append(np.amax(self.adc.y[ch]) - np.amin(self.adc.y[ch]))
+            vpp.append(np.amax(ADC.y[ch]) - np.amin(ADC.y[ch]))
         
         # Return tuple containing the data
         return tuple(vpp)

@@ -117,6 +117,21 @@ def task_manager(input):
         str_response = str(data_dictionary)
         print(str_response)
         pAC.write(str_response + '\n')
+        
+    elif "start_log" in input:
+        # start logging data on the BBB
+        if log.active == True:
+            log.stop_logging()
+            
+        # parse user input for desired title of the log file
+        (_, desired_title) = input.split(',')
+        
+        # Start the logging file
+        log.start_logging(desired_title)
+        
+    elif "stop_log" in input:
+        # stop logging data on seawolf
+        log.stop_logging()
 
     elif "change_pinger_freq" in input:
         # Takes input in the form "change_pinger_freq,23e3"
@@ -139,24 +154,6 @@ def task_manager(input):
         config.set('Acoustics', 'array_spacing', str(desired_spacing))
         with open(root_directory+'/config.ini', 'wb') as configfile:
             config.write(configfile)
-
-    elif input == "locate pinger":
-
-        # Get data
-        acoustics.log_ready('srp')
-        angle_to_pinger = acoustics.compute_pinger_direction()
-
-        # Send data back to seawolf
-        send(str(angle_to_pinger))
-
-    elif input == "locate pinger2":
-
-        # Get data
-        acoustics.log_ready('srp')
-        angle_to_pinger = acoustics.compute_pinger_direction2()
-
-        # Send data back to seawolf
-        send(str(angle_to_pinger))
 
     elif input == "hello":
         send("Hello to you too, Seawolf.")

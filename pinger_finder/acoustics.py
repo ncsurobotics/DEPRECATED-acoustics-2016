@@ -5,6 +5,7 @@ import time
 import csv
 import math
 from scipy.fftpack import fft
+import glob
 #from scipy.signal import argrelextrema
 
 from bbb.ADC import ADS7865
@@ -203,7 +204,7 @@ class Acoustics():
                     # Print watchdog timer for diagnostic purposes
                     print('acoustics: watchdog_timer = %.2f' % watchdog_timer)
 
-                    # Timer passed. Move on to FFT analysis
+                    # Timer logic passed. Move on to FFT analysis
                     if watchdog_timer < PINGER_CYCLE_TIME * 1.1:
                         next_state = 'fft_analysis'
                     else:
@@ -376,7 +377,7 @@ class Acoustics():
         updated.
         """
         # set update tolerance
-        tol = 0.001e-2
+        tol = 0.001e-3
 
         # update if necessary
         d = config.getfloat('Acoustics', 'array_spacing') # Assumes Config has been refreshed
@@ -395,12 +396,19 @@ class Acoustics():
         # Use logic to decide whether or not to update data buffer
         update_occured = False
         if result == None:
-            # Data was captured. Do not update buffer
-            pass
+            # Data was not captured. Do not update buffer...
+            
+            # but still record data if logger is active
+            self.log_ready('s')
+            self.logger.process(self.adc, self.filt)
         else:
             # Data was captured. Update buffer.
             self.data_buffer = (result, time.time())
             update_occured = True
+            
+            # Record data that says a ping was captured
+            self.log_ready('sp')
+            self.logger.process(self.adc, self.filt, pinger_data=result['ab'])
 
         return update_occured
 
@@ -619,7 +627,7 @@ class Logging():
         self.base_name = None
 
         # logging logic
-        self.log_active = False
+        self.active = False
         self.log_sig = False
         self.log_rec = False
         self.log_ping = False
@@ -722,13 +730,38 @@ class Logging():
                     self.log_ping = False
                 else:
                     exit = True
+            # ENDIF
+        # ENDWHILE
+        
+        self.cmd_buffer = ''
         return
 
-    def start_logging(self):
+    def start_logging(self, data_filename):
         # Get base path name
-        self.base_name = get_date_str()
-        #self.base_name = "test"
+        self.base_name = data_filename
+        
+        # Check if test is anywhere else in directory
+        MAX_DUPS = 100
+        n = 0; exit = False
+        claimed_filename = None
+        while (n < MAX_DUPS) and (exit == False):
+            suggested_filename = self.base_name + str(n)
+            if glob.glob(self.base_path + suggested_filename + '*.csv'):
+                # Duplicate found. incr n
+                n += 1
+            else:
+                # Found a good name
+                exit = True
+                claimed_filename = suggested_filename
 
+        # Signals user that his operation was unsuccessful
+        if claimed_filename == None:
+            return None
+            
+        # Or keep on going with the aqcuired filename
+        else:
+            self.base_name = claimed_filename
+            
         # Create filenames
         self.sig_fn = self.base_name + " - sig.csv"
         self.rsig_fn = self.base_name + " - rsig.csv"
@@ -741,10 +774,10 @@ class Logging():
         self.ping_f = open(path.join(self.base_path, self.ping_fn), 'w')
 
         # set flag
-        self.log_active = True
+        self.active = True
 
         # print confirmation
-        print("acoustics.py: Logging is now enabled")
+        print("acoustics.py: Logging is now enabled. Opening '%s' csv files" % self.base_name)
 
     def stop_logging(self):
         # Release base name
@@ -759,7 +792,7 @@ class Logging():
         self.log_active = False
 
         # print confirmation
-        print("acoustics.py: Logging is now disables")
+        print("acoustics.py: Logging disabled. Closing '%s' csv files" % self.base_name)
 
     def tog_logging(self):
 

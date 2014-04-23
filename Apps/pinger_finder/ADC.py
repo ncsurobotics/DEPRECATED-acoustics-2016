@@ -5,6 +5,7 @@ import boot			#
 import time			#sleep
 import BBBIO		#Yields functions for working with GPIO
 import settings		#Same function as a .YAML file
+import numpy as np
 
 #Global ADC program Constants
 PRU0_SR_Mem_Offset = 3
@@ -20,6 +21,7 @@ WORD_SIZE = 12
 
 BYTES_PER_SAMPLE = 4
 MIN_SAMPLE_LENGTH = 2
+DEFAULT_DAC_VOLTAGE = 2.49612
 
 CODE_READDAC = 0x103
 CODE_SWRESET = 0x105
@@ -112,7 +114,7 @@ class ADS7865:
 			+ "address range starting at %s" % (hex(self.ddr['addr'])))
 		
 		self.sampleRate = SR
-		self.sampleLength = L
+		self.sampleLength = int(L)
 		self.arm_status = "unknown"
 		
 		#Load overlays: Does not configure any GPIO to pruin or pruout
@@ -211,10 +213,20 @@ class ADS7865:
 		# interpret value
 		dac_voltage_readout = self.Conv_Dac_Str_to_Voltage(dac_s)
 		print("... Vdac = %.5f volts" % dac_voltage_readout)
+		
+		# Update DAC related atributes
+		self.dacVoltage = dac_voltage_readout
+		self.LSB = self.dacVoltage/(2**(WORD_SIZE-1)) #Volts
 	
 	def SW_Reset(self):
 		print("Performing ADC device reset...")
 		self.Config([CODE_SWRESET])
+		
+		# DAC outputs the default voltage
+		self.dacVoltage = DEFAULT_DAC_VOLTAGE
+		self.LSB = self.dacVoltage/(2**(WORD_SIZE-1)) #Volts
+		
+		# Let user know work is done
 		print("... done.")
 			
 	def Close(self):
@@ -289,11 +301,11 @@ class ADS7865:
 		pypruss.open(0)		# Open PRU event 0 which is PRU0_ARM_INTERRUPT
 		pypruss.pruintc_init()  # Init the interrupt controller
 	
-	def Burst(self, length=None, n_channels=None, raw=None):
+	def Burst(self, length=None, n_channels=None, raw=None, fmt_volts=1):
 		if length is None:				#Optional argument for sample length
 			length = self.sampleLength
 		else:
-			self.sampleLength = length
+			self.sampleLength = int(length)
 		
 		if n_channels is None:
 			n_channels = self.n_channels
@@ -326,17 +338,31 @@ class ADS7865:
 		
 		# Read the memory
 		raw_data = Read_Sample(self.ddr, length)
+		
+
 		y = [0]*n_channels
 		for chan in range(n_channels):
-			y[chan] = raw_data[chan::n_channels]
-			i = 0
+		
+			# user may specify whether he wants a numpy array
+			# ... or not.
+			y[chan] = np.asarray(raw_data[chan::n_channels])
 			
+		
 			# User may specify whether he wants values to come in
 			# raw, or two's compliment.
 			if (raw == None) or (raw == 0):
+				i = 0
 				for samp in y[chan]:
 					y[chan][i] = twos_comp(samp,WORD_SIZE)
 					i += 1
+					
+				# Assuming that the user is requesting 2 compliment values,
+				# it is possible to do conversion to voltage values. How ever,
+				# if the user has set raw to True, then this option is 
+				# unavailable.
+				if fmt_volts:
+					y[chan] = y[chan] * self.LSB
+				
 			
 		self.Reload()
 		return y,t

@@ -40,12 +40,12 @@
 	.u32	Sample
 	.u32	PRU0_Ptr
 	.u32	PRU1_Ptr
-	.u16	TapeHD_Offset
+	.u32	TapeHD_Offset
 	.u8	PRU0_State
 	.u8	PRU1_State
 	.u8 	Sub_Sample //0 or 1... as ADC always grabs two channels at a time. 
 .ends
-.assign DAQ_State, r5, r9.b0, DQ
+.assign DAQ_State, r5, r9.b2, DQ
 
 
 .struct DAQ_Config

@@ -1,6 +1,7 @@
 import ADC
 import os
 import watch_for_dead_bits
+import ADS7865_Sampler
 
 help_text = """quit: quit the program.
 help: display this help text."""
@@ -86,6 +87,12 @@ def UI():
 		elif ('adc_debug_wizard' == user_input) or ('d' == user_input):
 			if ADC_active:
 				adc_debug_wizard(ADS7865)
+			else:
+				response(loc.curr, "Please run 'load_adc_app' first")
+				
+		elif ('adc_collect_data' == user_input) or ('data' == user_input):
+			if ADC_active:
+				ADS7865_Sampler.main(ADS7865)
 			else:
 				response(loc.curr, "Please run 'load_adc_app' first")
 			
@@ -175,7 +182,7 @@ def adc_config(ADC_OBJ, loc):
 	SL = query(loc.curr)
 	response(loc.curr, "Please enter a sample rate")
 	SR = query(loc.curr)
-	ADC_OBJ.sampleLength = eval(SL)
+	ADC_OBJ.sampleLength = int(eval(SL))
 	ADC_OBJ.sampleRate = eval(SR)
 	response(loc.curr, "Exiting ADC config mode")
 	

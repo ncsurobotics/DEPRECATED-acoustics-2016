@@ -13,7 +13,7 @@ def Shoot(ADC,length,SR):
 
 	# Used ADC to collect samples
 	raw_input("Hit enter when you're ready...")
-	y,t = ADC.Burst(length)
+	y,t = ADC.Burst(length, fmt_volts=0)
 
 	# Interpret data
 	
@@ -55,7 +55,7 @@ def Shoot(ADC,length,SR):
 		
 		# write n plots to matplotlib
 		for n in range(ADC.n_channels):
-			ax.plot(time,y[n],'*')
+			ax.plot(time,y[n])
 
 		ax.axis(xmin=0,
 				xmax=None,

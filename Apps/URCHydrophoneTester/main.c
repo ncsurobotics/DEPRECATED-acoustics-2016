@@ -22,7 +22,7 @@ int main()
 	Hydrophone_Init();
 	Serial_Init();
 
-	unsigned int PACKET_SIZE = 200;
+	unsigned int PACKET_SIZE = 255;
 
 	int *DataForPython;
 	int buf[512] = {0};

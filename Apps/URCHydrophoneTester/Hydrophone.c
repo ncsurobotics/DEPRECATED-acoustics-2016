@@ -12,13 +12,13 @@
 #include "SerialApp.h"
 
 volatile int n;
-volatile int out[500] = {0};
+volatile int out[511] = {0};
 
 
 int *CollectHydrophoneData(int *buf, int size)
 {
 	// initalize some variables
-	ADCSRA |= 1<<ADIF; //a logical one clears this interuppt flag.
+	ADCSRA |= 1<<ADIF; //a logical one clears this interrupt flag.
 	TIFR0 |= (1<<OCF0A);
 	n = 0;
 
@@ -83,7 +83,11 @@ void ADC_Init()
 
 void Timer0_Init()
 {
-	TCCR0A = 0x02; //Set part WGM for CTC mode
-	TCCR0B = 0x05; // Set other part of WGM and PRESCALER = 1024
-	OCR0A = 0x7F; // Select the Comparison point
+	// Samplerate = CLK_RATE OCR0A/PS_TIMER0
+
+	// CTC=Clear timer on compare match
+	// WGM = 010  yields CTC mode
+	TCCR0A |= 2<<WGM00; //Set WGM0[1:0] for CTC mode
+	TCCR0B |= (0<<WGM02 | 2<<CS00); // Set WGM0[2] for CTC mode. and PRESCALER = 256
+	OCR0A = 0x1E; // Select the Comparison point. DO NOT SET LOWER THAN 26! (Max ADC speed = 76.9kHz)
 }

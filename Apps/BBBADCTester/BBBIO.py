@@ -1,4 +1,42 @@
 import os
+import sys
+
+def batchLookupGPIO(pinList):
+	i = 0
+	GPIOList = [None]*len(pinList)
+	lookupTable = {'P8_03': 38,
+		'P8_04': 39,
+		'P8_05': 34,
+		'P8_06': 35,
+		'P8_07': 66,
+		'P8_08': 67,
+		'P8_09': 69,
+		'P8_10': 68,
+		'P8_11': 45,
+		'P8_12': 44,
+		'P8_13': 23,
+		'P8_14': 26,
+		'P8_15': 47,
+		'P8_16': 46,
+		'P8_17': 27,
+		'P8_18': 65,
+		'P8_20': 63,
+		'P8_21': 62,
+		'P8_22': 37,
+		'P8_23': 36,
+		'P8_24': 33,
+		'P8_25': 32,
+		'P8_26': 61,
+		}		
+	
+	try:
+		for pin in pinList:
+			GPIOList[i] = lookupTable[pin]
+			i += 1
+	except KeyError:
+		print('Uh oh. pin%s does not exist current' % pin)
+		sys.exit(1)
+	return GPIOList
 
 class GPIO:
 	def __init__(self,gpio_pin):
@@ -57,7 +95,10 @@ class Port():
 		self.value = []
 	
 	def createPort(self, pinNameList):
-		for pin in pinNameList:
+		GPIOList = batchLookupGPIO(pinNameList)
+		for pin in GPIOList:
+			print(pinNameList)
+			print(GPIOList)
 			obj_pin = GPIO(pin)
 			self.pins.append(obj_pin)
 			(self.direction).append(obj_pin.direction)

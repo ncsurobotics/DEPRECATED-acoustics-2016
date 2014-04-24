@@ -33,7 +33,7 @@ class ADS7865:
 		io['PortDB'].write(adcInit1p2) # 0x900
 		self.WR.write(1)
 
-	def WriteOnDB(cmd):
+	def WriteOnDB(self,cmd):
 		callee_sPD = self.PortDB.portDirection
 		callee_sWR = self.WR.value
 		
@@ -46,7 +46,7 @@ class ADS7865:
 		self.WR.write(1)		
 		self.PortDB.setPortDir(callee_sPD)
 
-	def Close():
+	def Close(self):
 		self.PortDB.close()
 		self.WR.close()
 		self.BUSY.close()

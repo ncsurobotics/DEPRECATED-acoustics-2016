@@ -88,27 +88,39 @@ class GPIO:
 
 
 class Port():
-	def __init__(self):
+	def __init__(self, assignment=None):
 		self.en = True
 		self.pins = []
 		self.direction = []
 		self.value = []
+		self.nValue = 0
+		self.length = 0
+		if assignment:
+			self.createPort(assignment)
 	
 	def createPort(self, pinNameList):
+		if type(pinNameList) == type(""):
+			pinNameList = [pinNameList]
+
 		GPIOList = batchLookupGPIO(pinNameList)
 		for pin in GPIOList:
 			print(pinNameList)
 			print(GPIOList)
+						
 			obj_pin = GPIO(pin)
-			self.pins.append(obj_pin)
-			(self.direction).append(obj_pin.direction)
-			(self.value).append(obj_pin.value)
+			self.pins.append(obj_pin)	#self.pins
+			(self.direction).append(obj_pin.direction)	#self.direction
+			(self.value).append(obj_pin.value)	#self.value
 
+		self.length = len(self.pins)		#self.length
 
 	def readStr(self):
 		s = ""
+		i = 0
 		for pin in self.pins:
-			s = str(pin.read()) + s	
+			a = pin.read()
+			s = str(a) + s	
+			self.value[i] = a
 		return s
 
 	def setPortDir(self, direction):

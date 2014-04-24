@@ -12,13 +12,14 @@ def main():
 	
 	# program
 	io = {'PortDB': BBBIO.Port(),
-		'/WR':BBBIO.GPIO(WR_pin),
-		'BUSY': BBBIO.GPIO(BUSY_pin),
-		'/CS': BBBIO.GPIO(CS_pin)
+		'/WR':BBBIO.Port(WR_pin),
+		'BUSY': BBBIO.Port(BUSY_pin),
+		'/CS': BBBIO.Port(CS_pin)
 	}
 
 	
 	io['PortDB'].createPort(DB_pin_table)
 	
 	ADS7865 = ADC.ADS7865(io)
+	import pdb; pdb.set_trace()
 main()

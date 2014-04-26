@@ -12,7 +12,7 @@ def INIT():
 def main():
     # Initialize ports
     print("Opening Port %s." % PORT_NAME)
-    pUSB = s.Serial(PORT_NAME, 9600, timeout=0.2)
+    pUSB = s.Serial(PORT_NAME, 9600, timeout=10)
 
     # Listen for texts and echo them ba
     print("USB terminal active. Any data you enter will be sent"

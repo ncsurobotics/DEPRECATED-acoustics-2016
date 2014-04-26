@@ -27,3 +27,6 @@ def main(ADC, plt=None, dearm=True):
     # dearm if user doesn't assert otherwise
     if dearm:
         ADC.Unready()
+
+    # return value to user
+    return angle

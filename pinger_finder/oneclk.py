@@ -5,17 +5,24 @@ import QikSampNPlt
 import locPinger
 
 
-def main():
-    cmd = argv[1]
+def main(cmd=None):
+    if (cmd == None):
+        cmd = argv[1]
 
     if (cmd == 'competition'):
         # Load ADC Stuff
         ADC = ADS7865()
+        ADC.Close()
+        ADC = ADS7865()
+        
         ADC.Preset(1)
-        locPinger.main(ADC, dearm=False)
+        val = locPinger.main(ADC, dearm=False) # degrees right
 
         # Dearm ADC outside of locPinger.py.
         ADC.Unready()
+
+        # return value to the user
+        return val
 
     elif (cmd == 'competition-cont'):
         # Load ADC Stuff

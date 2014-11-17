@@ -1,6 +1,9 @@
 *.cproject
 *.project
 *.prefs
+*.settings
+
+*/ExportApp/
 
 /Apps/LTC1564_Tester/Debug/
 /Apps/LTC1564_Tester/Release/

@@ -2,8 +2,11 @@
 *.project
 *.prefs
 *.settings
-
-*/ExportApp/
+*.DS_Store
 
 /Apps/LTC1564_Tester/Debug/
 /Apps/LTC1564_Tester/Release/
+
+/Apps/URCHydrophoneTester/Debug/
+/Apps/URCHydrophoneTester/Release/
+

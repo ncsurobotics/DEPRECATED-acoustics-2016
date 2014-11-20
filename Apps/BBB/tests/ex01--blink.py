@@ -1,7 +1,7 @@
 import Adafruit_BBIO.GPIO as GPIO
 from time import sleep
 
-sleeptime = 0.5
+sleeptime = 0.2
 target = "P8_14"
 
 GPIO.setup(target, GPIO.OUT)

@@ -3,6 +3,8 @@
 *.prefs
 *.settings
 *.DS_Store
+*.csv
+*__pycache__*
 
 /Apps/LTC1564_Tester/Debug/
 /Apps/LTC1564_Tester/Release/

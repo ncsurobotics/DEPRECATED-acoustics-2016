@@ -22,7 +22,7 @@ int main()
 	Hydrophone_Init();
 	Serial_Init();
 
-	unsigned int PACKET_SIZE = 2;
+	unsigned int PACKET_SIZE = 200;
 
 	int *DataForPython;
 	int buf[512] = {0};
@@ -30,6 +30,8 @@ int main()
 	while(1)
 	{
 		WaitForPermissionForData(PACKET_SIZE); // writes W and int to python
+
+		while ( (ACSR & (1<<ACO) ) == 0 ){}
 		LED_PORT |= 1<<LED_PIN;
 		DataForPython = CollectHydrophoneData(buf,PACKET_SIZE);
 		LED_PORT &= ~1<<LED_PIN;

@@ -40,7 +40,7 @@ def ExportData(data):
 def main():
 	# Settings
 	DEVICE = "/dev/tty.usbserial-A5025L80"
-	MODE = 'monitor'
+	MODE = 'export'
 	
 	# Main program
 	ser = serial.Serial(DEVICE, 9600)

@@ -32,6 +32,7 @@ class GPIO:
 	def read(self):
 		with open(self.gpio_path+"value") as f:
 			self.value = int( f.read().rstrip("\n") )
+		return self.value
 
 	def help(self):
 		print("You can call the following attributes: ")
@@ -46,3 +47,48 @@ class GPIO:
 
 	def close(self):
 		os.system("echo %d >%sunexport" % (self.gpio_pin,self.gpio_base)) 
+
+
+class Port():
+	def __init__(self):
+		self.en = True
+		self.pins = []
+		self.direction = []
+		self.value = []
+	
+	def createPort(self, pinNameList):
+		for pin in pinNameList:
+			obj_pin = GPIO(pin)
+			self.pins.append(obj_pin)
+			(self.direction).append(obj_pin.direction)
+			(self.value).append(obj_pin.value)
+
+
+	def readStr(self):
+		s = ""
+		for pin in self.pins:
+			s = str(pin.read()) + s	
+		return s
+
+	def setPortDir(self, direction):
+		i = 0
+		for pin in self.pins:
+			pin.setDirection(direction)
+			self.direction[i] = pin.direction
+
+	def close(self):
+		for pin in self.pins:
+			pin.close()
+
+	def help(self):
+		print("You can call the following attributes: ")
+		for item in self.__dict__.keys():
+			print("  *.%s" % item)
+		
+		print("")
+		print("You also have access to the following methods: ")
+		for item in [method for method in dir(self) if callable(getattr(self, method))]:
+			print("  *.%s()" % item)
+		print("")
+
+

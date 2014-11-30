@@ -2,8 +2,6 @@ import BBBIO
 import time
 
 class ADS7865:
-	adcInit1p1 = 4095 # 0x104
-	adcInit1p2 = 0 # 0x900
 	WAIT_TIME = 1
 
 	def __init__(self,io):
@@ -13,8 +11,9 @@ class ADS7865:
 		self.BUSY = io['BUSY']
 		self.CS = io['/CS']
 		self.RD = io['/RD']
+		self._CONVST = io['/CONVST']
 
-	def pulseWR(self):
+	def PulseWR(self):
 		callee_s = self.WR.value
 		self.WR.writeToPort(1)
 		time.sleep(self.WAIT_TIME)
@@ -25,18 +24,19 @@ class ADS7865:
 	def Init_ADC(self):
 		self.PortDB.setPortDir('in')
 		self.WR.setPortDir('out')
-		self.BUSY.setPortDir('in')
-		self.CS.setPortDir('out')
 		self.WR.writeToPort(1)
+		self.BUSY.setPortDir('in')
+		self.RD.setPortDir('out')
+		self.RD.writeToPort(1)
+		self._CONVST.setPortDir('out')
+		self._CONVST.writeToPort(1)
+		self.CS.setPortDir('out')
 		self.CS.writeToPort(0)
 
-		self.WriteOnDB(self.adcInit1p1) # 0x104;
-		self.WriteOnDB(self.adcInit1p2) # 0x900
 		print('ADS7865: Initialization complete.')
 
-	def WriteOnDB(self,cmd):
+	def Configure(self,cmd):
 		callee_sPD = self.PortDB.portDirection
-		callee_sWR = self.WR.value
 		
 		self.WR.writeToPort(0)
 		self.PortDB.setPortDir("out")
@@ -47,9 +47,24 @@ class ADS7865:
 		self.WR.writeToPort(1)		
 		self.PortDB.setPortDir(callee_sPD)
 
+	def StartConv(self):
+		a = time.time()
+		self._CONVST.writeToPort(0)
+		self._CONVST.writeToPort(1)
+		b = time.time()
+		print("_CONVST signal was low for %f seconds." % (b-a))
+
+	def ReadConv(self):
+		self.RD.writeToPort(0)
+		result = self.PortDB.readStr()
+		print("ADS7865: Conversion Result = %s." % result)
+		self.RD.writeToPort(1)
+
 	def Close(self):
+		self.CS.writeToPort(1)
 		self.PortDB.close()
 		self.WR.close()
 		self.BUSY.close()
 		self.CS.close()
 		self.RD.close()
+		self._CONVST.close()

@@ -9,23 +9,44 @@ def main():
 	BUSY_pin = 'P9_12'
 	CS_pin = 'P9_13'
 	RD_pin = 'P9_14'
+	CONVST_pin = 'P9_15'
 	
+	leave = False
 	
 	# program
-	io = {'PortDB': BBBIO.Port(),
+	io = {'PortDB': BBBIO.Port(DB_pin_table),
 		'/WR':BBBIO.Port(WR_pin),
 		'BUSY': BBBIO.Port(BUSY_pin),
 		'/CS': BBBIO.Port(CS_pin),
-		'/RD': BBBIO.Port(RD_pin)
+		'/RD': BBBIO.Port(RD_pin),
+		'/CONVST': BBBIO.Port(CONVST_pin),
 	}
-
-	# Deprecated... should remove and use the new format.	
-	io['PortDB'].createPort(DB_pin_table)
 
 	# ADC initialization
 	ADS7865 = ADC.ADS7865(io)
 	ADS7865.Init_ADC()
 	import pdb; pdb.set_trace()
 
+	##########
+	## LOOP ##
+	##########
+	while leave == False:
+		# Select experiment
+		experiment = 'trace CH1'		
+		if experiment == 'trace CH1':
+			ADS7865.Configure(256) # 0x100
+		if experiment == 'trace CH1 and CH2':
+			self.Configure(300) # 0x104;
+			self.Configure(2304) # 0x900
+			
+		# Start conversion
+		ADS7865.StartConv()
+		
+		#
+		ADS7865.ReadConv()
+		import pdb; pdb.set_trace()
+
+		leave = True
 	ADS7865.Close()
+
 main()

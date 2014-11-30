@@ -33,6 +33,7 @@ def batchLookupGPIO(pinList):
 		'P9_12': 60,
 		'P9_13': 31,
 		'P9_14': 50,
+		'P9_15': 48,
 		}		
 	
 	try:
@@ -130,6 +131,10 @@ class Port():
 		return s
 	
 	def writeToPort(self,value):
+		'''Function takes the integer 'value' and converts it to a 
+		string formated binary representation, which is parsed in 
+		the for loop in order to configure each pin on the port.'''
+		
 		portLength = len(self.pins)
 		binaryVal = ('{0:0'+str(portLength)+'b}').format(value) # generate binary string from value arg
 		

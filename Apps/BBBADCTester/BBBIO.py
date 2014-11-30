@@ -20,6 +20,7 @@ def batchLookupGPIO(pinList):
 		'P8_16': 46,
 		'P8_17': 27,
 		'P8_18': 65,
+		'P8_19': 22,
 		'P8_20': 63,
 		'P8_21': 62,
 		'P8_22': 37,
@@ -27,6 +28,11 @@ def batchLookupGPIO(pinList):
 		'P8_24': 33,
 		'P8_25': 32,
 		'P8_26': 61,
+
+		'P9_11': 30,
+		'P9_12': 60,
+		'P9_13': 31,
+		'P9_14': 50,
 		}		
 	
 	try:
@@ -34,7 +40,7 @@ def batchLookupGPIO(pinList):
 			GPIOList[i] = lookupTable[pin]
 			i += 1
 	except KeyError:
-		print('Uh oh. pin%s does not exist current' % pin)
+		print('Uh oh. pin%s does not exist in the BBBIO.py\'s database. Check your spelling or update the lookup table.' % pin)
 		sys.exit(1)
 	return GPIOList
 
@@ -58,7 +64,7 @@ class GPIO:
 			with open(self.gpio_path+"direction") as f:
 				self.direction = f.read().rstrip("\n")
 		else:
-			print("%s: %s is not a valid direction" % (self.gpio_pin,targetstate))
+			print("pin%s: %s is not a valid direction" % (self.gpio_pin,targetState))
 
 	def write(self,value):
 		if self.direction == "out":
@@ -92,6 +98,7 @@ class Port():
 		self.en = True
 		self.pins = []
 		self.direction = []
+		self.portDirection = ''
 		self.value = []
 		self.nValue = 0
 		self.length = 0
@@ -104,8 +111,7 @@ class Port():
 
 		GPIOList = batchLookupGPIO(pinNameList)
 		for pin in GPIOList:
-			print(pinNameList)
-			print(GPIOList)
+			#print(pinNameList) ; print(GPIOList)
 						
 			obj_pin = GPIO(pin)
 			self.pins.append(obj_pin)	#self.pins
@@ -122,12 +128,25 @@ class Port():
 			s = str(a) + s	
 			self.value[i] = a
 		return s
+	
+	def writeToPort(self,value):
+		portLength = len(self.pins)
+		binaryVal = ('{0:0'+str(portLength)+'b}').format(value) # generate binary string from value arg
+		
+		for i in range(portLength):
+			s_i = (portLength-1)-i
+			b = int( binaryVal[s_i] )
+			self.pins[i].write( b )
+			
 
 	def setPortDir(self, direction):
 		i = 0
 		for pin in self.pins:
 			pin.setDirection(direction)
 			self.direction[i] = pin.direction
+			i += 1
+
+		self.portDirection = direction
 
 	def close(self):
 		for pin in self.pins:

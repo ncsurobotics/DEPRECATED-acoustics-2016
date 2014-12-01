@@ -48,17 +48,17 @@ class ADS7865:
 		self.PortDB.setPortDir(callee_sPD)
 
 	def StartConv(self):
-		a = time.time()
+		#a = time.time()
 		self._CONVST.writeToPort(0)
 		self._CONVST.writeToPort(1)
-		b = time.time()
-		print("_CONVST signal was low for %f seconds." % (b-a))
+		#b = time.time()
+		#print("_CONVST signal was low for %f seconds." % (b-a))
 
 	def ReadConv(self):
 		self.RD.writeToPort(0)
 		result = self.PortDB.readStr()
-		print("ADS7865: Conversion Result = %s." % result)
 		self.RD.writeToPort(1)
+		return result
 
 	def Close(self):
 		self.CS.writeToPort(1)

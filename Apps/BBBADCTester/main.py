@@ -1,5 +1,13 @@
 import BBBIO
 import ADC
+import export
+import time
+
+def twos_comp(val, bits):
+	"""compute the 2's compliment of int value val"""
+	if( (val&(1<<(bits-1))) != 0 ):
+		val = val - (1<<bits)
+	return val
 
 def main():
 	# settings
@@ -25,7 +33,7 @@ def main():
 	# ADC initialization
 	ADS7865 = ADC.ADS7865(io)
 	ADS7865.Init_ADC()
-	import pdb; pdb.set_trace()
+	#import pdb; pdb.set_trace()
 
 	##########
 	## LOOP ##
@@ -38,14 +46,28 @@ def main():
 		if experiment == 'trace CH1 and CH2':
 			self.Configure(300) # 0x104;
 			self.Configure(2304) # 0x900
-			
-		# Start conversion
-		ADS7865.StartConv()
-		
-		#
-		ADS7865.ReadConv()
-		import pdb; pdb.set_trace()
 
+		n = 0
+		data = []
+		a = time.time()
+		while n < 1000:
+			# Start conversion
+			ADS7865.StartConv()
+			result = ADS7865.ReadConv()
+
+			b = time.time()
+			if n == 0:
+				t0 = b - a
+			
+			t = (b - a - t0)
+		
+			trace = twos_comp(int(result,2), len(result)) 
+
+			print(trace)
+			data.append((t,trace))
+			n += 1
+
+		export.RunCSVExport(data)
 		leave = True
 	ADS7865.Close()
 

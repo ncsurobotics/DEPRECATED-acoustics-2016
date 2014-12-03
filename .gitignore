@@ -5,6 +5,7 @@
 *.DS_Store
 *preview.csv
 *__pycache__*
+*.pyc
 
 /Apps/LTC1564_Tester/Debug/
 /Apps/LTC1564_Tester/Release/

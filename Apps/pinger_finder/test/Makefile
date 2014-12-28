@@ -1,0 +1,10 @@
+COMPILER=pasm -b
+FILENAME=hello_pru
+
+.PHONY: clean all
+
+all:
+	$(COMPILER) $(FILENAME).p
+
+clean:
+	rm -rf $(FILENAME).bin

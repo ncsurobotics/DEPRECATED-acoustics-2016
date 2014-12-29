@@ -31,7 +31,7 @@
 #define CONST_DDR       C31
 
 
-#define CONTROL_MODULE          0x44E10000
+#define CONTROL_MODULE          0x44e10800
 
 .macro  LD32
 .mparam dst,src
@@ -64,6 +64,15 @@
 .endm
 
 // ------
+// given an "offset" (some value b/t 0x000 and 0xFFF), this
+// macro will configure the appropiate mux to a particular
+// 32-bit "value"
+.macro  SET_MUX
+.mparam offset, value
+        MOV  r25, CONTROL_MODULE | offset
+	MOV  r26, value
+        SBBO r26, r25, 0, 4
+.endm
 
 .macro  SBB_II
 .mparam src_I, dst_I, size

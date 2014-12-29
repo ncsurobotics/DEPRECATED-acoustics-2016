@@ -42,23 +42,22 @@ PREPARE:
         // Store data address for reference by the host program.
         SBB_II DATA_MEM_START, samplestart_ptr, 1 
 
+        SET_MUX  0x3c, 0x00000006 // configure BUSY INPUT
+
         MOV  r0, 0xBEBC200      // Ready up the timout counter
         MOV  r2, 0x2000         // R2 points to DRAM1[0]
        
 
 ROADBLOCK:
         QBEQ END, r0, 0         // Check Timeout ctr. End program if too long.
+        
+        QBBS END, r31, BUSY
         SUB  r0, r0, 1          // decrement timer.
         LBBO r1, r2, 0, 4       // Grab data from DRAM1[0]
         QBEQ ROADBLOCK, r1, 0   // Loop as long as PRU1 didnt intervene
         QBA  END
 
 
-.macro  SET_MUX
-.mparam offset, value
-        MOV  r25, CONTROL_MODULE | offset
-        SBBO CONTROL_MOD, pAddr_Reg, 0, 4
-.endm
 
 
 END:

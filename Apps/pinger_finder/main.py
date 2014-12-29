@@ -11,7 +11,7 @@ def main():
 	pypruss.pruintc_init()  # Init the interrupt controller
 
 	# Configure PRU Registers
-	pypruss.pru_write_memory(0, 0, [0,])
+	pypruss.pru_write_memory(0, 0, [1,])
 	
 	# Execute the PRU program
 	a = time.time()

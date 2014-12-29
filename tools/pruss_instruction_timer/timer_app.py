@@ -10,13 +10,12 @@ def main():
 	pypruss.open(0)		# Open PRU event 0 which is PRU0_ARM_INTERRUPT
 	pypruss.pruintc_init()  # Init the interrupt controller
 
-	# Configure PRU Registers	
-	pypruss.pru_write_memory(1, 0x0000, [0x0,]) # clearing ack bit from pru1
-
+	# Configure PRU Registers
+	pypruss.pru_write_memory(0, 0, [0,])
+	
 	# Execute the PRU program
 	a = time.time()
-	#pypruss.exec_program(1, "./pru1.bin") 		# Load firmware on PRU1
-	pypruss.exec_program(0, "./ADS7865_sample.bin") # Load firmware on PRU0
+	pypruss.exec_program(0, "./timer_app.bin") # Load firmware on PRU0
 
 	# Wait for PRU to finish its job.
 	pypruss.wait_for_event(0)# Wait for event 0 which is conn to PRU0_ARM_INTERUPT
@@ -27,7 +26,8 @@ def main():
 	pypruss.exit()		# Exit PRU
 
 	print("That's a %ds loop you have there." % loop_time)
-	print("done")
+	print("Test completed: PRU was successfully opened and closed.")
 
 print("-"*50)
+print("timer_app.py: Timing a dummy loop...")
 main()

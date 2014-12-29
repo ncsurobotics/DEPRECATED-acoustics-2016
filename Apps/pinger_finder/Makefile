@@ -1,10 +1,14 @@
 COMPILER=pasm -b
-FILENAME=ADS7865_sample
+FILENAME1=ADS7865_sample
+FILENAME2=pru1
 
 .PHONY: clean all
 
 all:
-	$(COMPILER) $(FILENAME).p
+	$(COMPILER) $(FILENAME1).p
+	$(COMPILER) $(FILENAME2).p
+
 
 clean:
-	rm -rf $(FILENAME).bin
+	rm -rf $(FILENAME1).bin
+	rm -rf $(FILENAME2).bin

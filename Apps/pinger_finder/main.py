@@ -11,10 +11,11 @@ def main():
 	pypruss.pruintc_init()  # Init the interrupt controller
 
 	# Configure PRU Registers
-	pypruss.pru_write_memory(0, 0, [1,])
+	pypruss.pru_write_memory(0, 2000, [0,])
 	
 	# Execute the PRU program
 	a = time.time()
+	pypruss.exec_program(1, "./pru1.bin") 		# Load firmware on PRU1
 	pypruss.exec_program(0, "./ADS7865_sample.bin") # Load firmware on PRU0
 
 	# Wait for PRU to finish its job.

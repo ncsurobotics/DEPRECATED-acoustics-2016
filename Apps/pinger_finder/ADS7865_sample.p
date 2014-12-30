@@ -42,7 +42,7 @@ PREPARE:
         // Store data address for reference by the host program.
         SBB_II DATA_MEM_START, samplestart_ptr, 1 
 
-        SET_MUX  0x3c, 0x00000006 // configure BUSY INPUT
+       // SET_MUX  0x30, 0x00000027 // configure BUSY INPUT
 
         MOV  r0, 0xBEBC200      // Ready up the timout counter
         MOV  r2, 0x2000         // R2 points to DRAM1[0]

@@ -11,19 +11,6 @@
 // Define all GPIO
 #define DB11    0  // P9-31
 
-// Define Memory settings
-#define PERMA_MEM_START 0x0000
-#define PERMA_MEM_SIZE  0x0008
-#define VOLAT_MEM_START PERMA_MEM_START+PERMA_MEM_SIZE
-#define VOLAT_MEM_SIZE  0x0008
-#define DATA_MEM_START  VOLAT_MEM_START+VOLAT_MEM_SIZE
-
-// Define Memory based struct stuff
-#define point_loc_ptr   0x0000 //counts (1byte)
-#define samplen_ptr     0x0001 //counts (12bit = 1.25bytes)
-#define delaylen_ptr    0x0003 //clk_cycles (32bit = 4bytes)
-#define samplestart_ptr 0x0007 //cells from 0 (8bit = 1byte)
-
 
 //-----------------------------------------------
 
@@ -43,13 +30,17 @@ PREPARE:
         // Store data address for reference by the host program.
         SBB_II DATA_MEM_START, samplestart_ptr, 1 
 
+        MOV  DAQState.PRU0_State_Ptr, 0x0000
+        MOV  DAQState.PRU1_State_Ptr, 0x2000
+
         MOV  DAQConf.TO, 0xBEBC200      // Ready up the timout counter
         MOV  r2, 0x2000         // R2 points to DRAM1[0]
+
         MOV  DAQConf.Data_Dst, samplestart_ptr  // Determine where samples will go 
         MOV  DAQConf.Samp_Len, 10               // Set sample length to 10        
 
         // SET Default bits (to be deprecated by some outside script)
-        CLR  r30, bCONVST
+        SET  r30, bCONVST
 
 TOP:
         QBGT SUBMIT, DAQState.TapeHD_Offset, DAQConf.Samp_Len
@@ -59,7 +50,37 @@ TOP:
          DECR  DAQConf.TO, 1          // decrement timer.
         #endif
 
-        SET  r30, bCONVST       // 
+TRIG:
+        CLR  r30, bCONVST       // Trigger a Conversion
+
+WAIT:
+        // connect bCONVST to BUSY pin in order to bypass this portion
+        WBC  r31, BUSY          // Watch for conversion to complete
+
+COLLECT:
+        SET  r30, bCONVST       // CONVST is no longer needed TAG=cleanup
+        CLR  r30, bWR           // Activate bWR
+
+        SET  DAQState.PRU0_State, Col_Act // Notify PRU1
+        MOV  GP.Ptr, 0x2000      
+        SBBO DAQState.PRU0_State, GP.Ptr, 0, SIZE(DAQState.PRU0_State)
+
+        MOV  GP.Cpr, r31                // collecting data: save local cpy of GPI
+        QBBC ASK_PRU1, GP.Cpr, DB11     // ^ Meas bit 11... go on to next step
+         SET DAQState.Sample, 11
+
+ASK_PRU1:
+                                                        // vvv Wait for PRU1 to finish.
+        LBBO DAQState.PRU1_State, DAQState.PRU1_State_Ptr, 0, SIZE(DAQState.PRU1_State)
+        QBBS ASK_PRU1, DAQState.PRU1_State, Col_Act
+        
+        LBBO GP.Cpr, DAQState.PRU1_Ptr, SHARED, 4       // collect PRU1s partial sample
+        OR   DAQ_State.Sample, DAQ_State.Sample, GP.Cpr // append data to sampling
+
+        QBA  SUBMIT
+
+
+/////////////////////////////
         LBBO r1, r2, 0, 4       // Grab data from DRAM1[0]
         QBEQ TOP, r1, 0   // Loop as long as PRU1 didnt intervene
         QBA  END
@@ -69,6 +90,6 @@ TOP:
 
 SUBMIT:
 END:
-        CLR  r30, bCONVST
+        SET  r30, bCONVST
         MOV r31.b0, PRU0_ARM_INTERRUPT+16 // Send notification to host for program completion
         HALT

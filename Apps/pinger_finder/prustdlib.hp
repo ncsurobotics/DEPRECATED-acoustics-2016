@@ -81,6 +81,10 @@
         SBBO r25, r26, 0, size
 .endm
 
+.macro	DECR
+.mparam ctrReg, stepSize
+	SUB ctrReg, ctrReg, stepSize
+.endm
 // ***************************************
 // *    Global Structure Definitions     *
 // ***************************************

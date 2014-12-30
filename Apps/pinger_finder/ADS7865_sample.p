@@ -1,4 +1,5 @@
 #include "prustdlib.hp"
+#include "pingerFinderLib.h"
 
 // Define all inputs
 #define BUSY    15 // P8-15
@@ -42,17 +43,15 @@ PREPARE:
         // Store data address for reference by the host program.
         SBB_II DATA_MEM_START, samplestart_ptr, 1 
 
-       // SET_MUX  0x30, 0x00000027 // configure BUSY INPUT
-
-        MOV  r0, 0xBEBC200      // Ready up the timout counter
+        MOV  DAQConf.TO, 0xBEBC200      // Ready up the timout counter
         MOV  r2, 0x2000         // R2 points to DRAM1[0]
        
 
 ROADBLOCK:
-        QBEQ END, r0, 0         // Check Timeout ctr. End program if too long.
+        QBEQ END, DAQConf.TO, 0         // Check Timeout ctr. End program if too long.
         
         QBBS END, r31, BUSY
-        SUB  r0, r0, 1          // decrement timer.
+        DECR  DAQConf.TO, 1          // decrement timer.
         LBBO r1, r2, 0, 4       // Grab data from DRAM1[0]
         QBEQ ROADBLOCK, r1, 0   // Loop as long as PRU1 didnt intervene
         QBA  END

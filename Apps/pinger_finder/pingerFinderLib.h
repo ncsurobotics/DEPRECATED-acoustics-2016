@@ -12,12 +12,14 @@
 // r7: DAQ_Config
 // r8: DAQ_Config
 
+#define TO_EN
 
 .struct General
 	.u32	Ptr
 	.u32	Tmr
+	.u32	Cpr
 .ends	
-.assign General, r0, r1, GP
+.assign General, r0, r2, GP
 
 
 .struct DAQ_State
@@ -25,7 +27,7 @@
 	.u8	PRU0_State
 	.u8	PRU1_State
 .ends
-.assign DAQ_State, r4, r4, DAQState
+.assign DAQ_State, r5, r5, DAQState
 
 
 .struct DAQ_Config

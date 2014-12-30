@@ -81,6 +81,11 @@
         SBBO r25, r26, 0, size
 .endm
 
+.macro	INCR
+.mparam ctrReg, stepSize
+	ADD ctrReg, ctrReg, stepSize
+.endm
+
 .macro	DECR
 .mparam ctrReg, stepSize
 	SUB ctrReg, ctrReg, stepSize

@@ -45,20 +45,30 @@ PREPARE:
 
         MOV  DAQConf.TO, 0xBEBC200      // Ready up the timout counter
         MOV  r2, 0x2000         // R2 points to DRAM1[0]
-       
+        MOV  DAQConf.Data_Dst, samplestart_ptr  // Determine where samples will go 
+        MOV  DAQConf.Samp_Len, 10               // Set sample length to 10        
 
-ROADBLOCK:
-        QBEQ END, DAQConf.TO, 0         // Check Timeout ctr. End program if too long.
-        
-        QBBS END, r31, BUSY
-        DECR  DAQConf.TO, 1          // decrement timer.
+        // SET Default bits (to be deprecated by some outside script)
+        CLR  r30, bCONVST
+
+TOP:
+        QBGT SUBMIT, DAQState.TapeHD_Offset, DAQConf.Samp_Len
+
+        #ifdef TO_EN
+        QBEQ END, DAQConf.TO, 0         // Check Timeout ctr. End program if too long.  
+         DECR  DAQConf.TO, 1          // decrement timer.
+        #endif
+
+        SET  r30, bCONVST       // 
         LBBO r1, r2, 0, 4       // Grab data from DRAM1[0]
-        QBEQ ROADBLOCK, r1, 0   // Loop as long as PRU1 didnt intervene
+        QBEQ TOP, r1, 0   // Loop as long as PRU1 didnt intervene
         QBA  END
 
 
+         //INCR DAQ_State.TapeHD_Offset, 1  // increment tapeHD at end of loop.
 
-
+SUBMIT:
 END:
+        CLR  r30, bCONVST
         MOV r31.b0, PRU0_ARM_INTERRUPT+16 // Send notification to host for program completion
         HALT

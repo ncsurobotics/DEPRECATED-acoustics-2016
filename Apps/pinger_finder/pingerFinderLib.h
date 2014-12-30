@@ -35,13 +35,13 @@
 #define Col_Act 2
 .struct DAQ_State
 	.u32	Sample
+	.u32	PRU0_Ptr
+	.u32	PRU1_Ptr
 	.u16	TapeHD_Offset
 	.u8	PRU0_State
 	.u8	PRU1_State
-	.u8	PRU0_State_Ptr
-	.u8	PRU1_State_Ptr
 .ends
-.assign DAQ_State, r5, r7.w0, DAQState
+.assign DAQ_State, r5, r8, DAQState
 
 
 .struct DAQ_Config
@@ -50,7 +50,7 @@
 	.u32	Data_Dst	// address 
 	.u32	TO		// TimeOut:loops
 .ends
-.assign DAQ_Config, r8, r11, DAQConf
+.assign DAQ_Config, r9, r12, DAQConf
 
 /////////////////////////////////////////
 // 		CONSTANTS 	/////////
@@ -67,3 +67,6 @@
 #define samplen_ptr     0x0001 //counts (12bit = 1.25bytes)
 #define delaylen_ptr    0x0003 //clk_cycles (32bit = 4bytes)
 #define samplestart_ptr 0x0007 //cells from 0 (8bit = 1byte)
+
+#define PRU1_RAM	0x2000
+#define SHAREDh		0x0004

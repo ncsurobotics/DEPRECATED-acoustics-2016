@@ -1,4 +1,4 @@
-#include "prustdlib.hp"
+#include "prustdlib.h"
 #include "pingerFinderLib.h"
 
 // Define all inputs
@@ -30,8 +30,8 @@ PREPARE:
         // Store data address for reference by the host program.
         SBB_II DATA_MEM_START, samplestart_ptr, 1 
 
-        MOV  DAQState.PRU0_State_Ptr, 0x0000
-        MOV  DAQState.PRU1_State_Ptr, 0x2000
+        LDI  DAQState.PRU0_Ptr, 0x0000
+        LDI  DAQState.PRU1_Ptr, 0x2000
 
         MOV  DAQConf.TO, 0xBEBC200      // Ready up the timout counter
         MOV  r2, 0x2000         // R2 points to DRAM1[0]
@@ -71,12 +71,13 @@ COLLECT:
 
 ASK_PRU1:
                                                         // vvv Wait for PRU1 to finish.
-        LBBO DAQState.PRU1_State, DAQState.PRU1_State_Ptr, 0, SIZE(DAQState.PRU1_State)
+        LBBO DAQState.PRU1_State, DAQState.PRU1_Ptr, 0, SIZE(DAQState.PRU1_State)
         QBBS ASK_PRU1, DAQState.PRU1_State, Col_Act
         
-        LBBO GP.Cpr, DAQState.PRU1_Ptr, SHARED, 4       // collect PRU1s partial sample
-        OR   DAQ_State.Sample, DAQ_State.Sample, GP.Cpr // append data to sampling
+        LBBO GP.Cpr, DAQState.PRU1_Ptr, SHAREDh, 4       // collect PRU1s partial sample
+        OR   DAQState.Sample, DAQState.Sample, GP.Cpr // append data to sampling
 
+        SET  r31, bWR
         QBA  SUBMIT
 
 

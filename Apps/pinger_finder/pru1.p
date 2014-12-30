@@ -1,3 +1,6 @@
+#include "prustdlib.h"
+#include "pingerFinderLib.h"
+
 .origin 0
 .entrypoint START
 
@@ -24,5 +27,9 @@ START:
         //MOV  r1, 1              // Setup bit be pru1 ack bit
         //MOV  r2, 0x0000         // address to DRAM1[0]
         //SBBO r1, r2, 0, 4       // Store data in DRAM1[0]
+
+TOP:
+        //
+
 END:
         HALT

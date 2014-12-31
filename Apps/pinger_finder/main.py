@@ -9,13 +9,18 @@ def main():
 	pypruss.init()		# Init the PRU
 	pypruss.open(0)		# Open PRU event 0 which is PRU0_ARM_INTERRUPT
 	pypruss.pruintc_init()  # Init the interrupt controller
+	
 
 	# Configure PRU Registers	
-	pypruss.pru_write_memory(1, 0x0000, [0x0,]) # clearing ack bit from pru1
-
+	pypruss.exec_program(0, "./init.bin") # Cleaning the registers
+	pypruss.exec_program(1, "./init.bin") # Cleaning the registers	
+	pypruss.pru_write_memory(0, 0x0000, [0x0,]*0x2000) # clearing ack bit from pru1
+	pypruss.pru_write_memory(0, 0x2000, [0x0,]*0x2000) # clearing ack bit from pru1
+	pypruss.pru_write_memory(0, 0x10000, [0x0,]*0x2EE0) # clearing ack bit from pru1
+	time.sleep(1)
 	# Execute the PRU program
 	a = time.time()
-	#pypruss.exec_program(1, "./pru1.bin") 		# Load firmware on PRU1
+	pypruss.exec_program(1, "./pru1.bin") 		# Load firmware on PRU1
 	pypruss.exec_program(0, "./ADS7865_sample.bin") # Load firmware on PRU0
 
 	# Wait for PRU to finish its job.

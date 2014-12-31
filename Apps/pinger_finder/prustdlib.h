@@ -90,6 +90,13 @@
 .mparam ctrReg, stepSize
 	SUB ctrReg, ctrReg, stepSize
 .endm
+
+.macro  WBCR 
+.mparam Label, Reg, Ptr, L
+	LBBO Reg, Ptr, 0, SIZE(Reg)
+	QBBC Label, Reg, L
+.endm
+
 // ***************************************
 // *    Global Structure Definitions     *
 // ***************************************

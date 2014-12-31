@@ -32,7 +32,9 @@
 // bit0: BUSY
 // bit1: ON STBY
 // bit2: Collecting Data
-#define Col_Act 2
+// bit3: Tmr Interrupt
+#define COLL	2 // Collection active bit
+#define CINT    3 // CONVST interrupt bit
 .struct DAQ_State
 	.u32	Sample
 	.u32	PRU0_Ptr
@@ -41,7 +43,7 @@
 	.u8	PRU0_State
 	.u8	PRU1_State
 .ends
-.assign DAQ_State, r5, r8, DAQState
+.assign DAQ_State, r5, r8, DQ
 
 
 .struct DAQ_Config
@@ -55,6 +57,19 @@
 /////////////////////////////////////////
 // 		CONSTANTS 	/////////
 /////////////////////////////////////////
+// PINS
+#define DB0     8   // P8-27  //ONLY PRU1
+#define DB1     10  // P8-28  //ONLY PRU1
+#define DB2     9   // P8-29  //ONLY PRU1
+#define DB3     6   // P8-39  //ONLY PRU1
+#define DB4     7   // P8-40  //ONLY PRU1
+#define DB5     4   // P8-41  //ONLY PRU1
+#define DB6     5   // P8-42  //ONLY PRU1
+#define DB7     2   // P8-43  //ONLY PRU1
+#define DB8     3   // P8-44  //ONLY PRU1
+#define DB9     0   // P8-45  //ONLY PRU1
+#define DB10    1   // P8-46  //ONLY PRU1
+
 // Define Memory settings
 #define PERMA_MEM_START 0x0000
 #define PERMA_MEM_SIZE  0x0008
@@ -68,5 +83,9 @@
 #define delaylen_ptr    0x0003 //clk_cycles (32bit = 4bytes)
 #define samplestart_ptr 0x0007 //cells from 0 (8bit = 1byte)
 
-#define PRU1_RAM	0x2000
-#define SHAREDh		0x0004
+//#define PRU0_RAM	0x0000
+//#define PRU1_RAM	0x2000
+#define SHAREDh		0x0000
+#define HOST_RESERVEDh	0x0004
+#define HOSH_SampLen	0x0008
+#define PRU_STATEh	0x0012

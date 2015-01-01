@@ -97,6 +97,17 @@
 	QBBC Label, Reg, L
 .endm
 
+.macro  NOP
+		OR r0,r0,r0
+.endm
+
+.macro  ms_DELAY
+.mparam LABEL1, LABEL2, reg
+		QBEQ NOP_LABEL2, reg, 0
+		DECR reg, 1
+		QBA  NOP_LABEL1  
+.endm
+
 // ***************************************
 // *    Global Structure Definitions     *
 // ***************************************

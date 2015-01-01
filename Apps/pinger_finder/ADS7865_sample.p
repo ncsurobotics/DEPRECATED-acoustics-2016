@@ -2,15 +2,30 @@
 #include "pingerFinderLib.h"
 
 // Define all inputs
-#define BUSY    15 // P8-15
+#define BUSY	15 // P8-15
 
 // Define all output
-#define bCONVST 15 // P8-11
-#define bWR     14 // P8-12
+#define bCONVST	15 // P8-11
+#define bWR		14 // P8-12
 
 // Define all GPIO
-#define DB11    0  // P9-31
+#define DB11	0  // P9-31
 
+.macro  Wait_For_DR_Signal_Then_ACK
+.mparam LABEL
+		LBBO DQ.PRU1_State, DQ.PRU1_Ptr, PRU_STATEh, SIZE(DQ.PRU1_State)
+		QBBC LABEL, DQ.PRU1_State, DR
+		CLR  DQ.PRU1_State, DR
+		SBBO DQ.PRU1_State, DQ.PRU1_Ptr, PRU_STATEh, SIZE(DQ.PRU1_State)
+.endm
+	
+.macro  Conf_DataDst_For_DDR_Address
+		LBBO DAQConf.Data_Dst, DQ.PRU0_Ptr, HOST_DDR_ADDRh, 4 
+.endm
+
+.macro  Conf_DataDst_For_Local_Ram_Address
+		MOV  DAQConf.Data_Dst, samplestart_ptr
+.endm
 
 //-----------------------------------------------
 
@@ -22,111 +37,138 @@
 // r2: Ptr to DRAM[0]
 
 START:
-        LBCO r0, C4, 4, 4       // Load Bytes Constant Offset (?)
-        CLR  r0, r0, 4          // Clear bit 4 in reg 0
-        SBCO r0, C4, 4, 4       // Store Bytes Constant Offset
+	LBCO r0, C4, 4, 4       // Load Bytes Constant Offset (?)
+	CLR  r0, r0, 4	  // Clear bit 4 in reg 0
+	SBCO r0, C4, 4, 4       // Store Bytes Constant Offset
+	
+	ZERO &r0, 122
 
 PREPARE:
-        // Store data address for reference by the host program.
-        //SBB_II DATA_MEM_START, samplestart_ptr, 1 
+	// Store data address for reference by the host program.
+	//SBB_II DATA_MEM_START, samplestart_ptr, 1 
 
-        LDI  DQ.PRU0_Ptr, 0x0000
-        LDI  DQ.PRU1_Ptr, 0x2000
+	LDI  DQ.PRU0_Ptr, 0x0000
+	LDI  DQ.PRU1_Ptr, 0x2000
 
-        MOV  DAQConf.TO, 0xBEBC200      // Ready up the timout counter
-        MOV  r2, 0x2000                 // R2 points to DRAM1[0]
+	MOV  DAQConf.TO, 0xBEBC200	// Ready up the timout counter
+	MOV  r2, 0x2000				// R2 points to DRAM1[0]
 
-        MOV  DAQConf.Data_Dst, samplestart_ptr  // Determine where samples will go 
-        MOV  DAQConf.Samp_Len, 10               // Set sample length to 10        
+	Conf_DataDst_For_DDR_Address	// Data will go to DDRAM
+	MOV  DAQConf.Samp_Len, 35		// Set sample length to 10	
+	
 
-        // SET Default bits (to be deprecated by some outside script)
-        SET  r30, bCONVST
+	// SET Default bits (to be deprecated by some outside script)
+	SET  r30, bCONVST
 
 TOP:
-        QBLT SUBMIT, DQ.TapeHD_Offset, DAQConf.Samp_Len
+	QBLT END, DQ.TapeHD_Offset, DAQConf.Samp_Len
 
-        #ifdef TO_EN
-        QBEQ END, DAQConf.TO, 0         // Check Timeout ctr. End program if too long.  
-         DECR  DAQConf.TO, 1          // decrement timer.
-        #endif
+	#ifdef TO_EN
+	QBEQ END, DAQConf.TO, 0		// Check Timeout ctr. End program if too long.  
+	 DECR DAQConf.TO, 1			// decrement timer.
+	#endif
 
 TRIG:
-        LBBO DQ.PRU1_State, DQ.PRU1_Ptr, PRU_STATEh, SIZE(DQ.PRU1_State)
-        QBBC TRIG, DQ.PRU1_State, CINT  // Advance when PRU1 trigger interupt!
-        CLR  r30, bCONVST               // Trigger a Conversion
+	LBBO DQ.PRU1_State, DQ.PRU1_Ptr, PRU_STATEh, SIZE(DQ.PRU1_State)
+	QBBC TRIG, DQ.PRU1_State, CINT	// Advance when PRU1 trigger interupt!
+	CLR	 DQ.PRU1_State, CINT
+	SBBO DQ.PRU1_State, DQ.PRU1_Ptr, PRU_STATEh, SIZE(DQ.PRU1_State)
+	
+	CLR  r30, bCONVST				// Trigger a Conversion
 
 WAIT:
-        // connect bCONVST to BUSY pin in order to bypass this portion
-        WBC  r31, BUSY                  // Watch for conversion to complete
+	// connect bCONVST to BUSY pin in order to bypass this portion
+	NOP32; NOP32;	// delay just in case
+	WBC  r31, BUSY		// Watch for conversion to complete
+	
+	// At this point, PRU0 has detected BUSY go low. Thus, a conversion
+	// has been completed, and a data point is ready for collection.
+	// PRU0 will now pull WR low (+ deactivate CONVST) in order to
+	// get the ADC output the 12-bit sample. Then it will set it's
+	// COLL=1 in the PRU0 status code, which should notify PRU1 that
+	// it should join in on the sample collection process.
+	
 
 COLLECT:
-        SET  r30, bCONVST               // CONVST is no longer needed TAG=cleanup
-        CLR  r30, bWR                   // Activate bWR
+	SET  r30, bCONVST	// CONVST is no longer needed TAG=cleanup
+	CLR  r30, bWR		// Activate bWR
 
-        SET  DQ.PRU0_State, COLL     // vvv
-        SBBO DQ.PRU0_State, DQ.PRU0_Ptr, PRU_STATEh, SIZE(DQ.PRU0_State) 
-                                        // Share PRU State
-                                        // ^ state: collecting
+	LBBO DQ.PRU0_State, DQ.PRU0_Ptr, PRU_STATEh, SIZE(DQ.PRU0_State) 
+	SET  DQ.PRU0_State, COLL	// vvv
+	SBBO DQ.PRU0_State, DQ.PRU0_Ptr, PRU_STATEh, SIZE(DQ.PRU0_State) 
+                                // Share PRU State
+                                // ^ state: collecting
 
-        MOV  GP.Cpr, r31                // collecting data: save local cpy of GPI
-        QBBC ASK_PRU1, GP.Cpr, DB11     // ^ Meas bit 11... go on to next step
-         SET DQ.Sample, 11
+	MOV  GP.Cpr, r31		// collecting data: save local cpy of GPI
+	MOV  DQ.Sample, 0		// re-init the sample reg
+
+  MDB11:
+	QBBC ASK_PRU1, GP.Cpr, DB11     // ^ Meas bit 11... go on to next step
+	 SET DQ.Sample, 11
 
 ASK_PRU1:
-                                                        // vvv Wait for PRU1 to finish.
-        LBBO DQ.PRU1_State, DQ.PRU1_Ptr, PRU_STATEh, SIZE(DQ.PRU1_State)
-        QBBS ASK_PRU1, DQ.PRU1_State, COLL
-        
-        LBBO GP.Cpr, DQ.PRU1_Ptr, SHAREDh, 4       // collect PRU1s partial sample
-        SET  r31, bWR
+	Wait_For_DR_Signal_Then_ACK	ASK_PRU1       // vvv Wait for PRU1 to finish.
+	
+	LBBO GP.Cpr, DQ.PRU0_Ptr, SHAREDh, 4       // collect PRU1s partial sample
+	SET  r31, bWR
+	
 
-        QBBC MDB9, GP.Cpr, DB10
-         SET DQ.Sample, 10
+	// At this point, PRU1s measurement has been received, and PRU0
+	// has done the necessary cleanup (DR:=0, bWR:=1, COLL:=0). Now, PRU0 will
+	// parse the collected sample and convert it to an intelligible format.
+	
+
+	QBBC MDB9, GP.Cpr, DB10
+	 SET DQ.Sample, 10
 MDB9:
-        QBBC MDB8, GP.Cpr, DB9
-         SET DQ.Sample, 9
+	QBBC MDB8, GP.Cpr, DB9
+	 SET DQ.Sample, 9
 MDB8:
-        QBBC MDB7, GP.Cpr, DB8
-         SET DQ.Sample, 8
+	QBBC MDB7, GP.Cpr, DB8
+	 SET DQ.Sample, 8
 MDB7:
-        QBBC MDB6, GP.Cpr, DB7
-         SET DQ.Sample, 7
+	QBBC MDB6, GP.Cpr, DB7
+	 SET DQ.Sample, 7
 MDB6:
-        QBBC MDB5, GP.Cpr, DB6
-         SET DQ.Sample, 6
+	QBBC MDB5, GP.Cpr, DB6
+	 SET DQ.Sample, 6
 MDB5:
-        QBBC MDB4, GP.Cpr, DB5
-         SET DQ.Sample, 5
+	QBBC MDB4, GP.Cpr, DB5
+	 SET DQ.Sample, 5
 MDB4:
-        QBBC MDB3, GP.Cpr, DB4
-         SET DQ.Sample, 4
+	QBBC MDB3, GP.Cpr, DB4
+	 SET DQ.Sample, 4
 MDB3:
-        QBBC MDB2, GP.Cpr, DB3
-         SET DQ.Sample, 3
+	QBBC MDB2, GP.Cpr, DB3
+	 SET DQ.Sample, 3
 MDB2:
-        QBBC MDB1, GP.Cpr, DB2
-         SET DQ.Sample, 2
+	QBBC MDB1, GP.Cpr, DB2
+	 SET DQ.Sample, 2
 MDB1:
-        QBBC MDB0, GP.Cpr, DB1
-         SET DQ.Sample, 1
+	QBBC MDB0, GP.Cpr, DB1
+	 SET DQ.Sample, 1
 MDB0:
-        QBBC NEXT, GP.Cpr, DB0
-         SET DQ.Sample, 0
+	QBBC NEXT, GP.Cpr, DB0
+	 SET DQ.Sample, 0
 
 NEXT:
-        QBA  SUBMIT
 
+	LBBO DQ.PRU0_State, DQ.PRU0_Ptr, PRU_STATEh, SIZE(DQ.PRU0_State) 
+	CLR  DQ.PRU0_State, COLL	// vvv
+	SBBO DQ.PRU0_State, DQ.PRU0_Ptr, PRU_STATEh, SIZE(DQ.PRU0_State) 
+                                // Share PRU State
+                                // ^ state: not collecting
+	QBA  SUBMIT
 
-/////////////////////////////
-        LBBO r1, r2, 0, 4       // Grab data from DRAM1[0]
-        QBEQ TOP, r1, 0   // Loop as long as PRU1 didnt intervene
-        QBA  END
-
-
-         //INCR DAQ_State.TapeHD_Offset, 1  // increment tapeHD at end of loop.
 
 SUBMIT:
+	SBBO DQ.Sample, DAQConf.Data_Dst, DQ.TapeHD_Offset, SIZE(DQ.Sample) // submit data to DDR
+	INCR DQ.TapeHD_Offset, 4 // increment pointer
+	QBA	 TOP// loop back to Top Branch instruction
+	
 END:
-        SET  r30, bCONVST
-        MOV r31.b0, PRU0_ARM_INTERRUPT+16 // Send notification to host for program completion
-        HALT
+	MOV  GP.Cpr, 0
+	SBBO GP.Cpr, DAQConf.Data_Dst, DQ.TapeHD_Offset, SIZE(DQ.Sample) // submit data to DDR
+	SET  r30, bCONVST
+	MOV r31.b0, PRU0_ARM_INTERRUPT+16 // Send notification to host for program completion
+	HALT

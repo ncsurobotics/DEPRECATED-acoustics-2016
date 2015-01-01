@@ -17,7 +17,7 @@
 /////////////////////////////////////////
 // 		SETTINGS 	/////////
 /////////////////////////////////////////
-#define TO_EN
+//#define TO_EN
 
 /////////////////////////////////////////
 // 		STRUCTS 	/////////
@@ -35,6 +35,7 @@
 // bit3: Tmr Interrupt
 #define COLL	2 // Collection active bit
 #define CINT    3 // CONVST interrupt bit
+#define DR		4 // Data Ready Bit
 .struct DAQ_State
 	.u32	Sample
 	.u32	PRU0_Ptr
@@ -53,6 +54,10 @@
 	.u32	TO		// TimeOut:loops
 .ends
 .assign DAQ_Config, r9, r12, DAQConf
+
+.macro  NOP32
+		NOP; NOP; NOP; NOP;
+.endm
 
 /////////////////////////////////////////
 // 		CONSTANTS 	/////////
@@ -83,9 +88,10 @@
 #define delaylen_ptr    0x0003 //clk_cycles (32bit = 4bytes)
 #define samplestart_ptr 0x0007 //cells from 0 (8bit = 1byte)
 
+// HOST = Python
 //#define PRU0_RAM	0x0000
 //#define PRU1_RAM	0x2000
 #define SHAREDh		0x0000
-#define HOST_RESERVEDh	0x0004
-#define HOSH_SampLen	0x0008
+#define HOST_DDR_ADDRh	0x0004
+#define HOST_SLh	0x0008	// sample length
 #define PRU_STATEh	0x0012

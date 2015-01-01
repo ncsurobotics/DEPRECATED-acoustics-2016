@@ -1,0 +1,5 @@
+import ADC
+
+ADS7865 = ADC.ADS7865()
+ADS7865.Ready_PRUSS_For_Burst()
+ADS7865.Burst(10)

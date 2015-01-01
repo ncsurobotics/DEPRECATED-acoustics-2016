@@ -44,14 +44,14 @@ START:
 	ZERO &r0, 122
 
 PREPARE:
-	// Store data address for reference by the host program.
-	//SBB_II DATA_MEM_START, samplestart_ptr, 1 
+	LDI  DQ.PRU0_Ptr, 0x0000		// Init PRU0 ptr
+	LDI  DQ.PRU1_Ptr, 0x2000		// Init PRU1 ptr
+	
+	MOV  DQ.PRU0_State, 0 			// Init status register
+	SBBO DQ.PRU0_State, DQ.PRU0_Ptr, PRU_STATEh, SIZE(DQ.PRU0_State)
 
-	LDI  DQ.PRU0_Ptr, 0x0000
-	LDI  DQ.PRU1_Ptr, 0x2000
-
-	MOV  DAQConf.TO, 0xBEBC200	// Ready up the timout counter
-	MOV  r2, 0x2000				// R2 points to DRAM1[0]
+	MOV  DAQConf.TO, 0xBEBC200		// Init timout counter
+	MOV  r2, 0x2000					// R2 points to DRAM1[0]
 
 	Conf_DataDst_For_DDR_Address	// Data will go to DDRAM
 	MOV  DAQConf.Samp_Len, 35		// Set sample length to 10	

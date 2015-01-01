@@ -55,6 +55,9 @@ START:
 INIT:
         MOV  DQ.PRU0_Ptr, 0x2000
         MOV  DQ.PRU1_Ptr, 0x0000
+        
+        MOV  DQ.PRU1_State, 0 			// Init status register
+		SBBO DQ.PRU1_State, DQ.PRU1_Ptr, PRU_STATEh, SIZE(DQ.PRU1_State)
 
 TOP:
         Set_CINT_On_PRU1		// Start with CINT active   

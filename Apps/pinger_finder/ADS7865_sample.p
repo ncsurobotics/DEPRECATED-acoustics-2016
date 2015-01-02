@@ -1,15 +1,6 @@
 #include "prustdlib.h"
 #include "pingerFinderLib.h"
 
-// Define all inputs
-#define BUSY	15 // P8-15
-
-// Define all output
-#define bCONVST	15 // P8-11
-#define bWR		14 // P8-12
-
-// Define all GPIO
-#define DB11	0  // P9-31
 
 .macro  Wait_For_DR_Signal_Then_ACK
 .mparam LABEL
@@ -25,6 +16,26 @@
 
 .macro  Conf_DataDst_For_Local_Ram_Address
 		MOV  DAQConf.Data_Dst, samplestart_ptr
+.endm
+
+.macro  Get_SL
+		LBBO DAQConf.Samp_Len, DQ.PRU0_Ptr, HOST_SLh, 4
+.endm 
+
+.macro  Set_COLL_High_On_PRU0
+	LBBO DQ.PRU0_State, DQ.PRU0_Ptr, PRU_STATEh, SIZE(DQ.PRU0_State) 
+	SET  DQ.PRU0_State, COLL	// vvv
+	SBBO DQ.PRU0_State, DQ.PRU0_Ptr, PRU_STATEh, SIZE(DQ.PRU0_State) 
+                                // Share PRU State
+                                // ^ state: collecting
+.endm
+
+.macro Set_COLL_Lo_On_PRU0
+	LBBO DQ.PRU0_State, DQ.PRU0_Ptr, PRU_STATEh, SIZE(DQ.PRU0_State) 
+	CLR  DQ.PRU0_State, COLL	// vvv
+	SBBO DQ.PRU0_State, DQ.PRU0_Ptr, PRU_STATEh, SIZE(DQ.PRU0_State) 
+                                // Share PRU State
+                                // ^ state: not collecting
 .endm
 
 //-----------------------------------------------
@@ -53,8 +64,9 @@ PREPARE:
 	MOV  DAQConf.TO, 0xBEBC200		// Init timout counter
 	MOV  r2, 0x2000					// R2 points to DRAM1[0]
 
-	Conf_DataDst_For_DDR_Address	// Data will go to DDRAM
-	MOV  DAQConf.Samp_Len, 35		// Set sample length to 10	
+	Conf_DataDst_For_DDR_Address	// Data will go to DDRAM.
+	Get_SL							// Receive SL from HOST.
+	//MOV  DAQConf.Samp_Len, 35		// Set sample length to 10	
 	
 
 	// SET Default bits (to be deprecated by some outside script)
@@ -93,31 +105,22 @@ COLLECT:
 	SET  r30, bCONVST	// CONVST is no longer needed TAG=cleanup
 	CLR  r30, bWR		// Activate bWR
 
-	LBBO DQ.PRU0_State, DQ.PRU0_Ptr, PRU_STATEh, SIZE(DQ.PRU0_State) 
-	SET  DQ.PRU0_State, COLL	// vvv
-	SBBO DQ.PRU0_State, DQ.PRU0_Ptr, PRU_STATEh, SIZE(DQ.PRU0_State) 
-                                // Share PRU State
-                                // ^ state: collecting
-
-	MOV  GP.Cpr, r31		// collecting data: save local cpy of GPI
-	MOV  DQ.Sample, 0		// re-init the sample reg
-
-  MDB11:
-	QBBC ASK_PRU1, GP.Cpr, DB11     // ^ Meas bit 11... go on to next step
-	 SET DQ.Sample, 11
+	Set_COLL_High_On_PRU0	// << Used to signal PRU1 to sample ADC
 
 ASK_PRU1:
-	Wait_For_DR_Signal_Then_ACK	ASK_PRU1       // vvv Wait for PRU1 to finish.
-	
-	LBBO GP.Cpr, DQ.PRU0_Ptr, SHAREDh, 4       // collect PRU1s partial sample
+	Wait_For_DR_Signal_Then_ACK	ASK_PRU1       // << Wait for PRU1 to finish sampling.
+	LBBO GP.Cpr, DQ.PRU0_Ptr, SHAREDh, 4       // Collect PRU1s partial sample.
 	SET  r31, bWR
-	
 
 	// At this point, PRU1s measurement has been received, and PRU0
 	// has done the necessary cleanup (DR:=0, bWR:=1, COLL:=0). Now, PRU0 will
 	// parse the collected sample and convert it to an intelligible format.
 	
-
+	MOV  DQ.Sample, 0		// re-init the sample reg
+MDB11:
+	QBBC MDB10, GP.Cpr, DB11   
+	 SET DQ.Sample, 11
+MDB10:
 	QBBC MDB9, GP.Cpr, DB10
 	 SET DQ.Sample, 10
 MDB9:
@@ -152,12 +155,7 @@ MDB0:
 	 SET DQ.Sample, 0
 
 NEXT:
-
-	LBBO DQ.PRU0_State, DQ.PRU0_Ptr, PRU_STATEh, SIZE(DQ.PRU0_State) 
-	CLR  DQ.PRU0_State, COLL	// vvv
-	SBBO DQ.PRU0_State, DQ.PRU0_Ptr, PRU_STATEh, SIZE(DQ.PRU0_State) 
-                                // Share PRU State
-                                // ^ state: not collecting
+	Set_COLL_Lo_On_PRU0  // << prevents false triggers on pru1
 	QBA  SUBMIT
 
 

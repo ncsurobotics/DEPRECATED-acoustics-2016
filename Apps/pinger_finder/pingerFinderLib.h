@@ -56,13 +56,15 @@
 .assign DAQ_Config, r9, r12, DAQConf
 
 .macro  NOP32
-		NOP; NOP; NOP; NOP;
+		NOP
+		NOP
+		NOP
 .endm
 
 /////////////////////////////////////////
 // 		CONSTANTS 	/////////
 /////////////////////////////////////////
-// PINS
+// ADC Data Pins
 #define DB0     8   // P8-27  //ONLY PRU1
 #define DB1     10  // P8-28  //ONLY PRU1
 #define DB2     9   // P8-29  //ONLY PRU1
@@ -74,6 +76,16 @@
 #define DB8     3   // P8-44  //ONLY PRU1
 #define DB9     0   // P8-45  //ONLY PRU1
 #define DB10    1   // P8-46  //ONLY PRU1
+#define DB11	16  // P9-26  //ONLY PRU1
+
+// ADC Outputs
+#define bCONVST	15 // P8-11
+#define bWR		14 // P8-12
+
+// ADC Inputs
+#define BUSY	15 // P8-15
+
+
 
 // Define Memory settings
 #define PERMA_MEM_START 0x0000

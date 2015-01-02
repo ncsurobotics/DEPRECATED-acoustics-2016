@@ -2,6 +2,7 @@ import pypruss
 import mmap
 import struct
 import boot
+import time
 
 class ADS7865:
 	def __init__(self, SR=0, L=0):
@@ -14,7 +15,7 @@ class ADS7865:
 		self.ddr['end'] =  0x10000000+self.ddr['size']
 		
 		self.sampleRate = SR
-		self.length = L
+		self.sampleLength = L
 		
 		# Load overlays
 		boot.load()
@@ -33,19 +34,30 @@ class ADS7865:
 		pypruss.pru_write_memory(0, 0x0000, [0x0,]*0x0800) # clearing pru0 ram
 		pypruss.pru_write_memory(0, 0x0800, [0x0,]*0x0800) # clearing pru1 ram
 		pypruss.pru_write_memory(0, 0x4000, [0x0,]*300) # clearing ack bit from pru1
-	
-	def Burst(self, length=1):
-		pypruss.pru_write_memory(0, 1, [self.ddr['addr'],])
+		
 		pypruss.exec_program(1, "./pru1.bin") 		# Load firmware on PRU1
+
+	def Reload(self):
+		print 'dad'
+	
+	def Burst(self, length=None):
+		if length is None:
+			length = self.sampleLength
+			
+		pypruss.pru_write_memory(0, 1, [self.ddr['addr'],])
+		pypruss.pru_write_memory(0, 2, [length*4-8,])
+		
+		a = time.time()
 		pypruss.exec_program(0, "./ADS7865_sample.bin") # Load firmware on PRU0
 		
 		# Wait for PRU to finish its job.
 		
 		pypruss.wait_for_event(0)# Wait for event 0 which is conn to PRU0_ARM_INTERUPT	
-		
+		b = time.time()
+		t = b-a
 		# Once signal has been received, clean up house
-		pypruss.clear_event(0)	# Clear the event
-		pypruss.exit()			# Exit PRU
+		#pypruss.clear_event(0)	# Clear the event
+		#pypruss.exit()			# Exit PRU
 		
 		# Read the memory
 		with open("/dev/mem", "r+b") as f:	# Open the physical memory device
@@ -57,6 +69,6 @@ class ADS7865:
 			b = a+4
 			c = struct.unpack("L", ddr_mem[a:b])[0]	# Parse the data
 			y = y + [c,]
-			print(c)
+			#print(c)
 			
-		return y
+		return y,t

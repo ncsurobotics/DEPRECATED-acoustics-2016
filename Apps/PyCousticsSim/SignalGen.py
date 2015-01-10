@@ -1,7 +1,7 @@
 import numpy as np
 
 class SG:
-	def __init__(self,end=40e-3):
+	def __init__(self,end=1e-3):
 		self.tstart = 0
 		self.tend = end
 		

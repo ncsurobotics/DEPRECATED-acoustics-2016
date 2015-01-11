@@ -18,6 +18,10 @@ Major data structs:
 		
 		
 Major Class structures:
+	* SG:
+		.tstart - Time at which the signal pulse will start.
+		.tend - Time at which the signal pulse will end.
+		
 	* Medium:
 		.c - speed of sound in medium
 		.name - Describes the medium
@@ -52,7 +56,7 @@ print("Diagnostics: Analog time domain consists of %d samples from %gs to %gs."
 		% (env['t'].size, env['t_start'], env['t_end']))
 		
 # Specify coordinate for various things
-env['loc_pinger'] = np.array([2,10]) #meters
+env['loc_pinger'] = np.array([5,10]) #meters
 env['loc_HY'] = np.array([0,0]) 
 		
 
@@ -63,7 +67,8 @@ SG = SignalGen.SG()
 
 # Init SG parameters
 sig['f'] = 22e3 #Hz
-	#Using defaults for start and end time
+SG.tstart = 0 #sec
+SG.tend = 1e-3 #sec
 
 # Generate the test signal
 sig['x'] = SG.Sin(sig['f'],env['t'])
@@ -80,6 +85,7 @@ MD = Medium.Water()
 
 # Init medium parameters
 print("Medium: c_%s = %g m/s." % (MD.name, MD.c))
+print("Medium: The wavelength of the %ghHz Sinusoid in %s is %gcm." % (sig['f']/1000, MD.name, MD.c/sig['f']*100))
 
 #################################################
 ################# Hydrophone Rx #################
@@ -87,11 +93,22 @@ print("Medium: c_%s = %g m/s." % (MD.name, MD.c))
 HY = Rx.BiHydrophoneArray()
 
 # Init Rx
-HY.d = .03 #meters
+HY.d = .067 #meters
 HY.origin = env['loc_HY']
 HY.src_loc = env['loc_pinger']
 HY.mediumModel = MD
 HY.maxSpread = 1/sig['f'] #seconds
+
+print("RX: The pinger is located at %smeters." % HY.src_loc)
+
+# Build the hydrophone array
+HY.BuildArray()
+print("""Rx: There are %d hydrophones in this array. Hydrophone0 is located
+		at %s, and Hydrophone1 is located at %s.""" % (HY.n_elements,
+														HY.Hyd_loc[0],
+														HY.Hyd_loc[1])
+	 )
+		
 
 # Compute the data capture for each channel
 sig['group'] = HY.Capture(sig['x'],env['t'],MD)

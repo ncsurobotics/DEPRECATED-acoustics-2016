@@ -8,42 +8,67 @@ class BiHydrophoneArray:
 		self.signalDict = None
 		self.mediumModel = None
 		self.maxSpread = None
+		self.n_elements = 2
+		
+	def BuildArray(self):
+		# Initialize placeholders
+		coor_system = 2
+		n = self.n_elements
+		self.Hyd_loc = [0]*n #meters
+		
+		if coor_system == 2:
+			for i in range(n):
+				sign = (-1)**(i+1)
+				self.Hyd_loc[i] = self.origin + np.array([sign*self.d/2,0])
+		elif coor_system == 3:
+			for i in range(n):
+				sign = (-1)^(i+1)
+				self.Hyd_loc[i] = self.origin + np.array([sign*self.d/2,0,0])
+		else:
+			print("BuildArray: Something went wrong")
+			exit(1)
+	
 		
 	def Capture(self, x, t, channelModel):
-		dt = t[1]-t[0]
-		Hyd_loc = [0,0]
-		dist = [0,0]
-		DM = [0,0]
-		y = [np.zeros(t.size), np.zeros(t.size)]
-		Hyd_loc[0] = self.origin + np.array([-self.d/2,0])
-		Hyd_loc[1] = self.origin + np.array([self.d/2,0])
-		dist[0] = np.linalg.norm(Hyd_loc[0]-self.src_loc)
-		dist[1] = np.linalg.norm(Hyd_loc[1]-self.src_loc)
+		# Initialize placeholders
+		coor_system = 2
+		n = self.n_elements
+		dist 		= [0]*n #meters
+		DM 			= [0]*n #samples
+		y 			= [0]*n
+		for i in range(n):
+			y[i] 	= np.zeros(t.size) #[placeholder]
 		
+		# Initialize constants
+		dt = t[1]-t[0] #sec
+		
+		# Compute distance of pinger to hydrophone
+		for i in range(n):
+			dist[i] = np.linalg.norm(self.Hyd_loc[i]-self.src_loc)
+		
+		# Compute TDOA just for diagnostic purposes
 		timeDiff = (dist[0] - dist[1])/self.mediumModel.c
 		if timeDiff > self.maxSpread:
 			print("Rx: Warning! Fold-over has occured!")
-		
-		if (4*dist[0]/self.mediumModel.c > t[-1]-t[0]) or (4*dist[1]/self.mediumModel.c > t[-1]-t[0]):
-			print("Rx: Warning! Delay exceeds time boundaries. please increase time span or reduce delay.")
 			
+		# Check is resolution of TDOA is too smal... for diagnostic purposes
 		dm = int(timeDiff/dt)
-		
 		if dm < 100:
 			print("Rx: Warning! dm = %d, which is a bit small (<100). Maybe try increasing dt in the host program."
 					% dm)
 		
-		# compute data for hydrophone 0
-		DM[0] = int(dist[0]/self.mediumModel.c/dt)
-		for i in range(DM[0],t.size):
-			m = t.size - i
-			y[0][m] = x[m-DM[0]]
+		# Check is delay is too long
+		if (4*dist[0]/self.mediumModel.c > t[-1]-t[0]) or (4*dist[1]/self.mediumModel.c > t[-1]-t[0]):
+			print("Rx: Warning! Delay may be too large and may clip time. please increase time span or reduce delay.")
 			
-		# compute data for hydrophone 1
-		DM[1] = int(dist[1]/self.mediumModel.c/dt)
-		for i in range(DM[1],t.size):
-			m = t.size - i
-			y[1][m] = x[m-DM[1]]
+
+		for el in range(n):
+			# compute data for hydrophone 0
+			DM[el] = int(dist[el]/self.mediumModel.c/dt)
+			for i in range(DM[el],t.size):
+				m = t.size - i
+				y[el][m] = x[m-DM[el]]
+
 			
 		
 		return y

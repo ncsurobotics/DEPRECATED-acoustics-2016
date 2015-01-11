@@ -5,10 +5,16 @@ class SG:
 		self.tstart = 0
 		self.tend = end
 		
+	"""Sin(): Function that delivers a sinusoidal pulse of set length based 
+	on a starting time and an end time.
+	"""
 	def Sin(self,f,t):
-		pi = np.pi
-		base= np.ones(t.size)
-
+		# Initialize constants
+		pi 	= np.pi
+		w	= 2*pi*f
+		
+		# Initialize base array [0,0,0...1,1,1...0,0,0]
+		base= np.ones(t.size)	
 		for i in range(t.size):
 			if t[i] < self.tstart:
 				base[i] = 0
@@ -17,7 +23,7 @@ class SG:
 			else:
 				pass
 			
-		w= 2*pi*f
+		# Create pulse by masking sinusoid with base array.
 		y = np.sin(w*t-pi)*base
 		
 		return y

@@ -132,10 +132,11 @@ sig['group_adc'] = ADC.Sample(sig['group'], env['t'])
 f2,ax = plt.subplots()
 ax.plot(sig['group_adc'][0])
 ax.plot(sig['group_adc'][1])
-plt.show()
-import pdb; pdb.set_trace()
 #plt.show()
 
 #################################################
 ###################### DSP ######################
 #################################################
+DSP = DSP.BBB()
+
+DSP.Vectorize1(sig['group_adc'], ADC.fs)

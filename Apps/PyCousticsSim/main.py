@@ -139,4 +139,7 @@ ax.plot(sig['group_adc'][1])
 #################################################
 DSP = DSP.BBB()
 
-DSP.Vectorize1(sig['group_adc'], ADC.fs)
+DSP.Vectorize1(sig['group_adc'], ADC.fs, sig['f'])
+
+# Display plots
+plt.show()

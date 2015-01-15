@@ -1,22 +1,27 @@
 # Pinger Finder
 An application that computes position vectors pointing to the hydrophone location, and relays that information back to seawolf.
 
-# How to build
+# How to run it
+**Step 1: Building the executable files**
 Simply issue the following command
 
      make
  
-# How to run the program
+**Step 2: Run the program**
 Issue the following command to run the program
 
      python main.py n
 
-whereas n is the number of samples that the ADC will collect and return to the user. Some diagnostic information will be displayed in order to indicate how quickly these samples were captured.
+whereas n is the number of samples that the ADC will collect and return to the user. Some diagnostic information will be displayed in order to indicate how quickly these samples were captured. To review the data collected, print out the "y" variable from main.py.
 
-# How to clean up every thing
+# Cleaning up.
+If things get messy, just run
+
      make clean
 
-# Pin i/o allocation (Needs to be updated. Consult <ElectricalDropbox>/2014/Acoustics/Schematics/Pinger Sensor/BBB Pinout.svg for a more up to date diagram).
+# Pin i/o allocation 
+**(Needs to be updated. Consult <ElectricalDropbox>/2014/Acoustics/Schematics/Pinger Sensor/BBB Pinout.svg for a more up to date diagram).**
+
 ## I/0
 DB0:  P8.27
 

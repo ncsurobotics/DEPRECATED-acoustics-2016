@@ -3,11 +3,14 @@ An application that computes position vectors pointing to the hydrophone locatio
 
 # How to build
 Simply issue the following command
+
      make
  
 # How to run the program
 Issue the following command to run the program
+
      python main.py n
+
 whereas n is the number of samples that the ADC will collect and return to the user. Some diagnostic information will be displayed in order to indicate how quickly these samples were captured.
 
 # How to clean up every thing

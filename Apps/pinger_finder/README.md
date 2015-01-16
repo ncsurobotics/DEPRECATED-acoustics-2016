@@ -5,7 +5,7 @@ An application that computes position vectors pointing to the hydrophone locatio
 # Running the main program
 **Step 0: Building the executable files and installing dependencies**
 
-Instructions for taking care of all the dependancies are given below. The lab Beaglebone should have all this taken care of, so generally it's safe to move on to the next step if you're using the lab Beaglebone.
+Instructions for taking care of all the dependancies are given in the section labeled "Dependencies" below. The lab Beaglebone should have all this taken care of, so generally it's safe to move on to the next step if you're using the lab Beaglebone.
 
 **Step 0.1: Run make to compile any changes in the source code if necessary**
 Simply issue the following command

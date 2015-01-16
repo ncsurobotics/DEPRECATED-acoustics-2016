@@ -38,6 +38,7 @@ Go to this adafruit tutorial (https://learn.adafruit.com/setting-up-wifi-with-be
      sudo reboot                        #You will have to ssh back in to the BBB after this.
  
 **Step 3: install Pypruss from source**
+
 Go to the Pypruss Bitbucket repository(https://bitbucket.org/intelligentagent/pypruss) and follow their instructions. Pypruss was installed on the lab beaglebone by...
 
      cd ~/Installs/

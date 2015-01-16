@@ -26,7 +26,7 @@ You don't have to do this, but it might be nice to have. The installs directory 
      make 
      make install
      
-Now you can issue the command <config-pin> from the commandline and use it for cool stuff. several .dtbo files get copied to the firmware directory as well.
+Now you can issue the command "config-pin" from the commandline and use it for easily manipulate some of the IO/Muxes. The boot.py script takes advantage of this. Also, the makefile had several .dtbo files get copied to the firmware directory as well.
  
 **Step 2: Disable the HDMI control**
 Go to this adafruit tutorial (https://learn.adafruit.com/setting-up-wifi-with-beaglebone-black/hardware), find the section labeled "HDMI Port Interference", and go to the part about manipulating the uEnv.txt file. These instructions are how to disable the HDMI cape on the BBB (Which will free up a lot of important pins for controlling the ADC). Follow them. For reference, here's what was done on the lab BBB:

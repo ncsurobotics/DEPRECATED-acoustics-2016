@@ -1,6 +1,31 @@
 # Pinger Finder
 An application that computes position vectors pointing to the hydrophone location, and relays that information back to seawolf.
 
+
+# Running the main program
+**Step 0: Building the executable files and installing dependencies**
+
+Instructions for taking care of all the dependancies are given below. The lab Beaglebone should have all this taken care of, so generally it's safe to move on to the next step if you're using the lab Beaglebone.
+
+**Step 0.1: Run make to compile any changes in the source code if necessary**
+Simply issue the following command
+
+     make
+ 
+**Step 1: Run the program**
+
+Issue the following command to run the program
+
+     python main.py n    #BUG: Usually doesn't work on first time after fresh boot. 
+                         #^^Try again if some error regarding the mmc shows up.
+
+whereas n is the number of samples that the ADC will collect and return to the user. Some diagnostic information will be displayed in order to indicate how quickly these samples were captured. To review the data collected, print out the "y" variable from main.py.
+
+# Cleaning up
+If things get messy, just run
+
+     make clean
+
 # Dependencies
 To run this program, you must have/do the following:
 
@@ -48,28 +73,8 @@ Go to the Pypruss Bitbucket repository(https://bitbucket.org/intelligentagent/py
      vim ~/.bashrc #Append "export LD_LIBRARY_PATH=/usr/local/lib" to end of file
      source ~/.bashrc
 
-After this, you are totally ready to run the this pinger_finder software. Go on to the next section for instructions how.
+After this, you are totally ready to run the this pinger_finder software. Instructions for how to do this are at the top.
 
-# How to run it
-**Step 1: Building the executable files**
-
-Simply issue the following command
-
-     make
- 
-**Step 2: Run the program**
-
-Issue the following command to run the program
-
-     python main.py n    #BUG: Usually doesn't work on first time after fresh boot. 
-                         #^^Try again if some error regarding the mmc shows up.
-
-whereas n is the number of samples that the ADC will collect and return to the user. Some diagnostic information will be displayed in order to indicate how quickly these samples were captured. To review the data collected, print out the "y" variable from main.py.
-
-# Cleaning up
-If things get messy, just run
-
-     make clean
 
 # Pin i/o allocation 
 **(Needs to be updated. Consult <ElectricalDropbox>/2014/Acoustics/Schematics/Pinger Sensor/BBB Pinout.svg for a more up to date diagram).**

@@ -61,7 +61,7 @@ Simply issue the following command
 
 Issue the following command to run the program
 
-     python main.py n    #BUG: Usually doesn't work on first time after boot. 
+     python main.py n    #BUG: Usually doesn't work on first time after fresh boot. 
                          #^^Try again if some error regarding the mmc shows up.
 
 whereas n is the number of samples that the ADC will collect and return to the user. Some diagnostic information will be displayed in order to indicate how quickly these samples were captured. To review the data collected, print out the "y" variable from main.py.

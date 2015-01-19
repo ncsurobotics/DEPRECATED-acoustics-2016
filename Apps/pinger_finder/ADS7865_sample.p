@@ -73,6 +73,14 @@ PREPARE:
 	SET  r30, bCONVST
 
 TOP:
+	// DQ.TapeHD_Offset: variable representing the current position/offset of
+	// the pointer writing to DDRAM. Once DQ.TapeHD_Offset > DAQConf.Samp_Len,
+	// we know that we have collected all the samples that the user has requested,
+	// and the program will end. 
+	//   NOTE: DQ.TapeHD_Offset must increment in steps of 4, as DDRAM is only 32 bit
+	//   addressable.
+	
+	// DAQConf.Samp_Len: Variable that represents n_samples_requested*4.
 	QBLT END, DQ.TapeHD_Offset, DAQConf.Samp_Len
 
 	#ifdef TO_EN

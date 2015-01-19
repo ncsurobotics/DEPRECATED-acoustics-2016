@@ -2,9 +2,12 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 # Initialize parameters
-d = 12.0e-2 #Hydrophone spacing (meters)
-del_t = 67.889e-6  #time difference in signal arrival (seconds)
+d = 12.01e-2 #Hydrophone spacing (meters)
+del_t = 67.889e-6/10  #time difference in signal arrival (seconds)
 v = 1473 #Speed of sound in the medium (m/s)
+
+# Settings
+sz = "small"
 
 def getFocii(spacing_of_elements):
 	c = spacing_of_elements/2
@@ -12,8 +15,8 @@ def getFocii(spacing_of_elements):
 	
 def hyperbola(a,b):
 	step = .1e-2 
-	y = np.arange(-20e-2, 20e-2+step, step)
-	x = a*np.sqrt(1+(y/a)**2)
+	y = np.arange(-200, 200+step, step)
+	x = a*np.sqrt(1+(y/b)**2)
 	return (x,y)
 
 def hyperbolaCOE(c,del_t,v_medium):
@@ -43,6 +46,22 @@ def main():
 	
 	#Plot yo work!
 	fig1,ax1 = plt.subplots()
+	ax1.set_xlabel("x (meters)")
+	ax1.set_ylabel("y (meters)")
+	if sz == "large":
+		ax1.set_title("(Zoomed out) X-Y plane of possible signal src. locations")
+		ax1.axis(xmin = -51,
+				xmax = 51,
+				ymin = -2,
+				ymax = 100)
+	elif sz == "small":
+		ax1.set_title("X-Y plane of possible signal src. locations")
+		ax1.axis(xmin = -10e-2,
+				xmax = 10e-2,
+				ymin = -10e-2,
+				ymax = 10e-2)
+		
+				
 	ax1.plot(d/2, 0, 'ro') #Plot focii
 	ax1.plot(-d/2, 0, 'ro')
 	ax1.plot(x,y) #hyperbola

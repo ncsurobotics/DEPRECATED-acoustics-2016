@@ -3,11 +3,21 @@ from sys import argv
 
 print('-'*50)
 print("Acoustics Client Communication App")
+ser = serial.Serial("/dev/tty.usbserial-A5025L80", 9600)
+
+
+def cmd_listen():
+	print("listening...")
+	
+	while True:
+		print(ser.readline())
 
 
 def main():
 	# Initialize connection
-	ser = serial.Serial("/dev/tty.usbserial-A5025L80", 9600)
+	
+	cmd_listen()
+	exit(1)
 	
 	# Check if successful
 	cmd_helloBBB()
@@ -34,4 +44,4 @@ if argc == 2:
 		print("help text.")
 		exit(1)
 
-main
+main()

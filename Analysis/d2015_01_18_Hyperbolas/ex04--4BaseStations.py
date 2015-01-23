@@ -77,7 +77,7 @@ def go(src_loc, n, bs):
 	for i in range(n):
 		plt.plot(bs[i][x], bs[i][y], 'ro')
 		
-	for ID in itertools.combinations(range(3), 2):
+	for ID in itertools.combinations(range(n), 2):
 		# Set parameters and establish system for accessing elements
 		print("go: Working on combo %s and %s" % (ID[0], ID[1]))
 		el = [0,0]
@@ -129,13 +129,17 @@ def go(src_loc, n, bs):
 	
 
 def main():
+	rot = np.pi
 	Hyd = [np.array([[0],[10e-2]])] #Hydrophone #1 location (meters)
-	Hyd.append( xform_rotate(Hyd[0], 2*np.pi/3) )
-	Hyd.append( xform_rotate(Hyd[1], 2*np.pi/3) )
+	Hyd.append( xform_rotate(Hyd[0], rot) )
+	#Hyd.append( xform_rotate(Hyd[1], rot) )
+	#Hyd.append( xform_rotate(Hyd[2], rot) )
 
-	src = np.array([[2e-2],[2e-2]])
+	src = np.array([[5e-2],[2e-2]])
 	
-	go(src, 3, Hyd)
+	n_baseStations = len(Hyd)
+	print(n_baseStations)
+	go(src, n_baseStations, Hyd)
 
 print("-"*50)
 main()

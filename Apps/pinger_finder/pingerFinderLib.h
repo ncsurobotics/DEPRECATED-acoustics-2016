@@ -107,3 +107,4 @@
 #define HOST_DDR_ADDRh	0x0004
 #define HOST_SLh	0x0008	// sample length
 #define PRU_STATEh	0x0012
+#define HOST_SRh	0x000C

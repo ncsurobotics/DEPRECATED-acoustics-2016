@@ -16,13 +16,12 @@ START:
         SBCO r0, C4, 4, 4       // Store Bytes Constant Offset
 
         MOV  r0, 0xBEBC200
-        MOV  r2, 0
+        MOV  r2, 0x0000
 ROADBLOCK:
         QBEQ END, r0, 0
         SUB  r0, r0, 1
-//        LBBO r1, r2, 0, 4
+        // Insert chunk of dummy code here //
         QBA  ROADBLOCK
-        //QBEQ ROADBLOCK, r1, 1
 END:
         MOV r31.b0, PRU0_ARM_INTERRUPT+16 // Send notification to host for program completion
         HALT

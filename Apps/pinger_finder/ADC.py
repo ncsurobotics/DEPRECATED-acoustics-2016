@@ -4,6 +4,10 @@ import struct
 import boot
 import time
 
+PRU0_SR_Mem_Offset = 3
+HC_SR = 0xBEBC200
+fclk = 200e6
+
 class ADS7865:
 	def __init__(self, SR=0, L=0):
 		self.ddr = {}
@@ -21,7 +25,17 @@ class ADS7865:
 		boot.load()
 		boot.arm()
 	
-	def Ready_PRUSS_For_Burst(self):
+	def Ready_PRUSS_For_Burst(self, SR=None):
+		# Initialize variables
+		if SR is None:
+			SR = self.sampleRate
+			
+		if SR == 0:
+			print("SR currently set to 0. Please specify a sample rate.")
+			exit(1)
+			
+		SR_BITECODE = int(round(1.0/SR*fclk))
+		
 		# Initialize evironment
 		pypruss.modprobe()	
 		pypruss.init()		# Init the PRU
@@ -34,6 +48,7 @@ class ADS7865:
 		pypruss.pru_write_memory(0, 0x0000, [0x0,]*0x0800) # clearing pru0 ram
 		pypruss.pru_write_memory(0, 0x0800, [0x0,]*0x0800) # clearing pru1 ram
 		pypruss.pru_write_memory(0, 0x4000, [0x0,]*300) # clearing ack bit from pru1
+		pypruss.pru_write_memory(0, PRU0_SR_Mem_Offset, [SR_BITECODE,]) # Setting samplerate
 		
 		pypruss.exec_program(1, "./pru1.bin") 		# Load firmware on PRU1
 
@@ -46,6 +61,8 @@ class ADS7865:
 			
 		pypruss.pru_write_memory(0, 1, [self.ddr['addr'],])
 		pypruss.pru_write_memory(0, 2, [length*4-8,])
+		
+		
 		
 		a = time.time()
 		pypruss.exec_program(0, "./ADS7865_sample.bin") # Load firmware on PRU0

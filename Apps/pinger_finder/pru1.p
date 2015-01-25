@@ -38,6 +38,10 @@
         QBLE LABEL, DAQConf.Samp_Rate, GP.Tmr
 .endm
 
+.macro  Get_Sample_Rate_From_PRU0
+		LBBO DAQConf.Samp_Rate, DQ.PRU0_Ptr, HOST_SRh, SIZE(DAQConf.Samp_Rate)
+.endm
+
 /////////////////////////////////////////////////
 //               MAIN Program               /////
 /////////////////////////////////////////////////
@@ -58,6 +62,12 @@ INIT:
         
         MOV  DQ.PRU1_State, 0 			// Init status register
 		SBBO DQ.PRU1_State, DQ.PRU1_Ptr, PRU_STATEh, SIZE(DQ.PRU1_State)
+		
+		Get_Sample_Rate_From_PRU0// Obtain sample_rate information
+
+	/////////////////////////////////////////////////
+	//               MAIN Loop                  /////
+	/////////////////////////////////////////////////
 
 TOP:
         Set_CINT_On_PRU1		// Start with CINT active   

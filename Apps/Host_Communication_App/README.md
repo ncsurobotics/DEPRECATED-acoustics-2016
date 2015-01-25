@@ -12,11 +12,17 @@ in order to complete this project:
 
 ## How to run the program
 
+cd into this project directory if you haven't already
+
+```
+root@beaglebone:~/Projects/acoustics# cd <proj-dir>/acoustics/Apps/Host_Communication_App/
+```
+
 Make sure the [FT232RL Breakout board](https://www.sparkfun.com/products/12731)
  is connected to the host computer. Also, make sure the board's breakout pins
 are connected such that the beaglebone can at least transmit UART messages
  to the breakout board. then simply run `python main.py` from
- the terminal screen (after you cd into this directory) to run the program.
+ the terminal screen to run the program.
 
 As of the current state of this program. A screen will appear to say
 "listening" which means you can transmit UART messages from the

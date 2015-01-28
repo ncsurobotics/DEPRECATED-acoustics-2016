@@ -3,6 +3,9 @@ import time
 from sys import argv
 
 def Shoot(ADC,len,SR):
+	# Initialize empty variables
+	sum = 0
+
 	# Used ADC to collect samples
 	y,t = ADC.Burst(len)
 
@@ -14,7 +17,14 @@ def Shoot(ADC,len,SR):
 	print("")
 	print("main: (1 - Actual_Rate/Intended_Rate) = %.2f%%." % ((1-(1/Ts)/SR)*100))
 
+	# Tell the user if he has any useful data
+	print("")
+	for i in y:
+		sum += i
+	print("main: The sum of all your samples is %d" % sum)
+
 	# Return the raw y incase needed for more analysis.
+	import pdb; pdb.set_trace()
 	return y
 
 Samp_len = int(argv[1])

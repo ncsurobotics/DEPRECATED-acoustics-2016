@@ -80,11 +80,13 @@
 #define DB11	16  // P9-26  //ONLY PRU1
 
 // ADC Outputs
-#define bCONVST	15 // P8-11
-#define bWR		14 // P8-12
+#define bCONVST	1	// P9-29
+#define bWR		0	// P9-31
+#define bRD		2	// P9-30
+
 
 // ADC Inputs
-#define BUSY	15 // P8-15
+#define BUSY	7	// P9-27
 
 
 

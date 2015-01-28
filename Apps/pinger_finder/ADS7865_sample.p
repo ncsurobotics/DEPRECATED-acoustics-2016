@@ -112,7 +112,7 @@ WAIT:
 
 COLLECT:
 	SET  r30, bCONVST	// CONVST is no longer needed TAG=cleanup
-	CLR  r30, bWR		// Activate bWR
+	CLR  r30, bRD		// Activate bWR
 
 	Set_COLL_High_On_PRU0	// << Used to signal PRU1 to sample ADC
 

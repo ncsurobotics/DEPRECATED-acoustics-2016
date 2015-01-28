@@ -2,12 +2,10 @@
 #include "pingerFinderLib.h"
 
 
-.macro  Wait_For_DR_Signal_Then_ACK
+.macro  Wait_For_COLL_CLR_Signal
 .mparam LABEL
-		LBBO DQ.PRU1_State, DQ.PRU1_Ptr, PRU_STATEh, SIZE(DQ.PRU1_State)
-		QBBC LABEL, DQ.PRU1_State, DR
-		CLR  DQ.PRU1_State, DR
-		SBBO DQ.PRU1_State, DQ.PRU1_Ptr, PRU_STATEh, SIZE(DQ.PRU1_State)
+		LBBO DQ.PRU0_State, DQ.PRU0_Ptr, PRU_STATEh, SIZE(DQ.PRU0_State)
+		QBBS LABEL, DQ.PRU0_State, COLL
 .endm
 	
 .macro  Conf_DataDst_For_DDR_Address
@@ -15,6 +13,13 @@
 .endm
 
 .macro  Conf_DataDst_For_Local_Ram_Address
+		#define samplestart_ptr 0x0007 //cells from 0 (8bit = 1byte)
+			// 0x0007 use to represent the end of PRU ram dedicated
+			// to settings... so this was once designating the location \
+			// be begine writing ADC samples to in PRU RAM. Since then, it was 
+			// chosen to write sample to DDRAM instead, and now this macro is
+			// not used in the code anywhere. It should be deleted at some 
+			// convenient time soon
 		MOV  DAQConf.Data_Dst, samplestart_ptr
 .endm
 
@@ -30,13 +35,7 @@
                                 // ^ state: collecting
 .endm
 
-.macro Set_COLL_Lo_On_PRU0
-	LBBO DQ.PRU0_State, DQ.PRU0_Ptr, PRU_STATEh, SIZE(DQ.PRU0_State) 
-	CLR  DQ.PRU0_State, COLL	// vvv
-	SBBO DQ.PRU0_State, DQ.PRU0_Ptr, PRU_STATEh, SIZE(DQ.PRU0_State) 
-                                // Share PRU State
-                                // ^ state: not collecting
-.endm
+
 
 //-----------------------------------------------
 
@@ -116,13 +115,14 @@ COLLECT:
 	Set_COLL_High_On_PRU0	// << Used to signal PRU1 to sample ADC
 
 ASK_PRU1:
-	Wait_For_DR_Signal_Then_ACK	ASK_PRU1       // << Wait for PRU1 to finish sampling.
-	LBBO GP.Cpr, DQ.PRU0_Ptr, SHAREDh, 4       // Collect PRU1s partial sample.
+	Wait_For_COLL_CLR_Signal	ASK_PRU1       // << Wait for PRU1 to finish sampling.
+	LBBO GP.Cpr, DQ.PRU0_Ptr, SHAREDh, 4       // << Collect PRU1s partial sample.
 	SET  r31, bWR
 
 	// At this point, PRU1s measurement has been received, and PRU0
-	// has done the necessary cleanup (DR:=0, bWR:=1, COLL:=0). Now, PRU0 will
-	// parse the collected sample and convert it to an intelligible format.
+	// has done the necessary cleanup (DR:=0, bWR:=1, COLL:=0(By PRU1). 
+	// Now, PRU0 will parse the collected sample and convert it to an 
+	// intelligible format.
 	
 	MOV  DQ.Sample, 0		// re-init the sample reg
 MDB11:
@@ -163,7 +163,6 @@ MDB0:
 	 SET DQ.Sample, 0
 
 NEXT:
-	Set_COLL_Lo_On_PRU0  // << prevents false triggers on pru1
 	QBA  SUBMIT
 
 

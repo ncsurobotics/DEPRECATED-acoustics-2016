@@ -42,6 +42,14 @@
 		LBBO DAQConf.Samp_Rate, DQ.PRU0_Ptr, HOST_SRh, SIZE(DAQConf.Samp_Rate)
 .endm
 
+.macro Set_COLL_Lo_On_PRU0
+	LBBO DQ.PRU0_State, DQ.PRU0_Ptr, PRU_STATEh, SIZE(DQ.PRU0_State) 
+	CLR  DQ.PRU0_State, COLL	// vvv
+	SBBO DQ.PRU0_State, DQ.PRU0_Ptr, PRU_STATEh, SIZE(DQ.PRU0_State) 
+                                // Share PRU State
+                                // ^ state: not collecting
+.endm
+
 /////////////////////////////////////////////////
 //               MAIN Program               /////
 /////////////////////////////////////////////////
@@ -98,7 +106,8 @@ ASK_PRU0:
 
 COLLECT:
         SBBO r31, DQ.PRU0_Ptr, SHAREDh, 4       // Submit GPI
-        Set_DR_On_PRU1							// Set DR bit
+        Set_COLL_Lo_On_PRU0  // << prevents false triggers on pru1
+        //Set_DR_On_PRU1							// Set DR bit
         
 WAIT:
         Sample_Delay WAIT

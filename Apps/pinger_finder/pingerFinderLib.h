@@ -43,8 +43,9 @@
 	.u16	TapeHD_Offset
 	.u8	PRU0_State
 	.u8	PRU1_State
+	.u8 	Sub_Sample //0 or 1... as ADC always grabs two channels at a time. 
 .ends
-.assign DAQ_State, r5, r8, DQ
+.assign DAQ_State, r5, r9.b0, DQ
 
 
 .struct DAQ_Config
@@ -53,7 +54,7 @@
 	.u32	Data_Dst	// address 
 	.u32	TO		// TimeOut:loops
 .ends
-.assign DAQ_Config, r9, r12, DAQConf
+.assign DAQ_Config, r10, r13, DAQConf
 
 .macro  NOP32
 		NOP
@@ -96,3 +97,17 @@
 #define HOST_SRh		0x000C
 //PRU Personal Space = (0x0000)_PRUx
 #define PRU_STATEh		0x0012
+
+
+/////////////////////////////////////////
+// 		MACROS 	/////////
+/////////////////////////////////////////
+
+.macro	Sub_Sample_Controller 
+.mparam LABEL
+		QBEQ RELOAD, DQ.Sub_Sample, 1
+          MOV DQ.Sub_Sample, 1 				//bit must be zero. setting it to 1 .
+          QBA LABEL
+		RELOAD:
+		MOV DQ.Sub_Sample, 0 				//bit must be 1. Set it to 0
+.endm

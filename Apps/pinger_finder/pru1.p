@@ -72,6 +72,7 @@ INIT:
 		SBBO DQ.PRU1_State, DQ.PRU1_Ptr, PRU_STATEh, SIZE(DQ.PRU1_State)
 		
 		Get_Sample_Rate_From_PRU0// Obtain sample_rate information
+		MOV	 DQ.Sub_Sample, 0	// Initialize starting sub_sample
 
 	/////////////////////////////////////////////////
 	//               MAIN Loop                  /////
@@ -105,9 +106,14 @@ ASK_PRU0:
 		// move on to the concatenation part.
 
 COLLECT:
-        SBBO r31, DQ.PRU0_Ptr, SHAREDh, 4       // Submit GPI
-        Set_COLL_Lo_On_PRU0  // << prevents false triggers on pru1
-        //Set_DR_On_PRU1							// Set DR bit
+        SBBO r31, DQ.PRU0_Ptr, SHAREDh, 4   // Submit GPI
+        Set_COLL_Lo_On_PRU0  				// << prevents false triggers on pru1
+		Sub_Sample_Controller ASK_PRU0
+			// Sub_Sample_Controller will either make a shortcut to the ASK_PRU0
+			// step, or go all the way back at the top of the cycle... depending
+			// on the sub_sample that was just collected.
+        
+        //Set_DR_On_PRU1					// Set DR bit
         
 WAIT:
         Sample_Delay WAIT

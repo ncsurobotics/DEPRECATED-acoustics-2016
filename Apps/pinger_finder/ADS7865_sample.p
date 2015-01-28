@@ -65,6 +65,7 @@ PREPARE:
 
 	Conf_DataDst_For_DDR_Address	// Data will go to DDRAM.
 	Get_SL							// Receive SL from HOST.
+	MOV	 DQ.Sub_Sample, 0			// Known that first sample is sub_sample 0
 	//MOV  DAQConf.Samp_Len, 35		// Set sample length to 10	
 	
 
@@ -92,7 +93,8 @@ TRIG:
 	QBBC TRIG, DQ.PRU1_State, CINT	// Advance when PRU1 trigger interupt!
 	CLR	 DQ.PRU1_State, CINT
 	SBBO DQ.PRU1_State, DQ.PRU1_Ptr, PRU_STATEh, SIZE(DQ.PRU1_State)
-	
+
+CONVST:	
 	CLR  r30, bCONVST				// Trigger a Conversion
 
 WAIT:
@@ -169,6 +171,12 @@ NEXT:
 SUBMIT:
 	SBBO DQ.Sample, DAQConf.Data_Dst, DQ.TapeHD_Offset, SIZE(DQ.Sample) // submit data to DDR
 	INCR DQ.TapeHD_Offset, 4 // increment pointer
+	
+	Sub_Sample_Controller CONVST
+		// Sub_Sample_Controller will either make a shortcut to the CONVST
+		// step, or go all the way back at the top of the cycle... depending
+		// on the sub_sample that was just collected.
+	
 	QBA	 TOP// loop back to Top Branch instruction
 	
 END:

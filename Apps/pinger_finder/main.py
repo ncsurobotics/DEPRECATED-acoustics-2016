@@ -7,6 +7,7 @@ def Shoot(ADC,len,SR):
 	sum = 0
 
 	# Used ADC to collect samples
+	raw_input("Hit enter when you're ready...")
 	y,t = ADC.Burst(len)
 
 	# Interpret data
@@ -24,7 +25,7 @@ def Shoot(ADC,len,SR):
 	print("main: The sum of all your samples is %d" % sum)
 
 	# Return the raw y incase needed for more analysis.
-	import pdb; pdb.set_trace()
+	#import pdb; pdb.set_trace()
 	return y
 
 Samp_len = int(argv[1])

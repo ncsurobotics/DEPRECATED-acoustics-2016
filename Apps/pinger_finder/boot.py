@@ -21,8 +21,8 @@ def arm():
 
 	os.system("config-pin P9.29 pruout") # bCONVST	#PRU0
 	os.system("config-pin P9.31 pruout") # bWR		#PRU0
-	os.system("config-pin P9.31 pruout") # bRD		#PRU0
-	os.system("config-pin P9.30 pruin")	# BUSY		#PRU0
+	os.system("config-pin P9.30 pruout") # bRD		#PRU0
+	os.system("config-pin P9.27 pruin")	# BUSY		#PRU0
 	
 def dearm():
 	os.system("config-pin P8.27 gpio") #DB0

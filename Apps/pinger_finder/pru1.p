@@ -62,8 +62,6 @@ START:
         CLR  r0, r0, 4          // Clear bit 4 in reg 0
         SBCO r0, C4, 4, 4       // Store Bytes Constant Offset
 
-		ZERO &r0, 122
-
 INIT:
         MOV  DQ.PRU0_Ptr, 0x2000
         MOV  DQ.PRU1_Ptr, 0x0000

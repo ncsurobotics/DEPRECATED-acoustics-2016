@@ -50,8 +50,7 @@ START:
 	LBCO r0, C4, 4, 4       // Load Bytes Constant Offset (?)
 	CLR  r0, r0, 4	  // Clear bit 4 in reg 0
 	SBCO r0, C4, 4, 4       // Store Bytes Constant Offset
-	
-	ZERO &r0, 122
+
 
 PREPARE:
 	LDI  DQ.PRU0_Ptr, 0x0000		// Init PRU0 ptr
@@ -119,7 +118,7 @@ COLLECT:
 ASK_PRU1:
 	Wait_For_COLL_CLR_Signal	ASK_PRU1       // << Wait for PRU1 to finish sampling.
 	LBBO GP.Cpr, DQ.PRU0_Ptr, SHAREDh, 4       // << Collect PRU1s partial sample.
-	SET  r31, bWR
+	SET  r30, bRD
 
 	// At this point, PRU1s measurement has been received, and PRU0
 	// has done the necessary cleanup (DR:=0, bWR:=1, COLL:=0(By PRU1). 

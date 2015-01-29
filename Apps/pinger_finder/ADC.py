@@ -23,7 +23,6 @@ class ADS7865:
 		
 		# Load overlays
 		boot.load()
-		boot.arm()
 	
 	def Ready_PRUSS_For_Burst(self, SR=None):
 		# Initialize variables
@@ -34,7 +33,7 @@ class ADS7865:
 			print("SR currently set to 0. Please specify a sample rate.")
 			exit(1)
 			
-		SR_BITECODE = int(round(1.0/SR*fclk))
+		SR_BITECODE = int(round(1.0/SR*fclk)) # Converts user SR input to Hex.
 		
 		# Initialize evironment
 		pypruss.modprobe()	
@@ -43,14 +42,17 @@ class ADS7865:
 		pypruss.pruintc_init()  # Init the interrupt controller
 
 		# INIT PRU Registers	
-		pypruss.exec_program(0, "./init.bin") # Cleaning the registers
-		pypruss.exec_program(1, "./init.bin") # Cleaning the registers	
+		pypruss.exec_program(0, "./init0.bin") # Cleaning the registers
+		pypruss.exec_program(1, "./init1.bin") # Cleaning the registers	
 		pypruss.pru_write_memory(0, 0x0000, [0x0,]*0x0800) # clearing pru0 ram
 		pypruss.pru_write_memory(0, 0x0800, [0x0,]*0x0800) # clearing pru1 ram
 		pypruss.pru_write_memory(0, 0x4000, [0x0,]*300) # clearing ack bit from pru1
 		pypruss.pru_write_memory(0, PRU0_SR_Mem_Offset, [SR_BITECODE,]) # Setting samplerate
 		
 		pypruss.exec_program(1, "./pru1.bin") 		# Load firmware on PRU1
+		
+		# end readying process by arming the PRUs
+		boot.arm()
 
 	def Reload(self):
 		print 'dad'

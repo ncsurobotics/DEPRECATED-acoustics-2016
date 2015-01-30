@@ -8,7 +8,7 @@ print("Acoustics Client Communication App")
 # Connect to the UART-to-USB device
 if "bone" in platform.platform():
 	device = "/dev/ttyUSB0"
-	ser = serial.Serial("/dev/ttyUSB0", 9600)
+	ser = serial.Serial("/dev/serial/by-id/usb-FTDI_FT232R_USB_UART_A5025L80-if00-port0", 9600)
 else:
 	print("Com_App: I'm not sure what" +
 		" the device is called on "+

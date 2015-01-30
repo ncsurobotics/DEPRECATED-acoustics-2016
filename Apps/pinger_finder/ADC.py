@@ -3,13 +3,30 @@ import mmap
 import struct
 import boot
 import time
+import BBBIO
 
 PRU0_SR_Mem_Offset = 3
 HC_SR = 0xBEBC200
 fclk = 200e6
 
+DB_pin_table = ['P8_08','P8_09','P8_10','P8_11','P8_12','P8_13','P8_14','P8_15','P8_16','P8_17','P8_18','P8_19']
+WR_pin = 'P9_11'
+BUSY_pin = 'P9_12'
+CS_pin = 'P9_13'
+RD_pin = 'P9_14'
+CONVST_pin = 'P9_15'
+
 class ADS7865:
 	def __init__(self, SR=0, L=0):
+	
+		# GPIO Stuff
+		self.DBus = BBBIO.Port(DB_pin_table)
+		self.DBus.setPortDir("out")
+		
+		self.WR = BBBIO.Port(WR_pin)
+		self.WR.setPortDir("out")
+	
+		# PRUSS Stuff
 		self.ddr = {}
 		self.ddr['addr'] = pypruss.ddr_addr()
 		self.ddr['size'] = pypruss.ddr_size()
@@ -23,7 +40,27 @@ class ADS7865:
 		
 		# Load overlays
 		boot.load()
+		
+	############################
+	#### GPIO Commands  #######
+	############################
+	def Config(self, cmd_list):
+		# Callee save the port direction
+		callee_sPD = self.DBus.portDirection
+		
+		# 
+		for cmd in cmd_list:
+			self.WR.writeToPort(0)		#Open ADC's input Latch
+			self.DBus.setPortDir("out")	#Latch open, safe to make DB pins an out
+			self.DBus.writeToPort(cmd)	#Write the value to the DB pins
+			print('ADS7865: Databus cmd %s has been sent.' % self.DBus.readStr())
+			self.WR.writeToPort(1)		#Latch down the input
+		
+		self.DBus.setPortDir(callee_sPD)#Return DB pins back to inputs.
 	
+	############################
+	#### PRUSS Commands  #######
+	############################
 	def Ready_PRUSS_For_Burst(self, SR=None):
 		# Initialize variables
 		if SR is None:

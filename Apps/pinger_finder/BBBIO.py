@@ -1,0 +1,210 @@
+import os
+import sys
+
+def batchLookupGPIO(pinList):
+	i = 0
+	GPIOList = [None]*len(pinList)
+	lookupTable = {'P8_03': 38,
+		'P8_04': 39,
+		'P8_05': 34,
+		'P8_06': 35,
+		'P8_07': 66,
+		'P8_08': 67,
+		'P8_09': 69,
+		'P8_10': 68,
+		'P8_11': 45,
+		'P8_12': 44,
+		'P8_13': 23,
+		'P8_14': 26,
+		'P8_15': 47,
+		'P8_16': 46,
+		'P8_17': 27,
+		'P8_18': 65,
+		'P8_19': 22,
+		'P8_20': 63,
+		'P8_21': 62,
+		'P8_22': 37,
+		'P8_23': 36,
+		'P8_24': 33,
+		'P8_25': 32,
+		'P8_26': 61,
+		'P8_27': 86,
+		'P8_28': 88,
+		'P8_29': 87,
+		'P8_30': 89,
+		'P8_31': 10,
+		'P8_32': 11,
+		'P8_33': 9,
+		'P8_34': 81,
+		'P8_35': 8,
+		'P8_36': 80,
+		'P8_37': 78,
+		'P8_38': 79,
+		'P8_39': 76,
+		'P8_40': 77,
+		'P8_41': 74,
+		'P8_42': 72,
+		'P8_43': 72,
+		'P8_44': 73,
+		'P8_45': 70,
+		'P8_46': 71,
+		
+
+		'P9_11': 30,
+		'P9_12': 60,
+		'P9_13': 31,
+		'P9_14': 50,
+		'P9_15': 48,
+		'P9_16': 51,
+		'P9_17': 5 ,
+		'P9_18': 4 ,
+		'P9_19': 13,
+		'P9_20': 12,
+		'P9_21': 3 ,
+		'P9_22': 2 ,
+		'P9_23': 49,
+		'P9_24': 15,
+		'P9_25': 117,
+		'P9_26': 14,
+		'P9_27': 115,
+		'P9_28': 113,
+		'P9_29': 111,
+		'P9_30': 112,
+		'P9_31': 110,
+		#'P9_41': 41???
+		#'P9_42': ????
+		}		
+	
+	try:
+		for pin in pinList:
+			GPIOList[i] = lookupTable[pin]
+			i += 1
+	except KeyError:
+		print('BBBIO: Uh oh. pin%s does not exist in the BBBIO.py\'s database. Check your spelling or update the lookup table.' % pin)
+		sys.exit(1)
+	return GPIOList
+
+class GPIO:
+	def __init__(self,gpio_pin):
+		self.gpio_pin = gpio_pin
+		self.gpio_base = "/sys/class/gpio/"
+		self.gpio_path = "/sys/class/gpio/gpio%d/"%gpio_pin
+		
+		os.system("echo %d > %sexport" % (gpio_pin,self.gpio_base))
+		with open(self.gpio_path+"direction") as f:
+			self.direction = f.read().rstrip("\n")
+		self.read()
+
+	def reInit(self):
+		self.__init__(self.gpio_pin)
+
+	def setDirection(self,targetState):
+		if (targetState == "out") or (targetState == "in"):
+			os.system("echo %s > %sdirection" % (targetState,self.gpio_path))
+			with open(self.gpio_path+"direction") as f:
+				self.direction = f.read().rstrip("\n")
+		else:
+			print("pin%s: %s is not a valid direction" % (self.gpio_pin,targetState))
+
+	def write(self,value):
+		if self.direction == "out":
+			os.system("echo %d > %svalue" % (value,self.gpio_path))
+			self.value = value
+		else: 
+			print("pin%s is not an output. You cannot set it's value." % self.gpio_pin)
+	
+	def read(self):
+		with open(self.gpio_path+"value") as f:
+			self.value = int( f.read().rstrip("\n") )
+		return self.value
+
+	def help(self):
+		print("You can call the following attributes: ")
+		for item in self.__dict__.keys():
+			print("  *.%s" % item)
+		
+		print("")
+		print("You also have access to the following methods: ")
+		for item in [method for method in dir(self) if callable(getattr(self, method))]:
+			print("  *.%s()" % item)
+		print("")
+
+	def close(self):
+		os.system("echo %d >%sunexport" % (self.gpio_pin,self.gpio_base)) 
+
+
+class Port():
+	def __init__(self, assignment=None):
+		self.en = True
+		self.pins = []
+		self.direction = []
+		self.portDirection = ''
+		self.value = []
+		self.nValue = 0
+		self.length = 0
+		if assignment:
+			self.createPort(assignment)
+	
+	def createPort(self, pinNameList):
+		if type(pinNameList) == type(""):
+			pinNameList = [pinNameList]
+
+		GPIOList = batchLookupGPIO(pinNameList)
+		for pin in GPIOList:
+			#print(pinNameList) ; print(GPIOList)
+						
+			obj_pin = GPIO(pin)
+			self.pins.append(obj_pin)	#self.pins
+			(self.direction).append(obj_pin.direction)	#self.direction
+			(self.value).append(obj_pin.value)	#self.value
+
+		self.length = len(self.pins)		#self.length
+
+	def readStr(self):
+		s = ""
+		i = 0
+		for pin in self.pins:
+			a = pin.read()
+			s = str(a) + s	
+			self.value[i] = a
+		return s
+	
+	def writeToPort(self,value):
+		'''Function takes the integer 'value' and converts it to a 
+		string formated binary representation, which is parsed in 
+		the for loop in order to configure each pin on the port.'''
+		
+		portLength = len(self.pins)
+		binaryVal = ('{0:0'+str(portLength)+'b}').format(value) # generate binary string from value arg
+		
+		for i in range(portLength):
+			s_i = (portLength-1)-i
+			b = int( binaryVal[s_i] )
+			self.pins[i].write( b )
+			
+
+	def setPortDir(self, direction):
+		i = 0
+		for pin in self.pins:
+			pin.setDirection(direction)
+			self.direction[i] = pin.direction
+			i += 1
+
+		self.portDirection = direction
+
+	def close(self):
+		for pin in self.pins:
+			pin.close()
+
+	def help(self):
+		print("You can call the following attributes: ")
+		for item in self.__dict__.keys():
+			print("  *.%s" % item)
+		
+		print("")
+		print("You also have access to the following methods: ")
+		for item in [method for method in dir(self) if callable(getattr(self, method))]:
+			print("  *.%s()" % item)
+		print("")
+
+

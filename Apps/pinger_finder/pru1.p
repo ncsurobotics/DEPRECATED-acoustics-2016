@@ -114,6 +114,7 @@ COLLECT:
         //Set_DR_On_PRU1					// Set DR bit
         
 WAIT:
+		//ADD GP.Tmr, GP.Tmr, 2 //Make up for time spent doing other stuff 
         Sample_Delay WAIT
         QBA TOP
 

@@ -28,23 +28,34 @@ def Shoot(ADC,len,SR):
 	#import pdb; pdb.set_trace()
 	return y
 
+########################
+#### MAIN PROGRAM ######
+########################
+
+# Parse user input: Aquire sample length
 Samp_len = int(argv[1])
 
-# create an object for ADS7865
-ADS7865 = ADC.ADS7865()
-
-"""Instantiating the ADS7865 also ran code for arming all PRU
-IO on the beaglebone, as well some built in attributes for 
-running commands relevent to the ADC"""
-
-
+# Parse user input: Acquire sampling rate
 if len(argv) < 3:
 	print("main: You did not specify a sample rate")
 	SR = input("Please enter a sample rate (samps/sec): ")
 else:
 	SR = int(argv[2])
-ADS7865.Ready_PRUSS_For_Burst(SR)
 
+### Configure there ADC
+# create an object for ADS7865
+ADS7865 = ADC.ADS7865()
+"""Instantiating the ADS7865 also ran code for building in attributes for 
+running commands relevent to the ADC"""
+if len(argv) > 3:
+	# Configure settings
+	#ADS7865.Config([0xF0F,])
+	ADS7865.Config([0xF0F,0x0F0])
+else:
+	print("\nmain: user did not give 4th argument. I will skip over any configuration steps.")
+
+# All settings have been configured. Beaglebone is ready for arming.
+ADS7865.Ready_PRUSS_For_Burst(SR)
 """At this point pruss module has been initialized, PRUSS-RAM has been
 wiped, and PRU1 firmware is loaded and running (PRU1 will idle until PRU0
 comes online to recognize and clear a CINT bit)."""

@@ -47,6 +47,8 @@ class ADS7865:
 		
 		self.WR = BBBIO.Port(WR_pin)
 		self.WR.setPortDir("out")
+		
+		self.n_channels = 2
 	
 		#PRUSS Stuff
 		self.ddr = {}
@@ -156,9 +158,12 @@ class ADS7865:
 	def Reload(self):
 		print 'Reload: "I do nothing."'
 	
-	def Burst(self, length=None):
+	def Burst(self, length=None, n_channels=None):
 		if length is None:				#Optional argument for sample length
 			length = self.sampleLength
+		
+		if n_channels is None:
+			n_channels = self.n_channels
 			
 		#Share DDR RAM Addr with PRU0
 		pypruss.pru_write_memory(0, 1, [self.ddr['addr'],])
@@ -180,6 +185,9 @@ class ADS7865:
 		#pypruss.exit()			# Exit PRU
 		
 		# Read the memory
-		y = Read_Sample(self.ddr, length)
+		raw_data = Read_Sample(self.ddr, length)
+		y = [0]*n_channels
+		for chan in range(n_channels):
+			y[chan] = raw_data[chan::2]
 			
 		return y,t

@@ -1,9 +1,9 @@
-import pypruss
+import pypruss		#Python PRUSS wrapper
 import mmap
 import struct
-import boot
-import time
-import BBBIO
+import boot			#
+import time			#sleep
+import BBBIO		#Yields functions for working with GPIO
 
 PRU0_SR_Mem_Offset = 3
 HC_SR = 0xBEBC200
@@ -57,6 +57,40 @@ class ADS7865:
 			self.WR.writeToPort(1)		#Latch down the input
 		
 		self.DBus.setPortDir(callee_sPD)#Return DB pins back to inputs.
+	
+	def EZConfig(self, sel):
+		#NOTES TO USER
+		#--At powerup, sequencer_register=0x000
+		#--Capturing one channel (non-pair) in isolation is doable by selecting sel=0
+		#or sel=1 (since ADS7865 resets the data_output pointer at the beginning of every
+		#CONVST), but the user must also take the extra precaution to disable the
+		#"sub-sampling" portion of the PRUSS code in order for it to work.
+	
+		#Single channel (pair) enable
+		if sel==0:
+			#User has chosen to sample the 0a/0b differential channel pair.
+			self.Config([0x100])
+		elif sel==1:
+			#User has chosen to sample the 1a/1b differential channel pair.
+			self.Config([0x300])
+
+		#Single channel (pair) enable with sequencer reinitialization
+		elif sel==2:
+			#User has chosen to sample the 0a/0b differential channel pair 
+			#while disabling the sequencer register
+			self.Config([0x101,0x000])
+		elif sel==3:
+			#User has chosen to sample the 0a/0b differential channel pair 
+			#while disabling the sequencer register
+			self.Config([0x301,0x000])
+			
+		#Dual channel (pair) enable
+		elif sel==4:
+			#User has chosen to sample the 0a/0b -> 1a/1b in FIFO style
+			self.Config([0x101,0x230])
+		elif sel==5:
+			#User has chosen to sample the 1a/1b -> 0a/0b in FIFO style
+			self.Config([0x101,0x2c0])
 	
 	############################
 	#### PRUSS Commands  #######

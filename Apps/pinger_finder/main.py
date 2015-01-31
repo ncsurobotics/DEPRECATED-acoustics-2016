@@ -50,7 +50,8 @@ running commands relevent to the ADC"""
 if len(argv) > 3:
 	# Configure settings
 	#ADS7865.Config([0xF0F,])
-	ADS7865.Config([0xF0F,0x0F0])
+	#ADS7865.Config([0xF0F,0x0F0])
+	ADS7865.EZConfig(4)
 else:
 	print("\nmain: user did not give 4th argument. I will skip over any configuration steps.")
 

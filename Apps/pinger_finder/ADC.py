@@ -188,6 +188,6 @@ class ADS7865:
 		raw_data = Read_Sample(self.ddr, length)
 		y = [0]*n_channels
 		for chan in range(n_channels):
-			y[chan] = raw_data[chan::2]
+			y[chan] = raw_data[chan::n_channels]
 			
 		return y,t

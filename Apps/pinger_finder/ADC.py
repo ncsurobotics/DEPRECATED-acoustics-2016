@@ -5,9 +5,31 @@ import boot			#
 import time			#sleep
 import BBBIO		#Yields functions for working with GPIO
 
+#Global ADC program Constants
 PRU0_SR_Mem_Offset = 3
 HC_SR = 0xBEBC200
 fclk = 200e6
+
+#Global Functions
+def Read_Sample(user_mem, Sample_Length):
+	print("ADC: Still have to write documentation about the structure of user_mem variable...")
+	
+	with open("/dev/mem", "r+b") as f:	# Open the physical memory device
+		ddr_mem = mmap.mmap(f.fileno(), user_mem['filelen'], offset=user_mem['offset']) # mmap the right area
+
+	y = []
+	for i in range(Sample_Length):
+		a = user_mem['start']+i*4
+		b = a+4
+		c = struct.unpack("L", ddr_mem[a:b])[0]	# Parse the data
+		y = y + [c,]
+		#print(c)
+		
+	return y
+		
+######################################
+######    ADS7865 Class ##############
+#####################################
 
 DB_pin_table = ['P8_08','P8_09','P8_10','P8_11','P8_12','P8_13','P8_14','P8_15','P8_16','P8_17','P8_18','P8_19']
 WR_pin = 'P9_11'
@@ -19,14 +41,14 @@ CONVST_pin = 'P9_15'
 class ADS7865:
 	def __init__(self, SR=0, L=0):
 	
-		# GPIO Stuff
+		#GPIO Stuff
 		self.DBus = BBBIO.Port(DB_pin_table)
 		self.DBus.setPortDir("out")
 		
 		self.WR = BBBIO.Port(WR_pin)
 		self.WR.setPortDir("out")
 	
-		# PRUSS Stuff
+		#PRUSS Stuff
 		self.ddr = {}
 		self.ddr['addr'] = pypruss.ddr_addr()
 		self.ddr['size'] = pypruss.ddr_size()
@@ -35,10 +57,16 @@ class ADS7865:
 		self.ddr['offset'] = self.ddr['addr']-0x10000000
 		self.ddr['end'] =  0x10000000+self.ddr['size']
 		
+		print("ADS7865: Allowing one 32bit memory block per sample, it is "
+			+ "possible to collect %.1fK Samples in a single burst. These "
+			% (self.ddr['size']/1000)
+			+ "sample points are stored in DDRAM, which is found at the "
+			+ "address range starting at %s" % (hex(self.ddr['addr'])))
+		
 		self.sampleRate = SR
 		self.sampleLength = L
 		
-		# Load overlays
+		#Load overlays
 		boot.load()
 		
 	############################
@@ -126,39 +154,32 @@ class ADS7865:
 		boot.arm()
 
 	def Reload(self):
-		print 'dad'
+		print 'Reload: "I do nothing."'
 	
 	def Burst(self, length=None):
-		if length is None:
+		if length is None:				#Optional argument for sample length
 			length = self.sampleLength
 			
+		#Share DDR RAM Addr with PRU0
 		pypruss.pru_write_memory(0, 1, [self.ddr['addr'],])
+		
+		#Share SL with PRU0
 		pypruss.pru_write_memory(0, 2, [length*4-8,])
 		
-		
-		
+		#Launch the Sample collection program
 		a = time.time()
 		pypruss.exec_program(0, "./ADS7865_sample.bin") # Load firmware on PRU0
 		
 		# Wait for PRU to finish its job.
-		
 		pypruss.wait_for_event(0)# Wait for event 0 which is conn to PRU0_ARM_INTERUPT	
 		b = time.time()
 		t = b-a
-		# Once signal has been received, clean up house
+
+		#Once signal has been received, clean up house
 		#pypruss.clear_event(0)	# Clear the event
 		#pypruss.exit()			# Exit PRU
 		
 		# Read the memory
-		with open("/dev/mem", "r+b") as f:	# Open the physical memory device
-			ddr_mem = mmap.mmap(f.fileno(), self.ddr['filelen'], offset=self.ddr['offset']) # mmap the right area
-	
-		y = []
-		for i in range(length):
-			a = self.ddr['start']+i*4
-			b = a+4
-			c = struct.unpack("L", ddr_mem[a:b])[0]	# Parse the data
-			y = y + [c,]
-			#print(c)
+		y = Read_Sample(self.ddr, length)
 			
 		return y,t

@@ -31,12 +31,12 @@ def Read_Sample(user_mem, Sample_Length):
 ######    ADS7865 Class ##############
 #####################################
 
-DB_pin_table = ['P8_08','P8_09','P8_10','P8_11','P8_12','P8_13','P8_14','P8_15','P8_16','P8_17','P8_18','P8_19']
-WR_pin = 'P9_11'
-BUSY_pin = 'P9_12'
-CS_pin = 'P9_13'
-RD_pin = 'P9_14'
-CONVST_pin = 'P9_15'
+DB_pin_table = ['P9_26','P8_46','P8_45','P8_44','P8_43','P8_42','P8_41','P8_40','P8_39','P8_29','P8_28','P8_27']
+WR_pin = 'P9_31'
+BUSY_pin = 'P9_27'
+CS_pin = 'P9_25'
+RD_pin = 'P9_30'
+CONVST_pin = 'P9_29'
 
 class ADS7865:
 	def __init__(self, SR=0, L=0):
@@ -47,6 +47,11 @@ class ADS7865:
 		
 		self.WR = BBBIO.Port(WR_pin)
 		self.WR.setPortDir("out")
+		
+		self._CS = BBBIO.Port(CS_pin)
+		self._CS.setPortDir("out")
+		self._CS.writeToPort(0)
+		
 		
 		self.n_channels = 2
 	
@@ -81,8 +86,10 @@ class ADS7865:
 		# 
 		for cmd in cmd_list:
 			self.WR.writeToPort(0)		#Open ADC's input Latch
+		
 			self.DBus.setPortDir("out")	#Latch open, safe to make DB pins an out
 			self.DBus.writeToPort(cmd)	#Write the value to the DB pins
+			
 			print('ADS7865: Databus cmd %s has been sent.' % self.DBus.readStr())
 			self.WR.writeToPort(1)		#Latch down the input
 		
@@ -121,6 +128,15 @@ class ADS7865:
 		elif sel==5:
 			#User has chosen to sample the 1a/1b -> 0a/0b in FIFO style
 			self.Config([0x101,0x2c0])
+			
+	def Close(self):
+		self._CS.writeToPort(1)
+		self.DBus.close()
+		self.WR.close()
+		#self.BUSY.close()
+		self._CS.close()
+		#self.RD.close()
+		#self._CONVST.close()
 	
 	############################
 	#### PRUSS Commands  #######
@@ -153,6 +169,7 @@ class ADS7865:
 		pypruss.exec_program(1, "./pru1.bin") 		# Load firmware on PRU1
 		
 		# end readying process by arming the PRUs
+		import pdb;pdb.set_trace()
 		boot.arm()
 
 	def Reload(self):

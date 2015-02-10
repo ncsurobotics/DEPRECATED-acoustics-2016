@@ -86,7 +86,7 @@
 
 
 // ADC Inputs
-#define BUSY	7	// P9-27
+#define BUSY	5//7	// P9-27 (datasheet say P9-27 = PRU1_R31_7)
 
 
 

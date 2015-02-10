@@ -43,7 +43,7 @@ def batchLookupGPIO(pinList):
 		'P8_39': 76,
 		'P8_40': 77,
 		'P8_41': 74,
-		'P8_42': 72,
+		'P8_42': 75,
 		'P8_43': 72,
 		'P8_44': 73,
 		'P8_45': 70,
@@ -130,6 +130,7 @@ class GPIO:
 		print("")
 
 	def close(self):
+		self.setDirection("in")
 		os.system("echo %d >%sunexport" % (self.gpio_pin,self.gpio_base)) 
 
 

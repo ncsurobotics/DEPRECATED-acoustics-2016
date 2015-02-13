@@ -6,7 +6,7 @@
 *preview.csv
 *__pycache__*
 *.pyc
-*/bin/*.bin
+*.bin
 *.swp*
 
 /Apps/LTC1564_Tester/Debug/

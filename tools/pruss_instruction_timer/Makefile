@@ -4,7 +4,7 @@ FILENAME=timer_app
 .PHONY: clean all
 
 all:
-	$(COMPILER) $(FILENAME).p
+	$(COMPILER) $(FILENAME).p -b bin/$(FILENAME)
 
 clean:
-	rm -rf $(FILENAME).bin
+	rm -rf bin/$(FILENAME).bin

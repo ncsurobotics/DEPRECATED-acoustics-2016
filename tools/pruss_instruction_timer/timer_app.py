@@ -15,7 +15,7 @@ def main():
 	
 	# Execute the PRU program
 	a = time.time()
-	pypruss.exec_program(0, "./timer_app.bin") # Load firmware on PRU0
+	pypruss.exec_program(0, "./bin/timer_app.bin") # Load firmware on PRU0
 
 	# Wait for PRU to finish its job.
 	pypruss.wait_for_event(0)# Wait for event 0 which is conn to PRU0_ARM_INTERUPT

@@ -169,7 +169,6 @@ class ADS7865:
 		pypruss.exec_program(1, "./pru1.bin") 		# Load firmware on PRU1
 		
 		# end readying process by arming the PRUs
-		import pdb;pdb.set_trace()
 		boot.arm()
 
 	def Reload(self):

@@ -98,12 +98,15 @@ CONVST:
 
 WAIT:
 	// connect bCONVST to BUSY pin in order to bypass this portion
-	NOP32; NOP32;	// delay just in case
+	NOP32; 	// delay just in case
 	NOP32;
 	NOP32;
 	NOP32;
 	NOP32;
 	NOP32;
+	NOP32;
+	NOP32;
+	SET  r30, bCONVST	// CONVST is no longer needed TAG=cleanup
 	WBC  r31, BUSY		// Watch for conversion to complete
 	
 	// At this point, PRU0 has detected BUSY go low. Thus, a conversion
@@ -115,9 +118,12 @@ WAIT:
 	
 
 COLLECT:
-	SET  r30, bCONVST	// CONVST is no longer needed TAG=cleanup
 	CLR  r30, bRD		// Activate bWR
-	
+
+        MOV  GP.Tmr, 0x4E20
+BUG_WAIT:
+        SUB  GP.Tmr, GP.Tmr, 2
+        QBLE BUG_WAIT, GP.Tmr, 3        
 
 	Set_COLL_High_On_PRU0	// << Used to signal PRU1 to sample ADC
 

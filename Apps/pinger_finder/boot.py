@@ -16,7 +16,7 @@ def arm():
 	os.system("config-pin P8.43 pruin") #DB7	#PRU1
 	os.system("config-pin P8.44 pruin") #DB8	#PRU1
 	os.system("config-pin P8.45 pruin") #DB9	#PRU1
-	os.system("config-pin P8.46 pruin") #DB10	#PRU1
+	os.system("config-pin P8.46 pruout") #DB10	#PRU1
 	os.system("config-pin P9.26 pruin") #DB11	#PRU1
 
 	os.system("config-pin P9.29 pruout") # bCONVST	#PRU0

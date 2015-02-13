@@ -66,18 +66,18 @@
 // 		CONSTANTS 	/////////
 /////////////////////////////////////////
 // ADC Data Pins
-#define DB0     8   // P8-27  //ONLY PRU1
-#define DB1     10  // P8-28  //ONLY PRU1
-#define DB2     9   // P8-29  //ONLY PRU1
-#define DB3     6   // P8-39  //ONLY PRU1
-#define DB4     7   // P8-40  //ONLY PRU1
-#define DB5     4   // P8-41  //ONLY PRU1
-#define DB6     5   // P8-42  //ONLY PRU1
-#define DB7     2   // P8-43  //ONLY PRU1
-#define DB8     3   // P8-44  //ONLY PRU1
-#define DB9     0   // P8-45  //ONLY PRU1
-#define DB10    1   // P8-46  //ONLY PRU1
-#define DB11	16  // P9-26  //ONLY PRU1
+#define DB0     16   // P8-27  //ONLY PRU1
+#define DB1     1  // P8-28  //ONLY PRU1
+#define DB2     0   // P8-29  //ONLY PRU1
+#define DB3     3   // P8-39  //ONLY PRU1
+#define DB4     2   // P8-40  //ONLY PRU1
+#define DB5     5   // P8-41  //ONLY PRU1
+#define DB6     4   // P8-42  //ONLY PRU1
+#define DB7     7   // P8-43  //ONLY PRU1
+#define DB8     6   // P8-44  //ONLY PRU1
+#define DB9     5   // P8-45  //ONLY PRU1
+#define DB10    10   // P8-46  //ONLY PRU1
+#define DB11	8  // P9-26  //ONLY PRU1
 
 // ADC Outputs
 #define bCONVST	1	// P9-29

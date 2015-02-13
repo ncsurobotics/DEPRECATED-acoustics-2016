@@ -104,7 +104,9 @@ ASK_PRU0:
 		// move on to the concatenation part.
 
 COLLECT:
+        SET  r30, DB1
         SBBO r31, DQ.PRU0_Ptr, SHAREDh, 4   // Submit GPI
+        CLR  r30, DB1
         Set_COLL_Lo_On_PRU0  				// << prevents false triggers on pru1
 		Sub_Sample_Controller ASK_PRU0
 			// Sub_Sample_Controller will either make a shortcut to the ASK_PRU0

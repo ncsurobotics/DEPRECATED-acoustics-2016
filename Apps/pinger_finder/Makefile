@@ -7,14 +7,15 @@ FILENAME3=pru1
 .PHONY: clean all
 
 all:
-	$(COMPILER) $(FILENAME0).p
-	$(COMPILER) $(FILENAME1).p
-	$(COMPILER) $(FILENAME2).p
-	$(COMPILER) $(FILENAME3).p
+	$(COMPILER) $(FILENAME0).p -b bin/$(FILENAME0)
+	$(COMPILER) $(FILENAME1).p -b bin/$(FILENAME1)
+	$(COMPILER) $(FILENAME2).p -b bin/$(FILENAME2)
+	$(COMPILER) $(FILENAME3).p -b bin/$(FILENAME3)
 
 
 clean:
-	rm -rf $(FILENAME0).bin
-	rm -rf $(FILENAME1).bin
-	rm -rf $(FILENAME2).bin
-	rm -rf $(FILENAME3).bin
+	rm -rf bin/$(FILENAME0).bin
+	rm -rf bin/$(FILENAME1).bin
+	rm -rf bin/$(FILENAME2).bin
+	rm -rf bin/$(FILENAME3).bin
+	rm -rf *.pyc

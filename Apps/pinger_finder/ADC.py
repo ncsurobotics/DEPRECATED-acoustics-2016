@@ -4,11 +4,19 @@ import struct
 import boot			#
 import time			#sleep
 import BBBIO		#Yields functions for working with GPIO
+import settings		#Same function as a .YAML file
 
 #Global ADC program Constants
 PRU0_SR_Mem_Offset = 3
 HC_SR = 0xBEBC200
 fclk = 200e6
+
+BIN = settings.bin_directory
+INIT0 = BIN+"init0.bin"
+INIT1 = BIN+"init1.bin"
+ADS7865_MasterPRU = BIN+"ADS7865_sample.bin"
+ADS7865_ClkAndSamplePRU = BIN+"pru1.bin"
+
 
 #Global Functions
 def Read_Sample(user_mem, Sample_Length):
@@ -39,6 +47,14 @@ RD_pin = 'P9_30'
 CONVST_pin = 'P9_29'
 
 class ADS7865:
+	"""
+	ADS7865: Class that allows the user to instantiate an object 
+	representing the system ADS7865, an analog to digital converter
+	IC by Texas Instruments. The object incorporates attributes
+	relating to ADC's config, and function for change the config
+	as well as functions for collecting a string of samples in
+	realtime. """
+
 	def __init__(self, SR=0, L=0):
 	
 		#GPIO Stuff
@@ -159,14 +175,14 @@ class ADS7865:
 		pypruss.pruintc_init()  # Init the interrupt controller
 
 		# INIT PRU Registers	
-		pypruss.exec_program(0, "./init0.bin") # Cleaning the registers
-		pypruss.exec_program(1, "./init1.bin") # Cleaning the registers	
+		pypruss.exec_program(0, INIT0) # Cleaning the registers
+		pypruss.exec_program(1, INIT1) # Cleaning the registers	
 		pypruss.pru_write_memory(0, 0x0000, [0x0,]*0x0800) # clearing pru0 ram
 		pypruss.pru_write_memory(0, 0x0800, [0x0,]*0x0800) # clearing pru1 ram
 		pypruss.pru_write_memory(0, 0x4000, [0x0,]*300) # clearing ack bit from pru1
 		pypruss.pru_write_memory(0, PRU0_SR_Mem_Offset, [SR_BITECODE,]) # Setting samplerate
 		
-		pypruss.exec_program(1, "./pru1.bin") 		# Load firmware on PRU1
+		pypruss.exec_program(1, ADS7865_ClkAndSamplePRU) 		# Load firmware on PRU1
 		
 		# end readying process by arming the PRUs
 		boot.arm()
@@ -189,7 +205,7 @@ class ADS7865:
 		
 		#Launch the Sample collection program
 		a = time.time()
-		pypruss.exec_program(0, "./ADS7865_sample.bin") # Load firmware on PRU0
+		pypruss.exec_program(0, ADS7865_MasterPRU) # Load firmware on PRU0
 		
 		# Wait for PRU to finish its job.
 		pypruss.wait_for_event(0)# Wait for event 0 which is conn to PRU0_ARM_INTERUPT	

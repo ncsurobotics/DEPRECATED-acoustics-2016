@@ -51,7 +51,7 @@ else:
 ### Configure there ADC
 # create an object for ADS7865
 ADS7865 = ADC.ADS7865()
-ADS7865.n_channels = 4
+ADS7865.n_channels = 2
 """Instantiating the ADS7865 also ran code for building in attributes for 
 running commands relevent to the ADC"""
 if len(argv) > 3:

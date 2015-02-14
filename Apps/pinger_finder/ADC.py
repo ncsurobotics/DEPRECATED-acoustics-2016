@@ -96,6 +96,7 @@ class ADS7865:
 	#### GPIO Commands  #######
 	############################
 	def Config(self, cmd_list):
+		"""Config: Method that takes a hex value, given as a list item in  """
 		# Callee save the port direction
 		callee_sPD = self.DBus.portDirection
 		

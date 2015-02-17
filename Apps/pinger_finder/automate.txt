@@ -1,2 +1,4 @@
-help
+load_adc_app
+adc_conf
+unload_adc_app
 quit

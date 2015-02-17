@@ -28,32 +28,52 @@ def ADC_app_splash():
 	print(bar)
 	print('v-'*15)
 
-class loc():
-	pass
+def usage():
+	text = ["help: Get help.\n",
+		"quit: quit this program.\n",
+		"review: not encoded yet.\n",
+		"load_adc_app: Startup the adc enviroment.\n",
+		"unload_adc_app: Close adc environment"]
+	print(''.join(text) )
+
+class location():
+	def __init__(self, init):
+		self.list = [init]
+		self.refresh()
+
+	def push(self, new_loc):
+		"""push: method for updating the loc object with
+		new_loc, a string"""
+		(self.list).append(new_loc)
+		self.refresh()
+	
+	def pop(self):
+		"""pop: method for stepping back a location."""
+		self.list.pop()
+		self.refresh()
+
+	def refresh(self):
+		"""refresh: method for updating several attribute of this
+		class. primarily designed for internal use."""
+		self.curr = self.list[-1]
+		self.path = '>'.join(self.list)
 
 def UI():
 	# Generate location expressions
-	loc = {'list': [],
-		'curr': '',
-		'text': ''
-	}
-	
 	HOME = "HOME"
-	loc['list'].append(HOME)
+	ADC_APP = "ADC_APP"
+	ADC_CONF = "CONFIG"
+	loc = location(HOME)
 
 	# Print introductory text
-	response(loc['list'][-1], "Welcome! Please, type in a command:")
+	response(loc.curr, "Welcome! Please, type in a command:")
 
 	q = 0
 	while(q == 0):
-		# build environment variables
-		loc['str'] = '>'.join(loc['list'])
-		loc['curr'] = loc['list'][-1]
-
 		# build status variables
 
 		# query user for input
-		user_input = query(loc['str'])
+		user_input = query(loc.path)
 
 		# Log user response
 		pass
@@ -76,14 +96,15 @@ def UI():
 
 		elif 'load_adc_app' == user_input:
 			ADC_app_splash();
-			loc['list'].append('ADC App')
-			loc['str'] = '>'.join(loc['list'])
-			loc['curr'] = loc['list'][-1]
-			response(loc['curr'], "Loading ADC app...")
+			loc.push(ADC_APP)
+			response(loc.curr, "Loading ADC app...")
 			ADS7865 = ADC.ADS7865()
-			response(loc['curr'], "Done loading app. Entering environment...")
+			response(loc.curr, "Done loading app. Entering environment...")
 			
-			
+		elif 'adc_conf' == user_input:
+			loc.push(ADC_CONF)
+			enter_adc_config(ADS7865, loc)
+			loc.pop()
 
 		elif 'arm_semi' == user_input:
 			pass
@@ -92,11 +113,15 @@ def UI():
 			pass
 
 		elif 'unload_adc_app' == user_input:
-			response(loc['list'][-1], "Closing app...")
+			response(loc.curr, "Closing app...")
 			ADS7865.Close()
+			loc.pop()
+		elif 'EOF' == user_input:
+			response(loc.curr, "End of input file reached")
 
 		else:
-			response(loc['curr'], "Not a recognized command! Try again.")
+			response(loc.curr, "Not a recognized command! Try again.")
+			usage()
 
 def exit_app():
 	print("Goodbye!")
@@ -105,7 +130,7 @@ def response(loc, s):
 	"""response: a means of generating a system response.
 	Takes a string s and outputs it with the current location in 
 	the program, as designated by the string loc."""
-	print(loc +": "+s)
+	print('\n' +loc +": "+s)
 
 def query(loc):
 	"""query: a means of getting user input. 
@@ -116,5 +141,9 @@ def query(loc):
 
 	return request		
 		
+def enter_adc_config(ADC_OBJ, loc):
+	response(loc.curr, "You have entered the ADC config mode")
+	
+	response(loc.curr, "Exiting ADC config mode")
 
 main()

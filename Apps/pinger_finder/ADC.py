@@ -59,7 +59,7 @@ class ADS7865:
 	
 		#GPIO Stuff
 		self.DBus = BBBIO.Port(DB_pin_table)
-		self.DBus.setPortDir("out")
+		self.DBus.setPortDir("in")
 		
 		self.WR = BBBIO.Port(WR_pin)
 		self.WR.setPortDir("out")
@@ -89,7 +89,7 @@ class ADS7865:
 		self.sampleRate = SR
 		self.sampleLength = L
 		
-		#Load overlays
+		#Load overlays: Does not configure any GPIO to pruin or pruout
 		boot.load()
 		
 	############################

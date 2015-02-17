@@ -85,20 +85,37 @@ def batchLookupGPIO(pinList):
 	return GPIOList
 
 class GPIO:
+	"""Each instance of GPIO represents a pin on the beaglebone.
+	The pin which it represents is given as an input argument when
+	the object is first instantiated."""
+
 	def __init__(self,gpio_pin):
+		"""gpio_pin represents an integer corresponding with the
+		GPIO pin ID, which will range from 0 to +117. This __init__
+		is meant to establish all of the components neccessary in order
+		to treat a single pin as an object with configurable settings."""
+
 		self.gpio_pin = gpio_pin
 		self.gpio_base = "/sys/class/gpio/"
 		self.gpio_path = "/sys/class/gpio/gpio%d/"%gpio_pin
 		
+		# generate the sysFS string
 		os.system("echo %d > %sexport" % (gpio_pin,self.gpio_base))
 		with open(self.gpio_path+"direction") as f:
 			self.direction = f.read().rstrip("\n")
+
+		# update known value of pin
 		self.read()
 
 	def reInit(self):
 		self.__init__(self.gpio_pin)
 
 	def setDirection(self,targetState):
+		"""setDirection: method for setting a pin as an output or an
+		input. targetState represents a string dictating the state
+		the user wants for the pin, either 'out' or 'in'. This method
+		also assumes the responsibility of updating (str)self.direction"""
+
 		if (targetState == "out") or (targetState == "in"):
 			os.system("echo %s > %sdirection" % (targetState,self.gpio_path))
 			with open(self.gpio_path+"direction") as f:
@@ -107,6 +124,13 @@ class GPIO:
 			print("pin%s: %s is not a valid direction" % (self.gpio_pin,targetState))
 
 	def write(self,value):
+		"""write: a method for getting a pin to output "value", which
+		is expected to be either a 1 or 0. This method will only work
+		if the pin is configured as an output before hand... which
+		can be done with the setDirection method.
+		--This method also assumes the responsibility of updating
+		(int)self.value."""
+
 		if self.direction == "out":
 			os.system("echo %d > %svalue" % (value,self.gpio_path))
 			self.value = value
@@ -114,11 +138,21 @@ class GPIO:
 			print("pin%s is not an output. You cannot set it's value." % self.gpio_pin)
 	
 	def read(self):
+		"""read: a method that returns a 1 or 0 representing the 
+		value/state of an input/output pin. This method also has
+		the responsibility of updating (str)self.value."""
+
+		# read op involve uneccessary \n char. Must take
+		# extra step to remove it.
 		with open(self.gpio_path+"value") as f:
 			self.value = int( f.read().rstrip("\n") )
 		return self.value
 
 	def help(self):
+		"""help: method that prints all the methods and attributes
+		which the caller will have access to. Useful when writing
+		new code, or debugging a program using this class."""
+
 		print("You can call the following attributes: ")
 		for item in self.__dict__.keys():
 			print("  *.%s" % item)
@@ -130,12 +164,28 @@ class GPIO:
 		print("")
 
 	def close(self):
+		"""close: method used, for all functional purposes, to
+		deactivate a pin. That is, it ensures that the pin is an input,
+		and it unexports the GPIO ID from sysFS, causing no methods
+		to work for (self) untill the self.reInit() method is called."""
+
 		self.setDirection("in")
 		os.system("echo %d >%sunexport" % (self.gpio_pin,self.gpio_base)) 
 
 
 class Port():
+	"""Each instance of Port represents a group of pins on the beaglebone.
+	This group of pins is actually a group of GPIO instances. The Caller
+	may specify this group during instantiation, or afterwards with the
+	(self).createPort(...) method."""
+
 	def __init__(self, assignment=None):
+		"""Initialization is meant to establish all attributes
+		needed for instantiation. assignment is an optional argument
+		in case the caller would like to define the port during
+		instantiation. For more details, see the pinNameList argument
+		of the (self).createPort method."""
+		
 		self.en = True
 		self.pins = []
 		self.direction = []
@@ -147,6 +197,16 @@ class Port():
 			self.createPort(assignment)
 	
 	def createPort(self, pinNameList):
+		"""createPort: method for assigning a port, which is
+		just a group of pins. pinNameList represents a list of
+		strings specifying BBB pins from a end user's POV, and
+		the format of this specification is "Px_y", whereas
+		x is the header number on the BBB, y is the pin 
+		number on that particular header (including leading zeros). 
+		Thus, strings such as "P8_01", "P8_46", "P9_02" are valid.
+		-- pinNameList[0] must represent the LSB, and
+		pinNameList[-1] must represent the MSB."""
+
 		if type(pinNameList) == type(""):
 			pinNameList = [pinNameList]
 
@@ -162,6 +222,10 @@ class Port():
 		self.length = len(self.pins)		#self.length
 
 	def readStr(self):
+		"""readStr: method for reading values of all pins that
+		make up a particular port (self), and returns a binary
+		string with the MSB on the left, and the LSB on the right."""
+
 		s = ""
 		i = 0
 		for pin in self.pins:
@@ -171,8 +235,8 @@ class Port():
 		return s
 	
 	def writeToPort(self,value):
-		'''Function takes the integer 'value' and converts it to a 
-		string formated binary representation, which is parsed in 
+		'''writeToPort: takes the integer 'value' and converts it to a 
+		string formated in binary representation, which is parsed in 
 		the for loop in order to configure each pin on the port.'''
 		
 		portLength = len(self.pins)
@@ -185,6 +249,13 @@ class Port():
 			
 
 	def setPortDir(self, direction):
+		"""setPortDir: method that set all pins on a port to
+		direction, which is a string saying "in" or "out, and
+		updates self.portDirection and self.direction accordingly.
+		--NOTE: this method does not return a value. Caller must
+		read the self.direction[i] of self.portDirection in order
+		to access such information."""
+
 		i = 0
 		for pin in self.pins:
 			pin.setDirection(direction)
@@ -194,10 +265,16 @@ class Port():
 		self.portDirection = direction
 
 	def close(self):
+		"""close: method for closing every pin on a port. 
+		See the close() in the GPIO class for more detail."""
+
 		for pin in self.pins:
 			pin.close()
 
 	def help(self):
+		"""help: prints a list of all available attribute and methods
+		for (self)."""
+
 		print("You can call the following attributes: ")
 		for item in self.__dict__.keys():
 			print("  *.%s" % item)

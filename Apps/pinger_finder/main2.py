@@ -1,3 +1,6 @@
+import ADC
+import os
+
 help_text = """quit: quit the program.
 help: display this help text."""
 
@@ -18,6 +21,15 @@ def title():
 	print(bar)
 	print(" "*15 + " PINGER FINDER")
 	print(bar)
+
+def ADC_app_splash():
+	bar = '- '*15
+	os.system("clear")
+	print(bar)
+	print('v-'*15)
+
+class loc():
+	pass
 
 def UI():
 	# Generate location expressions
@@ -43,6 +55,9 @@ def UI():
 		# query user for input
 		user_input = query(loc['str'])
 
+		# Log user response
+		pass
+
 		# respond to user input
 		if 'quit' == user_input:
 			q = 1
@@ -60,7 +75,15 @@ def UI():
 			pass
 
 		elif 'load_adc_app' == user_input:
-			pass
+			ADC_app_splash();
+			loc['list'].append('ADC App')
+			loc['str'] = '>'.join(loc['list'])
+			loc['curr'] = loc['list'][-1]
+			response(loc['curr'], "Loading ADC app...")
+			ADS7865 = ADC.ADS7865()
+			response(loc['curr'], "Done loading app. Entering environment...")
+			
+			
 
 		elif 'arm_semi' == user_input:
 			pass
@@ -68,8 +91,9 @@ def UI():
 		elif 'arm_oneshot' == user_input:
 			pass
 
-		elif 'dearm_adc' == user_input:
-			pass
+		elif 'unload_adc_app' == user_input:
+			response(loc['list'][-1], "Closing app...")
+			ADS7865.Close()
 
 		else:
 			response(loc['curr'], "Not a recognized command! Try again.")

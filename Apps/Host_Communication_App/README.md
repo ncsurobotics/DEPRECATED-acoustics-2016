@@ -52,3 +52,21 @@ file representing the UART system:
 ```
 root@beaglebone:~# echo --insert message here-- > /dev/ttyO4
 ```
+
+# Troubleshooting
+**BBB not reading uart input data**
+
+Possible that backend terminal processing is missing something that will tell it to "print <x> to screen". To check, enter
+
+```
+stty -F /dev/ttyO<uart_port#> -a
+
+```
+
+to check on the port's settings, or enter
+
+```
+stty -F /dev/ttyO<uart_port#> raw
+```
+
+To see circumvent terminal processing and verify that signals are reaching the target RX pin at all.

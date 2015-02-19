@@ -1,5 +1,10 @@
 import os
 
+UART_RX = "P9.11"
+UART_TX = "P9.13"
+BAUD = 9600
+UART_DEV_FILE = "ttyO4"
+
 def load():
 	# enable all pins to be used as io
 	os.system("config-pin overlay cape-universal")
@@ -42,3 +47,22 @@ def dearm():
 	os.system("config-pin P9.31 gpio") # bWR
 	os.system("config-pin P9.30 gpio") # bRD
 	os.system("config-pin P9.27 gpio") # BUSY
+
+def uart():
+	print("booy.py: Loading uart pins %s (RX) and " % UART_RX
+		+ "%s (TX)" 			% UART_TX)
+
+	os.system("config-pin -a %s uart" 	% UART_RX)
+	os.system("config-pin %s uart" 		% UART_TX)
+	# os.system("stty -F /dev/%s raw %d" 	% (UART_DEV_FILE, BAUD))
+	print("boot.py: Finished loading uart pins")
+	
+def nouart():
+	print("booy.py: Unloading uart pins %s (RX) and " % UART_RX
+		+ "%s (TX)" 			% UART_TX)
+
+	os.system("config-pin %s gpio"		% UART_RX)
+	os.system("config-pin %s gpio" 		% UART_TX)
+	#os.system("stty -F /dev/%s sane" 	% (UART_DEV_FILE, BAUD))
+	print("boot.py: uart pins have been unloaded.")
+

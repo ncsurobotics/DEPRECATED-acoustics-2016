@@ -7,6 +7,7 @@
 *__pycache__*
 *.pyc
 *.swp*
+*.py~
 
 /Apps/LTC1564_Tester/Debug/
 /Apps/LTC1564_Tester/Release/

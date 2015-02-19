@@ -16,6 +16,7 @@ INIT0 = BIN+"init0.bin"
 INIT1 = BIN+"init1.bin"
 ADS7865_MasterPRU = BIN+"ADS7865_sample.bin"
 ADS7865_ClkAndSamplePRU = BIN+"pru1.bin"
+WORD_SIZE = 12
 
 
 #Global Functions
@@ -35,6 +36,13 @@ def Read_Sample(user_mem, Sample_Length):
 		
 	return y
 		
+def twos_comp(val, bits):
+        """compute the 2's compliment of int value val"""
+        if( (val&(1<<(bits-1))) != 0 ):
+          val = val - (1<<bits)
+        return val
+
+
 ######################################
 ######    ADS7865 Class ##############
 #####################################
@@ -51,11 +59,13 @@ class ADS7865:
 	ADS7865: Class that allows the user to instantiate an object 
 	representing the system ADS7865, an analog to digital converter
 	IC by Texas Instruments. The object incorporates attributes
-	relating to ADC's config, and function for change the config
+	relating to ADC's config, and function for changing the config
 	as well as functions for collecting a string of samples in
 	realtime. """
 
 	def __init__(self, SR=0, L=0):
+		"""Initialization will configure several BBB pins as necessary
+		to hold the adc in an idle state. """
 	
 		#GPIO Stuff
 		self.DBus = BBBIO.Port(DB_pin_table)
@@ -63,6 +73,15 @@ class ADS7865:
 		
 		self.WR = BBBIO.Port(WR_pin)
 		self.WR.setPortDir("out")
+		self.WR.writeToPort(1)
+		
+		self._RD = BBBIO.Port(RD_pin)
+		self._RD.setPortDir("out")
+		self._RD.writeToPort(1)
+
+		self._CONVST = BBBIO.Port(CONVST_pin)
+		self._CONVST.setPortDir("out")
+		self._CONVST.writeToPort(1)
 		
 		self._CS = BBBIO.Port(CS_pin)
 		self._CS.setPortDir("out")
@@ -96,7 +115,12 @@ class ADS7865:
 	#### GPIO Commands  #######
 	############################
 	def Config(self, cmd_list):
-		"""Config: Method that takes a hex value, given as a list item in  """
+		"""Config: Method that takes a list of hex values (cmd_list)
+		and bitbangs the ADC accordingly. User may refer to the
+		datasheet for an explanation of what the hex values actually
+		mean. Additionally, user may refer to (self).EZConfig for
+		examples of how to correctly apply this command."""
+
 		# Callee save the port direction
 		callee_sPD = self.DBus.portDirection
 		
@@ -113,6 +137,10 @@ class ADS7865:
 		self.DBus.setPortDir(callee_sPD)#Return DB pins back to inputs.
 	
 	def EZConfig(self, sel):
+		"""EZConfig: method allowing the user to access commonly
+		used config command (presets). sel is an integer from 0 to 5
+		representing a particular preset."""
+
 		#NOTES TO USER
 		#--At powerup, sequencer_register=0x000
 		#--Capturing one channel (non-pair) in isolation is doable by selecting sel=0
@@ -150,10 +178,10 @@ class ADS7865:
 		self._CS.writeToPort(1)
 		self.DBus.close()
 		self.WR.close()
+		self._RD.close()
 		#self.BUSY.close()
 		self._CS.close()
-		#self.RD.close()
-		#self._CONVST.close()
+		self._CONVST.close()
 	
 	############################
 	#### PRUSS Commands  #######
@@ -222,5 +250,8 @@ class ADS7865:
 		y = [0]*n_channels
 		for chan in range(n_channels):
 			y[chan] = raw_data[chan::n_channels]
+			i = 0
+			for samp in y[chan]:
+				y[chan][i] = twos_comp(samp,WORD_SIZE)
 			
 		return y,t

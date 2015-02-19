@@ -120,10 +120,10 @@ WAIT:
 COLLECT:
 	CLR  r30, bRD		// Activate bWR
 
-        MOV  GP.Tmr, 0x4E20
+//        MOV  GP.Tmr, 0x4E20
 BUG_WAIT:
-        SUB  GP.Tmr, GP.Tmr, 2
-        QBLE BUG_WAIT, GP.Tmr, 3        
+//        SUB  GP.Tmr, GP.Tmr, 2
+//        QBLE BUG_WAIT, GP.Tmr, 3        
 
 	Set_COLL_High_On_PRU0	// << Used to signal PRU1 to sample ADC
 
@@ -183,7 +183,7 @@ SUBMIT:
 	SBBO DQ.Sample, DAQConf.Data_Dst, DQ.TapeHD_Offset, SIZE(DQ.Sample) // submit data to DDR
 	INCR DQ.TapeHD_Offset, 4 // increment pointer
 	
-	Sub_Sample_Controller CONVST
+	Sub_Sample_Controller WAIT
 		// Sub_Sample_Controller will either make a shortcut to the CONVST
 		// step, or go all the way back at the top of the cycle... depending
 		// on the sub_sample that was just collected.

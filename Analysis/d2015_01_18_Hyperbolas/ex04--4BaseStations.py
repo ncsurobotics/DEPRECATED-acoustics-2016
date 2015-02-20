@@ -129,11 +129,13 @@ def go(src_loc, n, bs):
 	
 
 def main():
-	rot = np.pi
+	rot = np.pi/8
 	Hyd = [np.array([[0],[10e-2]])] #Hydrophone #1 location (meters)
 	Hyd.append( xform_rotate(Hyd[0], rot) )
-	#Hyd.append( xform_rotate(Hyd[1], rot) )
-	#Hyd.append( xform_rotate(Hyd[2], rot) )
+	Hyd.append( xform_rotate(Hyd[1], rot) )
+	Hyd.append( xform_rotate(Hyd[2], rot) )
+	Hyd.append( xform_rotate(Hyd[2], rot) )
+	Hyd.append( xform_rotate(Hyd[2], rot) )
 
 	src = np.array([[5e-2],[2e-2]])
 	

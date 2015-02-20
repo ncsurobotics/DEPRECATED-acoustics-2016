@@ -126,7 +126,7 @@ ax[1].plot(env['t'],sig['group'][1])
 #################################################
 ADC = ADC.ADS7865()
 
-ADC.fs = 400e3 #Hz
+ADC.fs = 400e3 #Sample Rate Hz
 sig['group_adc'] = ADC.Sample(sig['group'], env['t'])
 
 f2,ax = plt.subplots()

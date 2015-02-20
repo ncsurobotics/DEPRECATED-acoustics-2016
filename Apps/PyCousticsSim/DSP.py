@@ -83,7 +83,6 @@ class BBB:
 		
 		print("Phase = %d degrees." % theta)
 		
-		import pdb; pdb.set_trace()
 		# Determine phase of 22khz signal
 		
 		

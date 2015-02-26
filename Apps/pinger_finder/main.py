@@ -2,6 +2,10 @@ import ADC
 import boot
 import time
 from sys import argv
+#import matplotlib
+#matplotlib.use('GTK')
+
+#import matplotlib.pyplot as plt
 
 def Shoot(ADC,len,SR):
 	# Initialize empty variables
@@ -31,6 +35,12 @@ def Shoot(ADC,len,SR):
 		for chan in range(ADC.n_channels):
 			print("Channel %d = %s.\n" % (chan, y[chan]))
 
+	ans = raw_input("\n would you like to plot the data?\n>>: ")
+
+	if ("y" in ans):
+		plt.plot(y[0])
+		plt.show()
+
 	# Return the raw y incase needed for more analysis.
 	return y
 
@@ -58,7 +68,7 @@ if len(argv) > 3:
 	# Configure settings
 	#ADS7865.Config([0xF0F,])
 	#ADS7865.Config([0xF0F,0x0F0])
-	ADS7865.EZConfig(0)
+	ADS7865.EZConfig(2)
 else:
 	print("\nmain: user did not give 4th argument. I will skip over any configuration steps.")
 

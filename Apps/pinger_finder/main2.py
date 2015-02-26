@@ -141,9 +141,14 @@ def query(loc):
 
 	return request		
 		
-def enter_adc_config(ADC_OBJ, loc):
+def EZ_enter_adc_config(ADC_OBJ, loc):
 	response(loc.curr, "You have entered the ADC config mode")
-	
+	q = 0
+	while (q != 0 ):
+		response(loc, "Please enter a sample size")
+		SL = query(loc)
+		response(loc, "Please enter a sample rate")
+		SR = 
 	response(loc.curr, "Exiting ADC config mode")
 
 main()

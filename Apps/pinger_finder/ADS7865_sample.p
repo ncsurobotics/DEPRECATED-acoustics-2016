@@ -111,8 +111,8 @@ WAIT:
 	
 	// At this point, PRU0 has detected BUSY go low. Thus, a conversion
 	// has been completed, and a data point is ready for collection.
-	// PRU0 will now pull WR low (+ deactivate CONVST) in order to
-	// get the ADC output the 12-bit sample. Then it will set it's
+	// PRU0 will now pull WR low  in order to get the ADC output to 
+        // output the 12-bit sample. Then it will set it's
 	// COLL=1 in the PRU0 status code, which should notify PRU1 that
 	// it should join in on the sample collection process.
 	
@@ -120,10 +120,6 @@ WAIT:
 COLLECT:
 	CLR  r30, bRD		// Activate bWR
 
-//        MOV  GP.Tmr, 0x4E20
-BUG_WAIT:
-//        SUB  GP.Tmr, GP.Tmr, 2
-//        QBLE BUG_WAIT, GP.Tmr, 3        
 
 	Set_COLL_High_On_PRU0	// << Used to signal PRU1 to sample ADC
 
@@ -174,6 +170,12 @@ MDB1:
 MDB0:
 	QBBC NEXT, GP.Cpr, DB0
 	 SET DQ.Sample, 0
+
+// Trying to fix issue with mux not working for b.
+        MOV  GP.Tmr, 0x4E2
+BUG_WAIT:
+        SUB  GP.Tmr, GP.Tmr, 2
+        QBLE BUG_WAIT, GP.Tmr, 3        
 
 NEXT:
 	QBA  SUBMIT

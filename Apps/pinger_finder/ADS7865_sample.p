@@ -24,7 +24,7 @@
 .endm
 
 .macro  Get_SL
-		LBBO DAQConf.Samp_Len, DQ.PRU0_Ptr, HOST_SLh, 4
+        LBBO DAQConf.Samp_Len, DQ.PRU0_Ptr, HOST_SLh, 4
 .endm 
 
 .macro  Set_COLL_High_On_PRU0
@@ -86,6 +86,7 @@ TOP:
 	QBEQ END, DAQConf.TO, 0		// Check Timeout ctr. End program if too long.  
 	 DECR DAQConf.TO, 1			// decrement timer.
 	#endif
+
 
 TRIG:
 	LBBO DQ.PRU1_State, DQ.PRU1_Ptr, PRU_STATEh, SIZE(DQ.PRU1_State)

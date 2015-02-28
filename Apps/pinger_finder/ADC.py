@@ -18,6 +18,9 @@ ADS7865_MasterPRU = BIN+"ADS7865_sample.bin"
 ADS7865_ClkAndSamplePRU = BIN+"pru1.bin"
 WORD_SIZE = 12
 
+BYTES_PER_SAMPLE = 4
+MIN_SAMPLE_LENGTH = 2
+
 
 #Global Functions
 def Read_Sample(user_mem, Sample_Length):
@@ -160,19 +163,21 @@ class ADS7865:
 		elif sel==2:
 			#User has chosen to sample the 0a/0b differential channel pair 
 			#while disabling the sequencer register
-			self.Config([0x101,0x000])
+			self.Config([0x104,0x000])
 		elif sel==3:
 			#User has chosen to sample the 0a/0b differential channel pair 
 			#while disabling the sequencer register
-			self.Config([0x301,0x000])
+			self.Config([0x304,0x000])
 			
 		#Dual channel (pair) enable
 		elif sel==4:
 			#User has chosen to sample the 0a/0b -> 1a/1b in FIFO style
-			self.Config([0x101,0x230])
+			self.Config([0x104,0x230])
 		elif sel==5:
 			#User has chosen to sample the 1a/1b -> 0a/0b in FIFO style
-			self.Config([0x101,0x2c0])
+			self.Config([0x104,0x2c0])
+		elif sel==6:
+			self.Config([0x104,0x290])
 			
 	def Close(self):
 		self._CS.writeToPort(1)
@@ -229,8 +234,13 @@ class ADS7865:
 		#Share DDR RAM Addr with PRU0
 		pypruss.pru_write_memory(0, 1, [self.ddr['addr'],])
 		
-		#Share SL with PRU0
-		pypruss.pru_write_memory(0, 2, [length*4-8,])
+		#Share SL with PRU0: pru_SL_mapping just incorporates
+		#some math that translates the user specified SL parameter
+		#to a byte addressible memory size value that the PRU will use to
+		#check whether it has finished writing it's data to the
+		#memory
+		pru_SL_mapping = (length - MIN_SAMPLE_LENGTH) * BYTES_PER_SAMPLE
+		pypruss.pru_write_memory(0, 2, [pru_SL_mapping,])
 		
 		#Launch the Sample collection program
 		a = time.time()
@@ -253,5 +263,6 @@ class ADS7865:
 			i = 0
 			for samp in y[chan]:
 				y[chan][i] = twos_comp(samp,WORD_SIZE)
+				i += 1
 			
 		return y,t

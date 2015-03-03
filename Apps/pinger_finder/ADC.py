@@ -110,6 +110,7 @@ class ADS7865:
 		
 		self.sampleRate = SR
 		self.sampleLength = L
+		self.arm_status = "unknown"
 		
 		#Load overlays: Does not configure any GPIO to pruin or pruout
 		boot.load()
@@ -125,7 +126,7 @@ class ADS7865:
 		examples of how to correctly apply this command."""
 
 		# Callee save the port direction
-		callee_sPD = self.DBus.portDirection
+		#callee_sPD = self.DBus.portDirection
 		
 		# 
 		for cmd in cmd_list:
@@ -137,7 +138,7 @@ class ADS7865:
 			print('ADS7865: Databus cmd %s has been sent.' % self.DBus.readStr())
 			self.WR.writeToPort(1)		#Latch down the input
 		
-		self.DBus.setPortDir(callee_sPD)#Return DB pins back to inputs.
+		self.DBus.setPortDir("in")#Return DB pins back to inputs.
 	
 	def EZConfig(self, sel):
 		"""EZConfig: method allowing the user to access commonly
@@ -157,7 +158,7 @@ class ADS7865:
 			self.Config([0x100])
 		elif sel==1:
 			#User has chosen to sample the 1a/1b differential channel pair.
-			self.Config([0x300])
+			self.Config([0xD00])
 
 		#Single channel (pair) enable with sequencer reinitialization
 		elif sel==2:
@@ -178,6 +179,16 @@ class ADS7865:
 			self.Config([0x104,0x2c0])
 		elif sel==6:
 			self.Config([0x104,0x290])
+			
+	def Read_Seq(self):
+		self.Config([0x106])
+		from time import sleep
+		for i in range(20):
+			print(i)
+			sleep(.1)
+		self._RD.writeToPort(1)
+		seq = self.DBus.readStr()
+		print("Config of sequencer: %s" % seq)
 			
 	def Close(self):
 		self._CS.writeToPort(1)

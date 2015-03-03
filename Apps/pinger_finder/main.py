@@ -68,7 +68,12 @@ if len(argv) > 3:
 	# Configure settings
 	#ADS7865.Config([0xF0F,])
 	#ADS7865.Config([0xF0F,0x0F0])
-	ADS7865.EZConfig(6)
+	for i in range(1,11):
+		print(11-i)
+		time.sleep(.1)
+	print("configuring")
+	ADS7865.EZConfig(2)
+	ADS7865.Read_Seq()
 else:
 	print("\nmain: user did not give 4th argument. I will skip over any configuration steps.")
 

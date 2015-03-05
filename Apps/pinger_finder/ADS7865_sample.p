@@ -198,4 +198,5 @@ END:
 	SBBO GP.Cpr, DAQConf.Data_Dst, DQ.TapeHD_Offset, SIZE(DQ.Sample) // submit data to DDR
 	SET  r30, bCONVST
 	MOV r31.b0, PRU0_ARM_INTERRUPT+16 // Send notification to host for program completion
+        MOV DQ.TapeHD_Offset, 0 // Clear the offset as preparation for next run
 	HALT

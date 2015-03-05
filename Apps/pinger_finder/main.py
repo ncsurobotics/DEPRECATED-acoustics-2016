@@ -38,7 +38,15 @@ def Shoot(ADC,len,SR):
 	ans = raw_input("\n would you like to plot the data?\n>>: ")
 
 	if ("y" in ans):
-		plt.plot(y[0])
+		fig,ax = plt.subplots()
+		ax.plot(y[0])
+		ax.plot(y[1])
+		ax.axis(xmin=0,
+				xmax=None,
+				ymin=-2**11,
+				ymax=2**11)
+				
+		
 		plt.show()
 
 	# Return the raw y incase needed for more analysis.
@@ -72,8 +80,8 @@ if len(argv) > 3:
 		print(11-i)
 		time.sleep(.1)
 	print("configuring")
-	ADS7865.EZConfig(2)
-	ADS7865.Read_Seq()
+	ADS7865.EZConfig(4)
+	#ADS7865.Read_Seq()
 else:
 	print("\nmain: user did not give 4th argument. I will skip over any configuration steps.")
 

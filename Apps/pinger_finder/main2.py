@@ -1,5 +1,6 @@
 import ADC
 import os
+import watch_for_dead_bits
 
 help_text = """quit: quit the program.
 help: display this help text."""
@@ -51,10 +52,10 @@ def UI():
 		################################
 
 		# respond to user input
-		if 'quit' == user_input:
+		if ('quit' == user_input) or ('q' == user_input):
 			q = 1
 
-		elif 'help' == user_input:
+		elif ('help' == user_input) or ('h' == user_input):
 			print('-'*50)
 			print(help_text)
 			print('-'*50)
@@ -63,13 +64,13 @@ def UI():
 		########### ADC cmd Class ######
 		################################
 
-		elif ('adc_status' == user_input):
+		elif ('adc_status' == user_input) or ('s' == user_input):
 			if ADC_active:
 				report_adc_status(ADS7865)
 			else:
 				response(loc.curr, "Please run 'load_adc_app' first")
 			
-		elif 'load_adc_app' == user_input:
+		elif ('load_adc_app' == user_input) or ('l' == user_input):
 			ADC_active = True
 			ADC_app_splash();
 			loc.push(ADC_APP)
@@ -77,20 +78,20 @@ def UI():
 			ADS7865 = ADC.ADS7865()
 			response(loc.curr, "Done loading app. Entering environment...")
 			
-		elif 'unload_adc_app' == user_input:
+		elif ('unload_adc_app' == user_input) or ('u'==user_input):
 			response(loc.curr, "Closing app...")
 			ADS7865.Close()
 			loc.pop()
 			
-		elif 'adc_debug_wizard':
+		elif ('adc_debug_wizard' == user_input) or ('d' == user_input):
 			if ADC_active:
 				adc_debug_wizard(ADS7865)
 			else:
 				response(loc.curr, "Please run 'load_adc_app' first")
 			
-		elif 'adc_conf' == user_input:
+		elif ('adc_conf' == user_input) or ('o' == user_input):
 			loc.push(ADC_CONF)
-			enter_adc_config(ADS7865, loc)
+			adc_config(ADS7865, loc)
 			loc.pop()
 			
 		# c ############################
@@ -143,7 +144,7 @@ def adc_debug_wizard(ADC_object):
 		# route user
 		if 'q' == user_input:
 			q = 1
-		elif 'watch_for_dead_bits':
+		elif ('watch_for_dead_bits' == user_input) or ('w' == user_input):
 			watch_for_dead_bits.main(ADC_object)
 		
 		
@@ -153,7 +154,18 @@ def printDebugs(keys):
 		print("\t%d: %s" % (row,key))
 		row += 1
 		
-
+		
+def adc_config(ADC_OBJ, loc):
+	response(loc.curr, "You have entered the ADC config mode")
+	q = 0
+	response(loc.curr, "Please enter a sample length")
+	SL = query(loc.curr)
+	response(loc.curr, "Please enter a sample rate")
+	SR = query(loc.curr)
+	ADC_OBJ.sampleLength = eval(SL)
+	ADC_OBJ.sampleRate = eval(SR)
+	response(loc.curr, "Exiting ADC config mode")
+	
 # 4. #####################################
 ##################### Elements ###########
 ##########################################
@@ -175,11 +187,13 @@ def ADC_app_splash():
 	print('v-'*15)
 
 def usage():
-	text = ["help: Get help.\n",
-		"quit: quit this program.\n",
-		"review: not encoded yet.\n",
-		"load_adc_app: Startup the adc enviroment.\n",
-		"unload_adc_app: Close adc environment"]
+	text = ["  (h)elp: Get help.\n",
+		"  (q)uit: quit this program.\n",
+		"  adc_(s)tatus: prints data regarding the adc.\n",
+		"  (l)oad_adc_app: Startup the adc enviroment.\n",
+		"  (u)nload_adc_app: Close adc environment.\n",
+		"  adc_c(o)nf: Change Settings of the ADC.\n",
+		"  adc_(d)ebugger: pull up the debugging menu"]
 	print(''.join(text) )
 
 class location():
@@ -220,15 +234,6 @@ def query(loc):
 	request = raw_input("{%s} >>" % loc)
 
 	return request		
-		
-def EZ_enter_adc_config(ADC_OBJ, loc):
-	response(loc.curr, "You have entered the ADC config mode")
-	q = 0
-	while (q != 0 ):
-		response(loc, "Please enter a sample size")
-		SL = query(loc)
-		response(loc, "Please enter a sample rate")
-		SR = query(loc)
-	response(loc.curr, "Exiting ADC config mode")
+
 
 main()

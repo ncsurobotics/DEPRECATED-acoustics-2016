@@ -235,7 +235,7 @@ class ADS7865:
 	def Reload(self):
 		print 'Reload: "I do nothing."'
 	
-	def Burst(self, length=None, n_channels=None):
+	def Burst(self, length=None, n_channels=None, raw=None):
 		if length is None:				#Optional argument for sample length
 			length = self.sampleLength
 		
@@ -272,8 +272,12 @@ class ADS7865:
 		for chan in range(n_channels):
 			y[chan] = raw_data[chan::n_channels]
 			i = 0
-			for samp in y[chan]:
-				y[chan][i] = twos_comp(samp,WORD_SIZE)
-				i += 1
+			
+			# User may specify whether he wants values to come in
+			# raw, or two's compliment.
+			if (raw == None) or (raw == 0):
+				for samp in y[chan]:
+					y[chan][i] = twos_comp(samp,WORD_SIZE)
+					i += 1
 			
 		return y,t

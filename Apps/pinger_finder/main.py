@@ -2,24 +2,23 @@ import ADC
 import boot
 import time
 from sys import argv
-#import matplotlib
-#matplotlib.use('GTK')
+import numpy as np
 
-#import matplotlib.pyplot as plt
-
-def Shoot(ADC,len,SR):
+def Shoot(ADC,length,SR):
 	# Initialize empty variables
 	sum = 0
+	SAMP_PER_CONV = 2
+	SAMP_PER_CYCLE = ADC.n_channels/2
 	
 
 	# Used ADC to collect samples
 	raw_input("Hit enter when you're ready...")
-	y,t = ADC.Burst(len)
+	y,t = ADC.Burst(length)
 
 	# Interpret data
 	
-	if ADC.n_channels == 2:
-		samples = len - 1
+	if ADC.n_channels > 1:
+		samples = length
 		Ts = t/ ((samples/2)-1)
 		print("")
 		print("main: %d samples were captured in %.2e seconds "
@@ -38,15 +37,34 @@ def Shoot(ADC,len,SR):
 	ans = raw_input("\n would you like to plot the data?\n>>: ")
 
 	if ("y" in ans):
+		# Load plotting program
+		print("Loading Matplotlib library...")
+		import matplotlib
+		matplotlib.use('GTK')
+		import matplotlib.pyplot as plt
+		print("...done.")
+		
+		# Setup info
+		throughput 			= ADC.sampleRate/float(SAMP_PER_CYCLE) #Hz per channel
+		Ts_per_samp 		= 1/throughput
+		Samps_per_channel 	= ADC.sampleLength/float(ADC.n_channels)
+		time 				= np.arange(0,Ts_per_samp*Samps_per_channel,Ts_per_samp)
+		
+		# Generate plots
 		fig,ax = plt.subplots()
-		ax.plot(y[0])
-		ax.plot(y[1])
+		
+		# write n plots to matplotlib
+		for n in range(ADC.n_channels):
+			ax.plot(time,y[n],'*')
+
 		ax.axis(xmin=0,
 				xmax=None,
 				ymin=-2**11,
 				ymax=2**11)
 				
-		
+		ax.set_xlabel('time (seconds)',fontsize = 18)
+		ax.set_ylabel('code', fontsize = 18)
+		ax.set_title("%d channel signal capture" % ADC.n_channels, fontsize = 18)
 		plt.show()
 
 	# Return the raw y incase needed for more analysis.
@@ -64,23 +82,19 @@ if len(argv) < 3:
 	print("main: You did not specify a sample rate")
 	SR = input("Please enter a sample rate (samps/sec): ")
 else:
-	SR = int(argv[2])
+	SR = float(argv[2])
 
 ### Configure there ADC
 # create an object for ADS7865
 ADS7865 = ADC.ADS7865()
-ADS7865.n_channels = 4
+ADS7865.n_channels = 2
 """Instantiating the ADS7865 also ran code for building in attributes for 
 running commands relevent to the ADC"""
 if len(argv) > 3:
 	# Configure settings
 	#ADS7865.Config([0xF0F,])
 	#ADS7865.Config([0xF0F,0x0F0])
-	for i in range(1,11):
-		print(11-i)
-		time.sleep(.1)
-	print("configuring")
-	ADS7865.EZConfig(4)
+	ADS7865.EZConfig(2)
 	#ADS7865.Read_Seq()
 else:
 	print("\nmain: user did not give 4th argument. I will skip over any configuration steps.")

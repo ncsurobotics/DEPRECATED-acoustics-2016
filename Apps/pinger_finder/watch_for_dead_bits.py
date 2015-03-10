@@ -71,23 +71,22 @@ def main(ADC_Obj):
 		user_input = 'q'
 	
 	while (user_input != 'q'):
-	
-		# Capture Data
-		y,t = ADC_Obj.Burst(raw=1)
+		try:
+			# Capture Data
+			y,t = ADC_Obj.Burst(raw=1)
 		
-		# Parse The Data
-		if user_input == 'burn':
-			msk.burn(y[0], .1)
-		if user_input == 'normal':
-			msk.normal(y[0], .1)
+			# Parse The Data
+			if user_input == 'burn':
+				msk.burn(y[0], .1)
+			if user_input == 'normal':
+				msk.normal(y[0], .1)
 		
-		# Take user input
-		#user_input = raw_input('Press enter to continue...')
-		
-		# Reload the program
-		pypruss.modprobe()	
-		pypruss.init()		# Init the PRU
-		pypruss.open(0)		# Open PRU event 0 which is PRU0_ARM_INTERRUPT
-		pypruss.pruintc_init()  # Init the interrupt controller
+			# Uncomment to allow for user loop control
+			#user_input = raw_input('Press enter to continue...')
+		except KeyboardInterrupt:
+			print("Quitting program")
+			user_input = 'q'
+
+
 		
 	boot.dearm()

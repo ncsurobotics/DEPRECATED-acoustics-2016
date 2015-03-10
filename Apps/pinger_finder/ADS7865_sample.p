@@ -173,10 +173,10 @@ MDB0:
 	 SET DQ.Sample, 0
 
 // Trying to fix issue with mux not working for b.
-        MOV  GP.Tmr, 0x4E2
-BUG_WAIT:
-        SUB  GP.Tmr, GP.Tmr, 2
-        QBLE BUG_WAIT, GP.Tmr, 3        
+//        MOV  GP.Tmr, 0x4E2
+//BUG_WAIT:
+//        SUB  GP.Tmr, GP.Tmr, 2
+//        QBLE BUG_WAIT, GP.Tmr, 3        
 
 NEXT:
 	QBA  SUBMIT

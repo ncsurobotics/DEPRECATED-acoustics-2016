@@ -21,6 +21,9 @@ WORD_SIZE = 12
 BYTES_PER_SAMPLE = 4
 MIN_SAMPLE_LENGTH = 2
 
+CODE_READDAC = 0x103
+CODE_SWRESET = 0x105
+CODE_READSEQ = 0x106
 
 #Global Functions
 def Read_Sample(user_mem, Sample_Length):
@@ -114,6 +117,7 @@ class ADS7865:
 		
 		#Load overlays: Does not configure any GPIO to pruin or pruout
 		boot.load()
+		self.SW_Reset()
 		
 	############################
 	#### GPIO Commands  #######
@@ -181,14 +185,31 @@ class ADS7865:
 			self.Config([0x104,0x290])
 			
 	def Read_Seq(self):
-		self.Config([0x106])
-		from time import sleep
-		for i in range(20):
-			print(i)
-			sleep(.1)
+		# Send cmd telling ADC to output it's SEQ config
+		self.Config([CODE_READSEQ])
+		
+		# Read ADC's databus
 		self._RD.writeToPort(1)
 		seq = self.DBus.readStr()
+		
+		# print config to the user
 		print("Config of sequencer: %s" % seq)
+		
+	def Read_Dac(self):
+		# Send cmd telling ADC to output it's SEQ config
+		self.Config([CODE_READDAC])
+		
+		# Read ADC's databus
+		self._RD.writeToPort(1)
+		seq = self.DBus.readStr()
+		
+		# print config to the user
+		print("Config of DAC: %s" % seq)
+	
+	def SW_Reset(self):
+		print("Performing ADC device reset...")
+		self.Config([CODE_SWRESET])
+		print("... done.")
 			
 	def Close(self):
 		self._CS.writeToPort(1)
@@ -206,6 +227,8 @@ class ADS7865:
 		# Initialize variables
 		if SR is None:
 			SR = self.sampleRate
+		else:
+			self.sampleRate = SR
 			
 		if SR == 0:
 			print("SR currently set to 0. Please specify a sample rate.")
@@ -233,14 +256,25 @@ class ADS7865:
 		boot.arm()
 
 	def Reload(self):
-		print 'Reload: "I do nothing."'
+		"""This method re-initializes the PRU's interrupt that this
+		library uses to tell python that it can continue running code again.
+		This must be called at the end of a function that utilizes this
+		interrupt. The calling function should not be responsible for
+		reloading PRUs."""
+		pypruss.init()		# Init the PRU
+		pypruss.open(0)		# Open PRU event 0 which is PRU0_ARM_INTERRUPT
+		pypruss.pruintc_init()  # Init the interrupt controller
 	
 	def Burst(self, length=None, n_channels=None, raw=None):
 		if length is None:				#Optional argument for sample length
 			length = self.sampleLength
+		else:
+			self.sampleLength = length
 		
 		if n_channels is None:
 			n_channels = self.n_channels
+		else:
+			self.n_channels = n_channels
 			
 		#Share DDR RAM Addr with PRU0
 		pypruss.pru_write_memory(0, 1, [self.ddr['addr'],])
@@ -280,4 +314,5 @@ class ADS7865:
 					y[chan][i] = twos_comp(samp,WORD_SIZE)
 					i += 1
 			
+		self.Reload()
 		return y,t

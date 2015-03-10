@@ -123,20 +123,23 @@ def report_adc_status(ADC_object):
 
 def adc_debug_wizard(ADC_object):
 	keys = ['watch_for_dead_bits', 
-			'read_DBus', 
+			'read_DBus',
+			'check_DBus', 
 			'dummy_read_seq', 
 			'dummy_read_dac',
+			'read_seq',
+			'read_dac',
 			'q']
 	
 	q = 0
 	while (q != 1):
 		# Print status
 		print("current status:")
-		report_adc_status(ADC_object)
+		report_adc_status(ADC_object); print("")
 		
 		# Print debug options
 		print("enter one of the following debugging commands")
-		printDebugs(keys)
+		printDebugs(keys); print("")
 		
 		# Take user input
 		user_input = query('adc_debug_wizard')
@@ -144,8 +147,18 @@ def adc_debug_wizard(ADC_object):
 		# route user
 		if 'q' == user_input:
 			q = 1
-		elif ('watch_for_dead_bits' == user_input) or ('w' == user_input):
+		elif ('watch_for_dead_bits' == user_input) or ('1' == user_input):
 			watch_for_dead_bits.main(ADC_object)
+			
+		elif('3' == user_input): #check_DBus
+			temp = ADC_object.DBus.readStr()
+			print("debug_wizard: DBus = %s" % temp)
+			
+		elif('6' == user_input):
+			ADC_object.Read_Seq()
+			
+		elif ('7' == user_input):
+			ADC_object.Read_Dac()
 		
 		
 def printDebugs(keys):

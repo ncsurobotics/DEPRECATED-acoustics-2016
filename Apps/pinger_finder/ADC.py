@@ -43,7 +43,7 @@ def Read_Sample(user_mem, Sample_Length):
 	return y
 		
 def twos_comp(val, bits):
-        """compute the 2's compliment of int value val"""
+        """compute the 2's compliment of int value val, of n bits."""
         if( (val&(1<<(bits-1))) != 0 ):
           val = val - (1<<bits)
         return val
@@ -189,8 +189,9 @@ class ADS7865:
 		self.Config([CODE_READSEQ])
 		
 		# Read ADC's databus
-		self._RD.writeToPort(1)
+		self._RD.writeToPort(0)
 		seq = self.DBus.readStr()
+		self._RD.writeToPort(1)
 		
 		# print config to the user
 		print("Config of sequencer: %s" % seq)
@@ -200,11 +201,16 @@ class ADS7865:
 		self.Config([CODE_READDAC])
 		
 		# Read ADC's databus
+		self._RD.writeToPort(0)
+		dac_s = self.DBus.readStr()
 		self._RD.writeToPort(1)
-		seq = self.DBus.readStr()
 		
 		# print config to the user
-		print("Config of DAC: %s" % seq)
+		print("Config of DAC: %s" % dac_s)
+		
+		# interpret value
+		dac_voltage_readout = self.Conv_Dac_Str_to_Voltage(dac_s)
+		print("... Vdac = %.5f volts" % dac_voltage_readout)
 	
 	def SW_Reset(self):
 		print("Performing ADC device reset...")
@@ -219,6 +225,24 @@ class ADS7865:
 		#self.BUSY.close()
 		self._CS.close()
 		self._CONVST.close()
+	
+	############################
+	# General ADC Commands  #####
+	############################
+	def Conv_Dac_Str_to_Voltage(self, dac_s):
+		"""Conv_Dac_Str_to_Voltage: Method for interpreting the data
+		12 bit binary output of an ADC DAC read cmd, represented
+		by the string dac_s."""
+		
+		# DAC value Conversion Constant
+		V_per_bit = 0.00244 #Volts/bit
+		base_2 = 2
+		
+		dac_i = int(dac_s, base_2)
+		dac_v = dac_i*V_per_bit
+		
+		return dac_v
+		
 	
 	############################
 	#### PRUSS Commands  #######

@@ -45,6 +45,7 @@ def Shoot(ADC,length,SR):
 		print("...done.")
 		
 		# Setup info
+		ADC.sampleRate		= eval(raw_input("Warning, actual sample rate may be different than what you specified. Please type in the actuall sample rate if you measured it:\n>> "))
 		throughput 			= ADC.sampleRate/float(SAMP_PER_CYCLE) #Hz per channel
 		Ts_per_samp 		= 1/throughput
 		Samps_per_channel 	= ADC.sampleLength/float(ADC.n_channels)
@@ -87,14 +88,14 @@ else:
 ### Configure there ADC
 # create an object for ADS7865
 ADS7865 = ADC.ADS7865()
-ADS7865.n_channels = 2
+ADS7865.n_channels = 4
 """Instantiating the ADS7865 also ran code for building in attributes for 
 running commands relevent to the ADC"""
 if len(argv) > 3:
 	# Configure settings
 	#ADS7865.Config([0xF0F,])
 	#ADS7865.Config([0xF0F,0x0F0])
-	ADS7865.EZConfig(2)
+	ADS7865.EZConfig(4)
 	#ADS7865.Read_Seq()
 else:
 	print("\nmain: user did not give 4th argument. I will skip over any configuration steps.")

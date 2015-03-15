@@ -92,6 +92,7 @@ def UI():
 				
 		elif ('adc_collect_data' == user_input) or ('data' == user_input):
 			if ADC_active:
+				ADS7865.EZConfig(1)
 				ADS7865_Sampler.main(ADS7865)
 			else:
 				response(loc.curr, "Please run 'load_adc_app' first")

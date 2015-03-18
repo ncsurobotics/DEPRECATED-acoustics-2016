@@ -22,6 +22,12 @@ WORD_SIZE = 12
 BYTES_PER_SAMPLE = 4
 MIN_SAMPLE_LENGTH = 2
 DEFAULT_DAC_VOLTAGE = 2.49612
+TOTAL_CHANNELS = 4
+DIFF_PAIR_1 = "CHA0"u"\u00B1"
+DIFF_PAIR_2 = "CHA1"u"\u00B1"
+DIFF_PAIR_3 = "CHB0"u"\u00B1"
+DIFF_PAIR_4 = "CHB1"u"\u00B1"
+PLUSMINUS	= u"\u00B1"
 
 CODE_READDAC = 0x103
 CODE_SWRESET = 0x105
@@ -113,9 +119,12 @@ class ADS7865:
 			+ "sample points are stored in DDRAM, which is found at the "
 			+ "address range starting at %s" % (hex(self.ddr['addr'])))
 		
-		self.sampleRate = SR
-		self.sampleLength = int(L)
-		self.arm_status = "unknown"
+		self.sampleRate 	= SR
+		self.sampleLength 	= int(L)
+		self.arm_status 	= "unknown"
+		self.seq_desc 	= "unknown"
+		self.ch 	= ['unknown']*4
+		
 		
 		#Load overlays: Does not configure any GPIO to pruin or pruout
 		boot.load()
@@ -146,7 +155,7 @@ class ADS7865:
 		
 		self.DBus.setPortDir("in")#Return DB pins back to inputs.
 	
-	def EZConfig(self, sel):
+	def EZConfig(self, sel=None):
 		"""EZConfig: method allowing the user to access commonly
 		used config command (presets). sel is an integer from 0 to 5
 		representing a particular preset."""
@@ -157,34 +166,112 @@ class ADS7865:
 		#or sel=1 (since ADS7865 resets the data_output pointer at the beginning of every
 		#CONVST), but the user must also take the extra precaution to disable the
 		#"sub-sampling" portion of the PRUSS code in order for it to work.
+		
+		if sel==None:
+			#Generate Query to user to see what kind of config he wants
+			options = ["0a/0b differential channel pair",
+				"1a/1b differential channel pair",
+				"0a/0b differential channel pair w/ sequencer re-init",
+				"1a/1b differential channel pair w/ sequencer re-init",
+				"0a/0b -> 1a/1b in FIFO style",
+				"1a/1b -> 0a/0b in FIFO style"]
+			
+			print("Please select from one of the options below:")
+			for i in range( len(options) ):
+				print("  %d: %s" % (i,options[i]) )
+			
+			#Take input
+			sel = eval( raw_input("Enter number here: ") )
+				
 	
-		#Single channel (pair) enable
+		## ##
+		## Single channel (pair) enable
 		if sel==0:
 			#User has chosen to sample the 0a/0b differential channel pair.
 			self.Config([0x100])
+			
+			#Update statuses
+			seq = "CHA0"+PLUSMINUS+"/CHB0"+PLUSMINUS
+			chans = [DIFF_PAIR_1, DIFF_PAIR_3, '', '']
+			self.Update_Config_Text(seq, chans)
+			
+			#Update n channels
+			self.n_channels = 2
+			
 		elif sel==1:
 			#User has chosen to sample the 1a/1b differential channel pair.
 			self.Config([0xD00])
+			
+			#Update statuses
+			seq = "CHA1"+PLUSMINUS+"/CHB1"+PLUSMINUS
+			chans = [DIFF_PAIR_2, DIFF_PAIR_4, '', '']
+			self.Update_Config_Text(seq, chans)
+			
+			#Update n channels
+			self.n_channels = 2
 
-		#Single channel (pair) enable with sequencer reinitialization
+		## ##
+		## Single channel (pair) enable with sequencer reinitialization
 		elif sel==2:
 			#User has chosen to sample the 0a/0b differential channel pair 
-			#while disabling the sequencer register
+			#while disabling the sequencer register. NOTE: The reason why
+			#this would ever be necessary is unclear, as it seems to have
+			#the same functionality of EZConfig 0.
 			self.Config([0x104,0x000])
+			
+			#Update statuses
+			seq = "CHA0"+PLUSMINUS+"/CHB0"+PLUSMINUS
+			chans = [DIFF_PAIR_1, DIFF_PAIR_3, '', '']
+			self.Update_Config_Text(seq, chans)
+			
+			#Update n channels
+			self.n_channels = 2
+			
+			
 		elif sel==3:
-			#User has chosen to sample the 0a/0b differential channel pair 
-			#while disabling the sequencer register
+			#User has chosen to sample the 1a/1b differential channel pair 
+			#while disabling the sequencer register NOTE: The reason why
+			#this would ever be necessary is unclear, as it seems to have
+			#the same functionality of EZConfig 1.
 			self.Config([0x304,0x000])
 			
-		#Dual channel (pair) enable
+			#Update statuses
+			seq = "CHA1"+PLUSMINUS+"/CHB1"+PLUSMINUS
+			chans = [DIFF_PAIR_2, DIFF_PAIR_4, '', '']
+			self.Update_Config_Text(seq, chans)
+			
+			#Update n channels
+			self.n_channels = 2
+			
+		## ##
+		## Dual channel (pair) enable
 		elif sel==4:
 			#User has chosen to sample the 0a/0b -> 1a/1b in FIFO style
 			self.Config([0x104,0x230])
+			
+			#Update statuses
+			seq1 = "CHA0"+PLUSMINUS+"/CHB0"+PLUSMINUS
+			seq2 = "CHA0"+PLUSMINUS+"/CHB0"+PLUSMINUS
+			seq = seq1 + " -> " + seq2
+			chans = [DIFF_PAIR_1, DIFF_PAIR_3, DIFF_PAIR_2, DIFF_PAIR_4]
+			self.Update_Config_Text(seq, chans)
+			
+			#Update n channels
+			self.n_channels = 4
+			
 		elif sel==5:
 			#User has chosen to sample the 1a/1b -> 0a/0b in FIFO style
 			self.Config([0x104,0x2c0])
-		elif sel==6:
-			self.Config([0x104,0x290])
+			
+			#Update statuses
+			seq1 = "CHA1"+PLUSMINUS+"/CHB1"+PLUSMINUS
+			seq2 = "CHA1"+PLUSMINUS+"/CHB1"+PLUSMINUS
+			seq = seq1 + " -> " + seq2
+			chans = [DIFF_PAIR_2, DIFF_PAIR_4, DIFF_PAIR_1, DIFF_PAIR_3]
+			self.Update_Config_Text(seq, chans)
+			
+			#Update n channels
+			self.n_channels = 4
 			
 	def Read_Seq(self):
 		# Send cmd telling ADC to output it's SEQ config
@@ -226,6 +313,13 @@ class ADS7865:
 		self.dacVoltage = DEFAULT_DAC_VOLTAGE
 		self.LSB = self.dacVoltage/(2**(WORD_SIZE-1)) #Volts
 		
+		# Update sequencer and channel descriptions
+		self.seq_desc = "CHA0"+PLUSMINUS+"/CHB0"+PLUSMINUS
+		self.ch[0] = DIFF_PAIR_1
+		self.ch[1] = DIFF_PAIR_3
+		self.ch[2] = ''
+		self.ch[3] = ''
+		
 		# Let user know work is done
 		print("... done.")
 			
@@ -241,6 +335,15 @@ class ADS7865:
 	############################
 	# General ADC Commands  #####
 	############################
+	def Update_Config_Text(self, seq, channels):
+		# Update human readable description
+		self.seq_desc = seq
+		
+		# Update channel descriptions
+		for i in range( TOTAL_CHANNELS ):
+			self.ch[i] = channels[i]
+	
+	
 	def Conv_Dac_Str_to_Voltage(self, dac_s):
 		"""Conv_Dac_Str_to_Voltage: Method for interpreting the data
 		12 bit binary output of an ADC DAC read cmd, represented
@@ -254,6 +357,33 @@ class ADS7865:
 		dac_v = dac_i*V_per_bit
 		
 		return dac_v
+		
+	def ADC_Status(self):
+		# Read and write pins
+		_RD = eval(self._RD.readStr())
+		_WR = eval(self._RD.readStr())
+		print("  _RD:\t%d" % _RD)
+		print("  _WR:\t%d" % _WR)
+	
+		# Sampling rate
+		sr = self.sampleRate
+		print("  sr:\t%d samples/sec" % sr)
+		
+		# Sample length
+		sl = self.sampleLength
+		print("  sl:\t%d samples" % sl)
+		
+		# arm status
+		armed = self.arm_status
+		print("  armed:\t%s" % armed)
+		
+		# channel config
+		print("  config:\t%s" % self.seq_desc)
+	
+		# get channels
+		for i in range(4):
+			print("  channel %d:\t%s" % (i,self.ch[i]))
+			
 		
 	
 	############################

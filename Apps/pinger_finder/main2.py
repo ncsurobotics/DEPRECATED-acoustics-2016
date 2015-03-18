@@ -58,7 +58,7 @@ def UI():
 
 		elif ('help' == user_input) or ('h' == user_input):
 			print('-'*50)
-			print(help_text)
+			usage()
 			print('-'*50)
 			
 		# b ############################
@@ -67,7 +67,7 @@ def UI():
 
 		elif ('adc_status' == user_input) or ('s' == user_input):
 			if ADC_active:
-				report_adc_status(ADS7865)
+				ADS7865.ADC_Status()
 			else:
 				response(loc.curr, "Please run 'load_adc_app' first")
 			
@@ -116,18 +116,6 @@ def UI():
 # 3. #####################################
 ########### ADC function repository ######
 ##########################################
-def report_adc_status(ADC_object):
-	sr = ADC_object.sampleRate
-	sl = ADC_object.sampleLength
-	armed = ADC_object.arm_status
-	_RD = eval(ADC_object._RD.readStr())
-	_WR = eval(ADC_object._RD.readStr())
-	
-	print("\tsl:\t%d samples" % sl)
-	print("\tsr:\t%d samples/sec" % sr)
-	print("\tarmed:\t%s" % armed)
-	print("\t_RD:\t%d" % _RD)
-	print("\t_WR:\t%d" % _WR)
 
 def adc_debug_wizard(ADC_object):
 	keys = ['watch_for_dead_bits', 
@@ -177,14 +165,25 @@ def printDebugs(keys):
 		
 		
 def adc_config(ADC_OBJ, loc):
+	# setup environment
 	response(loc.curr, "You have entered the ADC config mode")
 	q = 0
+	
+	# Get user's sample length
 	response(loc.curr, "Please enter a sample length")
 	SL = query(loc.curr)
+	ADC_OBJ.sampleLength = int(eval(SL))
+	
+	# Get user's sample rate
 	response(loc.curr, "Please enter a sample rate")
 	SR = query(loc.curr)
-	ADC_OBJ.sampleLength = int(eval(SL))
 	ADC_OBJ.sampleRate = eval(SR)
+	
+	# Get user's config
+	ADC_OBJ.EZConfig() #Empty argument means to user a wizard like this one
+	
+	
+	# exit environment
 	response(loc.curr, "Exiting ADC config mode")
 	
 # 4. #####################################
@@ -210,12 +209,12 @@ def ADC_app_splash():
 def usage():
 	text = ["  (h)elp: Get help.\n",
 		"  (q)uit: quit this program.\n",
-		"  adc_(s)tatus: prints data regarding the adc.\n",
 		"  (l)oad_adc_app: Startup the adc enviroment.\n",
+		"  adc_(s)tatus: prints data regarding the adc.\n",
 		"  (u)nload_adc_app: Close adc environment.\n",
 		"  adc_c(o)nf: Change Settings of the ADC.\n",
-		"  adc_(d)ebugger: pull up the debugging menu"]
-	print(''.join(text) )
+		"  adc_(d)ebugger: debug the ADC."]
+	print('\n'.join(text) )
 
 class location():
 	def __init__(self, init):

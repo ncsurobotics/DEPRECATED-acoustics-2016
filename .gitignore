@@ -8,6 +8,7 @@
 *.pyc
 *.swp*
 *.py~
+*ipynb*
 
 /Apps/LTC1564_Tester/Debug/
 /Apps/LTC1564_Tester/Release/

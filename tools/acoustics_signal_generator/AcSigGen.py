@@ -15,9 +15,9 @@ def main():
 	SAMPLE_LENGTH = 64 		# <----- Not used
 	
 	MAX_TIME_SHIFT = 0.1e-3	#seconds
-	PHASE_DELAY = 0.5
-	PHASE_DIFF = {'H1': -.4,  #<--- any value from -1 to 1...
-			      'H2': 0.4,
+	PHASE_DELAY = 0
+	PHASE_DIFF = {'H1': -.2,  #<--- any value from -1 to 1...
+			      'H2': 1,
 				  'H3': -2} #<--- ...but also -2 disables hydrophone.
 				  
 	PHASE = {'MAX_TIME_SHIFT': MAX_TIME_SHIFT,
@@ -108,7 +108,7 @@ def import_real_data(SEL, SR):
 	y = y[0::index_skip_value]
 	
 	print("\n%s: Per your request, I was able to parse this " % FCN_NAME
-			+ " data as if it was collected at %dKHz sample rate." % (fs/index_skip_value/1000)
+			+ " data as if it was collected at %.0fKHz sample rate." % (fs/index_skip_value/1000)
 			+ " This should be close enough.\n")
 	
 	return (y, Ts*index_skip_value)
@@ -149,7 +149,7 @@ def phase_shift_signals(raw_recording, Ts, PHASE):
 	
 	print("\n%s: for y[0:%d], a = %d and b = %d.\n" % (FCN_NAME, n_samples_input, a, b))
 	
-	print("\n%s: This data was collected at %.2eKHz." % (FCN_NAME, 1/Ts/1000)
+	print("\n%s: This data was collected at %.3eKHz." % (FCN_NAME, 1/Ts/1000)
 		+ " Proceding to shift signals accordingly.\n")
 	
 	

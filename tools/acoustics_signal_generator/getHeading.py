@@ -71,5 +71,5 @@ def calculate_heading(target_freq, a, b):
     (y,x) = phase_diff_to_x_and_y(phase_diff, target_freq)
     print("x=%f meters and y=%f meters." % (x,y))
 
-    #Calculate and return heading using tan-1(phase_diffs)
+    #Calculate and return heading using tan-1(y/x)
     return (math.atan2(y, x))*180/math.pi

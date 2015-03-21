@@ -9,8 +9,7 @@ def phase_diff_to_x_and_y(phase_diff, fundamental_freq):
 	
 	#Compute wavelength of signal
 	wavelength = v/fundamental_freq #meters
-	
-	
+
 	#Compute delta D amongst hydrophones 
 	D1minusD2 = (phase_diff/math.pi/2)*wavelength #meters
 	

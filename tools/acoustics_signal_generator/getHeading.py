@@ -14,9 +14,6 @@ def phase_diff_to_x_and_y(phase_diff, fundamental_freq):
 	#Compute delta D amongst hydrophones 
 	D1minusD2 = (phase_diff/math.pi/2)*wavelength #meters
 	
-	#Compute delta t between hydrophones
-	deltaT = D1minusD2/v #seconds
-	
 	#Generate vector components
 	x = D1minusD2/2 #meters
 	y = math.sqrt(d**2 - x**2)

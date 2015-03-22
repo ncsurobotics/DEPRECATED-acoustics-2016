@@ -92,7 +92,6 @@ def UI():
 				
 		elif ('adc_collect_data' == user_input) or ('data' == user_input):
 			if ADC_active:
-				ADS7865.EZConfig(1)
 				ADS7865_Sampler.main(ADS7865)
 			else:
 				response(loc.curr, "Please run 'load_adc_app' first")
@@ -179,8 +178,13 @@ def adc_config(ADC_OBJ, loc):
 	SR = query(loc.curr)
 	ADC_OBJ.sampleRate = eval(SR)
 	
+	# Get user's threshold value
+	response(loc.curr, "Please enter a threshold value (int)")
+	THR = query(loc.curr)
+	ADC_OBJ.threshold = eval(THR)
+	
 	# Get user's config
-	ADC_OBJ.EZConfig() #Empty argument means to user a wizard like this one
+	ADC_OBJ.EZConfig() #Empty argument means to use a wizard like this one
 	
 	
 	# exit environment

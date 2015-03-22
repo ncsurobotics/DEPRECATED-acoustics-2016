@@ -34,8 +34,6 @@ def plot_output(ADC_obj, y):
 	fs 		= ADC_obj.sampleRate/float(frequency_attenuation_factor) #Hertz
 	Ts		= 1/fs
 	
-	import pdb; pdb.set_trace()
-	
 	if (M*Ts/Ts <= M):
 		t 		= np.arange(0, M*Ts, Ts) 
 	elif (M*Ts/Ts > M):
@@ -45,14 +43,17 @@ def plot_output(ADC_obj, y):
 		
 	
 	# Plot the data
+	legend_list = ['']*ADC_obj.n_channels
 	for chan in range(ADC_obj.n_channels):
 		ax.plot(t,y[chan])
+		legend_list[chan] = ADC_obj.ch[chan]
 	
 	
 	ax.axis(xmin=0,
 			xmax=None,
 			ymin=-2.5,
 			ymax=2.5)
+	ax.legend(legend_list)
 	plt.show()
 	
 	

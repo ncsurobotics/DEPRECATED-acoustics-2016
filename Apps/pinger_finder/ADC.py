@@ -9,6 +9,7 @@ import numpy as np
 
 #Global ADC program Constants
 PRU0_SR_Mem_Offset = 3
+PRU0_THR_Mem_Offset = 4
 HC_SR = 0xBEBC200
 fclk = 200e6
 
@@ -21,7 +22,8 @@ WORD_SIZE = 12
 
 BYTES_PER_SAMPLE = 4
 MIN_SAMPLE_LENGTH = 2
-DEFAULT_DAC_VOLTAGE = 2.49612
+DEFAULT_DAC_VOLTAGE = 2.49612	#volts
+DEFAULT_THRESHOLD = 0	#volts
 TOTAL_CHANNELS = 4
 DIFF_PAIR_1 = "CHA0"u"\u00B1"
 DIFF_PAIR_2 = "CHA1"u"\u00B1"
@@ -124,6 +126,7 @@ class ADS7865:
 		self.arm_status 	= "unknown"
 		self.seq_desc 	= "unknown"
 		self.ch 	= ['unknown']*4
+		self.threshold = DEFAULT_THRESHOLD
 		
 		
 		#Load overlays: Does not configure any GPIO to pruin or pruout
@@ -342,6 +345,9 @@ class ADS7865:
 		# Update channel descriptions
 		for i in range( TOTAL_CHANNELS ):
 			self.ch[i] = channels[i]
+			
+	def	V_to_12bit_Hex(self, Vin):
+		return int(round(Vin/self.LSB))
 	
 	
 	def Conv_Dac_Str_to_Voltage(self, dac_s):
@@ -372,6 +378,9 @@ class ADS7865:
 		# Sample length
 		sl = self.sampleLength
 		print("  sl:\t%d samples" % sl)
+		
+		# Threshold
+		print("  thr:\t%d Volts" % self.threshold)
 		
 		# arm status
 		armed = self.arm_status
@@ -452,6 +461,10 @@ class ADS7865:
 		#memory
 		pru_SL_mapping = (length - MIN_SAMPLE_LENGTH) * BYTES_PER_SAMPLE
 		pypruss.pru_write_memory(0, 2, [pru_SL_mapping,])
+		
+		#Share Threshold with PRU0
+		thr_hex = self.V_to_12bit_Hex(self.threshold)
+		pypruss.pru_write_memory(0, PRU0_THR_Mem_Offset, [thr_hex,])
 		
 		#Launch the Sample collection program
 		a = time.time()

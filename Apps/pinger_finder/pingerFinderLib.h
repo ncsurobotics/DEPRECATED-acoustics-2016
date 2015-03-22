@@ -34,10 +34,14 @@
 // bit1: ON STBY
 // bit2: Collecting Data
 // bit3: Tmr Interrupt
+
+//conversion control
 #define COLL	2 // Collection active bit
 #define CINT    3 // CONVST interrupt bit
-#define TRGD	4 // Trigger'd bit
-#define ARMD	5 //  Armed bit
+
+// bits for sample control
+#define TRGD	0 // Trigger'd bit
+#define ARMD	1 //  Armed bit
 .struct DAQ_State
 	.u32	Sample_Abs
 	.u32	Sample
@@ -46,9 +50,11 @@
 	.u32	TapeHD_Offset
 	.u8	PRU0_State
 	.u8	PRU1_State
+	.u8 	Super_Sample
 	.u8 	Sub_Sample //0 or 1... as ADC always grabs two channels at a time. 
+	.u8		Sample_Ctrl
 .ends
-.assign DAQ_State, r4, r9.b2, DQ
+.assign DAQ_State, r4, r10.b0, DQ
 
 
 .struct DAQ_Config
@@ -58,7 +64,7 @@
 	.u32	TO		// TimeOut:loops
 	.u32	Trg_Threshold
 .ends
-.assign DAQ_Config, r10, r14, DAQConf
+.assign DAQ_Config, r11, r15, DAQConf
 
 .macro  NOP32
 		NOP
@@ -101,8 +107,9 @@
 #define HOST_DDR_ADDRh	0x0004
 #define HOST_SLh		0x0008	// sample length
 #define HOST_SRh		0x000C
+#define HOST_THRh		0x0010
 //PRU Personal Space = (0x0000)_PRUx
-#define PRU_STATEh		0x0012
+#define PRU_STATEh		0x0014
 
 
 /////////////////////////////////////////

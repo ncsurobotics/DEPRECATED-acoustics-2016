@@ -40,10 +40,25 @@
 .mparam R
 		QBBC	RET_ABS, R, 11
 		  SUB	R, R, 1
-		  OR	R, R, GP.GP.Extension
+		  OR	R, R, GP.Extension
 		  NOT	R, R
 		
 		RET_ABS:
+.endm
+
+.macro 	Load_Threshold_From_Memory
+		LBBO DAQConf.Trg_Threshold, DQ.PRU0_Ptr, HOST_THRh, 4
+.endm
+
+.macro Super_Sample_Counter
+	QBGT SUPSAMP_ADD, DQ.Super_Sample, 3
+	  MOV  DQ.Super_Sample, 0
+	  QBA  SUPSAMP_RET
+	SUPSAMP_ADD:
+	ADD  DQ.Super_Sample, DQ.Super_Sample, 1
+		
+	SUPSAMP_RET:
+.endm
 
 
 //-----------------------------------------------
@@ -76,8 +91,10 @@ PREPARE:
 	MOV	 DQ.Sub_Sample, 0			// Known that first sample is sub_sample 0
 	//MOV  DAQConf.Samp_Len, 35		// Set sample length to 10	
 	
-	MOV	GP.Extension, 0xFB00		// Negative sign extension register
-	MOV DAQConf.Trg_Threshold, 0x0000	// For the Trigger logic
+	MOV	GP.Extension, 0xFFFFF000		// Negative sign extension register
+	MOV DAQConf.Trg_Threshold, 0x0002	// For the Trigger logic
+	
+	Load_Threshold_From_Memory		// load
 
 	// SET Default bits (to be deprecated by some outside script)
 	SET  r30, bCONVST
@@ -185,18 +202,27 @@ MDB0:
 
 
 NEXT:
-	QBBS  SUBMIT,DQ.PRU0_State, TRGD
+	QBBS  SUBMIT,DQ.Sample_Ctrl, TRGD
+	  MOV  DQ.Sample_Abs, DQ.Sample
 	  Get_Absolute_Value	DQ.Sample_Abs
 	  QBLT CONTROLLER, DAQConf.Trg_Threshold, DQ.Sample_Abs
-	    SET  DQ.PRU0_State, TRGD
+	    SET  DQ.Sample_Ctrl, TRGD
 	    QBA SUBMIT
 
 
 SUBMIT:
-	SBBO DQ.Sample, DAQConf.Data_Dst, DQ.TapeHD_Offset, SIZE(DQ.Sample) // submit data to DDR
-	INCR DQ.TapeHD_Offset, 4 // increment pointer
+	QBBC ARMING_CTRL, DQ.Sample_Ctrl, ARMD
+	  SBBO DQ.Sample, DAQConf.Data_Dst, DQ.TapeHD_Offset, SIZE(DQ.Sample) // submit data to DDR
+	  INCR DQ.TapeHD_Offset, 4 // increment pointer
+	  QBA CONTROLLER
+
+ARMING_CTRL:
+	QBNE CONTROLLER, DQ.Super_Sample, 0
+	  SET DQ.Sample_Ctrl, ARMD
+	  QBA SUBMIT
 
 CONTROLLER:
+	Super_Sample_Counter
 	Sub_Sample_Controller WAIT
 		// Sub_Sample_Controller will either make a shortcut to the CONVST
 		// step, or go all the way back at the top of the cycle... depending
@@ -210,4 +236,5 @@ END:
 	SET  r30, bCONVST
 	MOV r31.b0, PRU0_ARM_INTERRUPT+16 // Send notification to host for program completion
         MOV DQ.TapeHD_Offset, 0 // Clear the offset as preparation for next run
+        MOV DQ.Sample_Ctrl, 0
 	HALT

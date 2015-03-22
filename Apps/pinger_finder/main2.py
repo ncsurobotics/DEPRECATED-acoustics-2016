@@ -2,9 +2,12 @@ import ADC
 import os
 import watch_for_dead_bits
 import ADS7865_Sampler
+import numpy as np
 
 help_text = """quit: quit the program.
 help: display this help text."""
+
+
 
 # 1. #####################################
 ##################### Main Sequence ######
@@ -28,6 +31,12 @@ def main():
 ##########################################
 	
 def UI():
+	
+	
+	# Important parameters
+	Signal_Data = {'y': []}
+	plt = None
+
 	# Generate location expressions
 	HOME = "HOME"
 	ADC_APP = "ADC_APP"
@@ -92,7 +101,7 @@ def UI():
 				
 		elif ('adc_collect_data' == user_input) or ('data' == user_input):
 			if ADC_active:
-				ADS7865_Sampler.main(ADS7865)
+				Signal_Data['y'] = ADS7865_Sampler.main(ADS7865,plt)
 			else:
 				response(loc.curr, "Please run 'load_adc_app' first")
 			
@@ -101,10 +110,18 @@ def UI():
 			adc_config(ADS7865, loc)
 			loc.pop()
 			
+		elif ("adc_analysis" == user_input) or ('a' == user_input):
+			if ADC_active:
+				adc_analysis_wizard(ADS7865, Signal_Data, plt)
+			else:
+				response(loc.curr, "Please run 'load_adc_app' first")
 		# c ############################
 		########### utility cmd Class ##
 		################################
 		
+		elif ('plot_en' == user_input) or ('p' == user_input):
+			plt = load_matplotlib()
+			
 		elif 'EOF' == user_input:
 			response(loc.curr, "End of input file reached")
 
@@ -190,6 +207,67 @@ def adc_config(ADC_OBJ, loc):
 	# exit environment
 	response(loc.curr, "Exiting ADC config mode")
 	
+def adc_analysis_wizard(ADC_OBJ, Signal_Data, plt):
+	keys = ['noise_analysis']
+	
+	q = 0
+	while (q != 1):
+		
+		# Print debug options
+		print("enter one of the following analysis commands")
+		printDebugs(keys); print("")
+		
+		# Take user input
+		user_input = query('adc_analysis_wizard')
+		
+		# route user
+		if 'q' == user_input:
+			q = 1
+		elif 's' == user_input:
+			# Print status
+			print("current status:")
+			ADC_OBJ.ADC_Status(); print("")
+		
+		elif ('noise_analysis' == user_input) or ('1' == user_input):
+			adc_noise_analysis(ADC_OBJ, Signal_Data, plt)
+			
+def adc_noise_analysis(ADC_OBJ, Signal_Data, plt=None):
+	# Ask user to select a channel of data for analysis
+	ADC_OBJ.ADC_Status()
+	channel_sel = eval(raw_input("Please enter a channel (0 thru 3) for analysis: "))
+	y = Signal_Data['y'][channel_sel]
+	
+	# Ask user to make sure that channel has no VLF components
+	print("Please understand that the presense of VLF components on the "
+		+ "Channel will make this measurement inaccurate. Having a DC Component "
+		+ "is okay though.")
+		
+	# Null the DC component
+	y = y - np.average(y)
+	
+	# Get T
+	Ts = 1/ADC_OBJ.sampleRate
+	T = y.size * Ts
+	
+	# Compute Noise RMS
+	i = 0
+	Vnrms_sq = 0
+	
+	for samp in y:
+		Vnrms_sq += 1/T * samp**2 * Ts
+	print("You got %f VoltsRMS noise here." % np.sqrt(Vnrms_sq))
+		
+	# plot if user has imported matplot lib
+	import pdb; pdb.set_trace()
+	if plt:
+		(n, bins, patches) = plt.hist(y, 200, normed=1, histtype='stepfilled')
+		plt.show()
+	
+	
+	
+	
+	
+	
 # 4. #####################################
 ##################### Elements ###########
 ##########################################
@@ -200,6 +278,15 @@ def title():
 	print(bar)
 	print(" "*15 + " PINGER FINDER")
 	print(bar)
+
+def load_matplotlib():
+	print("Loading Matplotlib library...")
+	import matplotlib
+	matplotlib.use('GTK')
+	import matplotlib.pyplot as plt
+	print("...done.")
+	
+	return plt
 	
 def exit_app():
 	print("Goodbye!")
@@ -213,11 +300,13 @@ def ADC_app_splash():
 def usage():
 	text = ["  (h)elp: Get help.\n",
 		"  (q)uit: quit this program.\n",
+		"  (p)lot_en: enable plotting (needs X11 port forwarding).\n",
 		"  (l)oad_adc_app: Startup the adc enviroment.\n",
 		"  adc_(s)tatus: prints data regarding the adc.\n",
 		"  (u)nload_adc_app: Close adc environment.\n",
 		"  adc_c(o)nf: Change Settings of the ADC.\n",
-		"  adc_(d)ebugger: debug the ADC."]
+		"  adc_(d)ebugger: debug the ADC.\n",
+		"  adc_(a)nalysis: Grab some experimental data."]
 	print('\n'.join(text) )
 
 class location():

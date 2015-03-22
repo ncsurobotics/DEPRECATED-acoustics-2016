@@ -3,7 +3,7 @@ import numpy as np
 SAMPLES_PER_CONV = 2
 
 
-def main(ADC_obj):
+def main(ADC_obj, plt):
 	ADC_obj.Ready_PRUSS_For_Burst()
 	
 	
@@ -13,17 +13,17 @@ def main(ADC_obj):
 	# grab data
 	(y,temp) = ADC_obj.Burst()
 	
-	user_input = raw_input("Would you like to plot the data?")
-	if "y" == user_input:
-		plot_output(ADC_obj, y)
+	if plt:
+		user_input = raw_input("Would you like to plot the data?")
+		if "y" == user_input:
+			plot_output(ADC_obj, y, plt)
 	
 	boot.dearm()
-	
+	return y
 		
 		
-def plot_output(ADC_obj, y):
-	# Load the library
-	plt = load_matplotlib()
+def plot_output(ADC_obj, y, plt):
+	# get plotting objects
 	fig,ax = plt.subplots()
 	
 	# Compute parameters
@@ -55,14 +55,3 @@ def plot_output(ADC_obj, y):
 			ymax=2.5)
 	ax.legend(legend_list)
 	plt.show()
-	
-	
-		
-def load_matplotlib():
-	print("Loading Matplotlib library...")
-	import matplotlib
-	matplotlib.use('GTK')
-	import matplotlib.pyplot as plt
-	print("...done.")
-	
-	return plt

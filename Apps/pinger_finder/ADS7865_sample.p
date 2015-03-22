@@ -36,6 +36,15 @@
 .endm
 
 
+.macro Get_Absolute_Value
+.mparam R
+		QBBC	RET_ABS, R, 11
+		  SUB	R, R, 1
+		  OR	R, R, GP.GP.Extension
+		  NOT	R, R
+		
+		RET_ABS:
+
 
 //-----------------------------------------------
 
@@ -67,6 +76,8 @@ PREPARE:
 	MOV	 DQ.Sub_Sample, 0			// Known that first sample is sub_sample 0
 	//MOV  DAQConf.Samp_Len, 35		// Set sample length to 10	
 	
+	MOV	GP.Extension, 0xFB00		// Negative sign extension register
+	MOV DAQConf.Trg_Threshold, 0x0000	// For the Trigger logic
 
 	// SET Default bits (to be deprecated by some outside script)
 	SET  r30, bCONVST
@@ -172,20 +183,20 @@ MDB0:
 	QBBC NEXT, GP.Cpr, DB0
 	 SET DQ.Sample, 0
 
-// Trying to fix issue with mux not working for b.
-//        MOV  GP.Tmr, 0x4E2
-//BUG_WAIT:
-//        SUB  GP.Tmr, GP.Tmr, 2
-//        QBLE BUG_WAIT, GP.Tmr, 3        
 
 NEXT:
-	QBA  SUBMIT
+	QBBS  SUBMIT,DQ.PRU0_State, TRGD
+	  Get_Absolute_Value	DQ.Sample_Abs
+	  QBLT CONTROLLER, DAQConf.Trg_Threshold, DQ.Sample_Abs
+	    SET  DQ.PRU0_State, TRGD
+	    QBA SUBMIT
 
 
 SUBMIT:
 	SBBO DQ.Sample, DAQConf.Data_Dst, DQ.TapeHD_Offset, SIZE(DQ.Sample) // submit data to DDR
 	INCR DQ.TapeHD_Offset, 4 // increment pointer
-	
+
+CONTROLLER:
 	Sub_Sample_Controller WAIT
 		// Sub_Sample_Controller will either make a shortcut to the CONVST
 		// step, or go all the way back at the top of the cycle... depending

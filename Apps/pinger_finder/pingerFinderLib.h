@@ -26,8 +26,9 @@
 	.u32	Ptr
 	.u32	Tmr
 	.u32	Cpr
+	.u32	Extension
 .ends	
-.assign General, r0, r2, GP
+.assign General, r0, r3, GP
 
 // bit0: BUSY
 // bit1: ON STBY
@@ -35,8 +36,10 @@
 // bit3: Tmr Interrupt
 #define COLL	2 // Collection active bit
 #define CINT    3 // CONVST interrupt bit
-//#define DR		4 // Data Ready Bit
+#define TRGD	4 // Trigger'd bit
+#define ARMD	5 //  Armed bit
 .struct DAQ_State
+	.u32	Sample_Abs
 	.u32	Sample
 	.u32	PRU0_Ptr
 	.u32	PRU1_Ptr
@@ -45,7 +48,7 @@
 	.u8	PRU1_State
 	.u8 	Sub_Sample //0 or 1... as ADC always grabs two channels at a time. 
 .ends
-.assign DAQ_State, r5, r9.b2, DQ
+.assign DAQ_State, r4, r9.b2, DQ
 
 
 .struct DAQ_Config
@@ -53,8 +56,9 @@
 	.u32	Samp_Rate	// loops
 	.u32	Data_Dst	// address 
 	.u32	TO		// TimeOut:loops
+	.u32	Trg_Threshold
 .ends
-.assign DAQ_Config, r10, r13, DAQConf
+.assign DAQ_Config, r10, r14, DAQConf
 
 .macro  NOP32
 		NOP

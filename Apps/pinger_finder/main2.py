@@ -131,7 +131,7 @@ def adc_debug_wizard(ADC_object):
 	while (q != 1):
 		# Print status
 		print("current status:")
-		report_adc_status(ADC_object); print("")
+		ADC_object.ADC_Status(); print("")
 		
 		# Print debug options
 		print("enter one of the following debugging commands")

@@ -3,7 +3,7 @@
 
 .macro  INIT_TIMER
         // //Submit current time
-        MOV  GP.Tmr, 0// INIT time
+        MOV  GP.Tmr, 8// INIT time... 8 instructions precede this one.
 .endm
 
 .macro  Wait_For_CINT_ACK
@@ -114,6 +114,9 @@ COLLECT:
 			// on the sub_sample that was just collected.
         
         //Set_DR_On_PRU1					// Set DR bit
+        
+CORRECT_TIME:
+		ADD  GP.Tmr, GP.Tmr, 26 //25 instr. + 1 add instr. occur before this point.
         
 WAIT:
 		//ADD GP.Tmr, GP.Tmr, 2 //Make up for time spent doing other stuff 

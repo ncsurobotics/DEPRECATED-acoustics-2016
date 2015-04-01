@@ -1,3 +1,4 @@
+from __future__ import print_function
 import pypruss		#Python PRUSS wrapper
 import mmap
 import struct
@@ -25,11 +26,12 @@ MIN_SAMPLE_LENGTH = 2
 DEFAULT_DAC_VOLTAGE = 2.49612	#volts
 DEFAULT_THRESHOLD = 0	#volts
 TOTAL_CHANNELS = 4
-DIFF_PAIR_1 = "CHA0"u"\u00B1"
-DIFF_PAIR_2 = "CHA1"u"\u00B1"
-DIFF_PAIR_3 = "CHB0"u"\u00B1"
-DIFF_PAIR_4 = "CHB1"u"\u00B1"
-PLUSMINUS	= u"\u00B1"
+
+PLUSMINUS	= u'\xb1'.encode('utf-8')
+DIFF_PAIR_1 = "CHA0" + PLUSMINUS
+DIFF_PAIR_2 = "CHA1" + PLUSMINUS
+DIFF_PAIR_3 = "CHB0" + PLUSMINUS
+DIFF_PAIR_4 = "CHB1" + PLUSMINUS
 
 CODE_READDAC = 0x103
 CODE_SWRESET = 0x105
@@ -387,11 +389,11 @@ class ADS7865:
 		print("  armed:\t%s" % armed)
 		
 		# channel config
-		print("  config:\t%s" % self.seq_desc)
+		print("  config:\t{}".format(self.seq_desc))
 	
 		# get channels
 		for i in range(4):
-			print("  channel %d:\t%s" % (i,self.ch[i]))
+			print("  channel {}:\t{}".format(i, self.ch[i]))
 			
 		
 	

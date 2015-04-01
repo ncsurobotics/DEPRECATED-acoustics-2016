@@ -258,7 +258,6 @@ def adc_noise_analysis(ADC_OBJ, Signal_Data, plt=None):
 	print("You got %f VoltsRMS noise here." % np.sqrt(Vnrms_sq))
 		
 	# plot if user has imported matplot lib
-	import pdb; pdb.set_trace()
 	if plt:
 		(n, bins, patches) = plt.hist(y, 200, normed=1, histtype='stepfilled')
 		plt.show()

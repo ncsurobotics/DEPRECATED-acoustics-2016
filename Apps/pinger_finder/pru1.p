@@ -3,7 +3,8 @@
 
 .macro  INIT_TIMER
         // //Submit current time
-        MOV  GP.Tmr, 8// INIT time... 8 instructions precede this one.
+        MOV  GP.Tmr, 20// INIT time... 8 instructions precede this one...
+                // The extra 12 was experimentally derived.
 .endm
 
 .macro  Wait_For_CINT_ACK

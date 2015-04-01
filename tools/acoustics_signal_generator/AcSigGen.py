@@ -58,7 +58,7 @@ def main():
 		plt.show()
 	
 	# return data
-	return hydrophone_recording
+	return (hydrophone_recording,SAMPLE_RATE)
 	
 	
 

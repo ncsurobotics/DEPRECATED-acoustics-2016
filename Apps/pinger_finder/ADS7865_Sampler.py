@@ -47,6 +47,9 @@ def plot_output(ADC_obj, y, plt):
 	for chan in range(ADC_obj.n_channels):
 		ax.plot(t,y[chan])
 		legend_list[chan] = ADC_obj.ch[chan]
+		plt.xlabel('time (seconds)')
+		plt.ylabel('Voltage')
+		plt.title('Voltage vs Time, Fs=%dKHz' % (fs/1000))
 	
 	
 	ax.axis(xmin=0,

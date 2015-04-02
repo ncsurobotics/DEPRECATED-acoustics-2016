@@ -2,6 +2,7 @@ import ADC
 import os
 import watch_for_dead_bits
 import ADS7865_Sampler
+from LTC1564 import LTC1564
 import numpy as np
 
 help_text = """quit: quit the program.
@@ -48,6 +49,8 @@ def UI():
 
 	q = 0
 	ADC_active = False
+	LTC_active = False
+	
 	while(q == 0):
 		# build status variables
 
@@ -115,6 +118,30 @@ def UI():
 				adc_analysis_wizard(ADS7865, Signal_Data, plt)
 			else:
 				response(loc.curr, "Please run 'load_adc_app' first")
+		# c ############################
+		########### Filter cmd Class ##
+		################################
+		elif ("lf" == user_input) or ("load_filts" == user_input):
+			LTC = LTC1564()
+			LTC_active = True
+		
+		elif ("Glf" == user_input) or ("conf_G" == user_input):
+			if LTC_active:
+				print("Config Input Gain: enter a mode from 0 to 3")
+				mode = eval(raw_input(">> "))
+				LTC.GainMode(mode)
+			else:
+				response(loc.curr, "Please run 'lf' (load_filts) first")
+				
+		elif ("Flf" == user_input) or ("conf_F" == user_input):
+			if LTC_active:
+				print("Config Input Fc: enter a mode from 0 to 1")
+				mode = eval(raw_input(">> "))
+				LTC.FiltMode(mode)
+			else:
+				response(loc.curr, "Please run 'lf' (load_filts) first")
+			
+		
 		# c ############################
 		########### utility cmd Class ##
 		################################
@@ -259,7 +286,9 @@ def adc_noise_analysis(ADC_OBJ, Signal_Data, plt=None):
 		
 	# plot if user has imported matplot lib
 	if plt:
-		(n, bins, patches) = plt.hist(y, 200, normed=1, histtype='stepfilled')
+		(n, bins, patches) = plt.hist(y, 50, normed=1, histtype='bar')
+		plt.title('Distribuition of error amongst %s samples' % y.size)
+		plt.xlabel("error (volts)")
 		plt.show()
 	
 	

@@ -1,9 +1,12 @@
 import ADC
 import os
+import numpy as np
+
+#Python file
 import watch_for_dead_bits
 import ADS7865_Sampler
 from LTC1564 import LTC1564
-import numpy as np
+import getHeading	
 
 help_text = """quit: quit the program.
 help: display this help text."""

@@ -312,6 +312,7 @@ def load_matplotlib():
 	import matplotlib
 	matplotlib.use('GTK')
 	import matplotlib.pyplot as plt
+	plt.ion()
 	print("...done.")
 	
 	return plt

@@ -4,7 +4,7 @@ import time
 from sys import argv
 import numpy as np
 
-def Shoot(ADC,length,SR):
+def Shoot(ADC,length,CR):
 	# Initialize empty variables
 	sum = 0
 	SAMP_PER_CONV = 2
@@ -27,7 +27,7 @@ def Shoot(ADC,length,SR):
 			% (1e6*Ts) + "That's a %.2fHz experiment." % (1/Ts))
 		print("")
 		print("main: also, (1 - Actual_Rate/Intended_Rate) = %.2f%%." 
-			% ((1-(1/Ts)/SR)*100))
+			% ((1-(1/Ts)/CR)*100))
 
 	ans = raw_input("\nWould you like to see some details about your sample data?\n>>: ") 
 	if ("y" in ans):
@@ -45,8 +45,8 @@ def Shoot(ADC,length,SR):
 		print("...done.")
 		
 		# Setup info
-		ADC.sampleRate		= eval(raw_input("Warning, actual sample rate may be different than what you specified. Please type in the actuall sample rate if you measured it:\n>> "))
-		throughput 			= ADC.sampleRate/float(SAMP_PER_CYCLE) #Hz per channel
+		ADC.convRate		= eval(raw_input("Warning, actual sample rate may be different than what you specified. Please type in the actuall sample rate if you measured it:\n>> "))
+		throughput 			= ADC.convRate/float(SAMP_PER_CYCLE) #Hz per channel
 		Ts_per_samp 		= 1/throughput
 		Samps_per_channel 	= ADC.sampleLength/float(ADC.n_channels)
 		time 				= np.arange(0,Ts_per_samp*Samps_per_channel,Ts_per_samp)
@@ -78,12 +78,12 @@ def Shoot(ADC,length,SR):
 # Parse user input: Aquire sample length
 Samp_len = int(argv[1])
 
-# Parse user input: Acquire sampling rate
+# Parse user input: Acquire conversion rate
 if len(argv) < 3:
-	print("main: You did not specify a sample rate")
-	SR = input("Please enter a sample rate (samps/sec): ")
+	print("main: You did not specify a conversion rate")
+	CR = input("Please enter a conversion rate (samps/sec): ")
 else:
-	SR = float(argv[2])
+	CR = float(argv[2])
 
 ### Configure there ADC
 # create an object for ADS7865
@@ -101,10 +101,10 @@ else:
 	print("\nmain: user did not give 4th argument. I will skip over any configuration steps.")
 
 # All settings have been configured. Beaglebone is ready for arming.
-ADS7865.Ready_PRUSS_For_Burst(SR)
+ADS7865.Ready_PRUSS_For_Burst(CR)
 """At this point pruss module has been initialized, PRUSS-RAM has been
 wiped, and PRU1 firmware is loaded and running (PRU1 will idle until PRU0
 comes online to recognize and clear a CINT bit)."""
-y = Shoot(ADS7865,Samp_len,SR)
+y = Shoot(ADS7865,Samp_len,CR)
 boot.dearm()
 ADS7865.Close()

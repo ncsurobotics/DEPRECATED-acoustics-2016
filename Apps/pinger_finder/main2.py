@@ -217,13 +217,13 @@ def adc_config(ADC_OBJ, loc):
 	SL = query(loc.curr)
 	ADC_OBJ.sampleLength = int(eval(SL))
 	
-	# Get user's sample rate
+	# Get user's conversion rate
 	response(loc.curr, "Please enter a sample rate")
 	SR = query(loc.curr)
-	ADC_OBJ.sampleRate = eval(SR)
+	ADC_OBJ.Update_SR(eval(SR))
 	
 	# Get user's threshold value
-	response(loc.curr, "Please enter a threshold value (int)")
+	response(loc.curr, "Please enter a threshold value (Volts)")
 	THR = query(loc.curr)
 	ADC_OBJ.threshold = eval(THR)
 	
@@ -273,7 +273,7 @@ def adc_noise_analysis(ADC_OBJ, Signal_Data, plt=None):
 	y = y - np.average(y)
 	
 	# Get T
-	Ts = 1/ADC_OBJ.sampleRate
+	Ts = 1/ADC_OBJ.convRate
 	T = y.size * Ts
 	
 	# Compute Noise RMS

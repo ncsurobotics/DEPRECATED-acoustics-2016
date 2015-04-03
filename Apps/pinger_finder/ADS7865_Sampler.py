@@ -30,16 +30,9 @@ def plot_output(ADC_obj, y, plt):
 	n 		= ADC_obj.n_channels
 	M 		= y[0].size
 	
-	frequency_attenuation_factor = n/SAMPLES_PER_CONV
-	fs 		= ADC_obj.sampleRate/float(frequency_attenuation_factor) #Hertz
-	Ts		= 1/fs
+	fs 		= ADC_obj.sampleRate
 	
-	if (M*Ts/Ts <= M):
-		t 		= np.arange(0, M*Ts, Ts) 
-	elif (M*Ts/Ts > M):
-		t 		= np.arange(0, (M-0.1)*Ts, Ts) # Chalk it up to precision error
-	else:
-		print("Something crazy happened.")
+	t = ADC_obj.Generate_Matching_Time_Array(M)
 		
 	
 	# Plot the data

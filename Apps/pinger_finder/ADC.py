@@ -8,10 +8,13 @@ import BBBIO		#Yields functions for working with GPIO
 import settings		#Same function as a .YAML file
 import numpy as np
 
+import logging
+logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
+
 #Global ADC program Constants
-PRU0_SR_Mem_Offset = 3
+PRU0_CR_Mem_Offset = 3
 PRU0_THR_Mem_Offset = 4
-HC_SR = 0xBEBC200
+HC_CR = 0xBEBC200
 fclk = 200e6
 
 BIN = settings.bin_directory
@@ -21,11 +24,14 @@ ADS7865_MasterPRU = BIN+"ADS7865_sample.bin"
 ADS7865_ClkAndSamplePRU = BIN+"pru1.bin"
 WORD_SIZE = 12
 
-BYTES_PER_SAMPLE = 4
-MIN_SAMPLE_LENGTH = 2
+BYTES_PER_SAMPLE 	= 4
+MIN_SAMPLE_LENGTH 	= 2
 DEFAULT_DAC_VOLTAGE = 2.49612	#volts
-DEFAULT_THRESHOLD = 0	#volts
-TOTAL_CHANNELS = 4
+DEFAULT_THRESHOLD 	= 0	#volts
+TOTAL_CHANNELS 		= 4
+SAMPLES_PER_CONV 	= 2
+
+CONV_RATE_LIMIT		= 800e3 #Hertz
 
 PLUSMINUS	= u'\xb1'.encode('utf-8')
 DIFF_PAIR_1 = "CHA0" + PLUSMINUS
@@ -60,6 +66,11 @@ def twos_comp(val, bits):
           val = val - (1<<bits)
         return val
 
+def CR_Warn_Programmer():
+	logger.warning("Your code updates the conversion rate instead of the"
+				+ " sample rate at the end user level. This goes against the"
+				+ " design spec, and you should fix it such that your code"
+				+ " accepts sample rates at the user level")
 
 ######################################
 ######    ADS7865 Class ##############
@@ -81,9 +92,26 @@ class ADS7865:
 	as well as functions for collecting a string of samples in
 	realtime. """
 
-	def __init__(self, SR=0, L=0):
+	def __init__(self, CR=0.0, L=0):
 		"""Initialization will configure several BBB pins as necessary
 		to hold the adc in an idle state. """
+		
+		"""Parameters (in order of initialization)
+		self.DBus
+		self.WR
+		self._RD
+		self._CONVST
+		self._CS
+		** Just ignore ddr stuff **
+		self.n_channels
+		self.ConveRate
+		self.arm_status
+		self.seq_desc
+		self.ch
+		self.threshold
+		self.CR_specd
+		
+		self.LSB"""
 	
 		#GPIO Stuff
 		self.DBus = BBBIO.Port(DB_pin_table)
@@ -105,8 +133,6 @@ class ADS7865:
 		self._CS.setPortDir("out")
 		self._CS.writeToPort(0)
 		
-		
-		self.n_channels = 2
 	
 		#PRUSS Stuff
 		self.ddr = {}
@@ -123,13 +149,14 @@ class ADS7865:
 			+ "sample points are stored in DDRAM, which is found at the "
 			+ "address range starting at %s" % (hex(self.ddr['addr'])))
 		
-		self.sampleRate 	= SR
+		self.n_channels = 0 
+		self.convRate = CR
 		self.sampleLength 	= int(L)
 		self.arm_status 	= "unknown"
 		self.seq_desc 	= "unknown"
 		self.ch 	= ['unknown']*4
 		self.threshold = DEFAULT_THRESHOLD
-		
+		self.SR_specd = 0	#parameter for keeping the up with the last spec
 		
 		#Load overlays: Does not configure any GPIO to pruin or pruout
 		boot.load()
@@ -278,6 +305,11 @@ class ADS7865:
 			#Update n channels
 			self.n_channels = 4
 			
+		if self.SR_specd:		# Last parameter that the user specd was SR
+			self.Update_SR(self.sampleRate)
+		else:
+			CR_Warn_Programmer()
+			
 	def Read_Seq(self):
 		# Send cmd telling ADC to output it's SEQ config
 		self.Config([CODE_READSEQ])
@@ -310,6 +342,27 @@ class ADS7865:
 		self.dacVoltage = dac_voltage_readout
 		self.LSB = self.dacVoltage/(2**(WORD_SIZE-1)) #Volts
 	
+	def Update_CR(self, CR):
+		self.convRate = float(CR)
+		self.sampleRate = self.CR_2_SR(CR)
+		
+		if (CR > CONV_RATE_LIMIT):
+			logging.warning("Your spec'd conversion rate"
+				+ " exceeds the system's spec (%dKHz)" % CONV_RATE_LIMIT/1000)
+				
+		self.SR_specd = 0
+	
+	def Update_SR(self, SR):
+		self.sampleRate = float(SR)
+		self.convRate = self.SR_2_CR(SR)
+		
+		self.SR_specd = 1
+		
+		if (self.convRate > CONV_RATE_LIMIT):
+			logging.warning("Your spec'd conversion rate"
+				+ " exceeds the system's spec (%dKHz)" % CONV_RATE_LIMIT/1000)
+		
+	
 	def SW_Reset(self):
 		print("Performing ADC device reset...")
 		self.Config([CODE_SWRESET])
@@ -325,6 +378,10 @@ class ADS7865:
 		self.ch[2] = ''
 		self.ch[3] = ''
 		
+		# Update other parameters
+		self.n_channels = 2
+		self.Update_CR(self.convRate)
+		
 		# Let user know work is done
 		print("... done.")
 			
@@ -333,7 +390,7 @@ class ADS7865:
 		self.DBus.close()
 		self.WR.close()
 		self._RD.close()
-		#self.BUSY.close()
+		#do not close# self.BUSY.close()
 		self._CS.close()
 		self._CONVST.close()
 	
@@ -365,6 +422,20 @@ class ADS7865:
 		dac_v = dac_i*V_per_bit
 		
 		return dac_v
+	
+	def CR_2_SR(self,CR):
+		if (self.n_channels != 0):
+			return (CR*SAMPLES_PER_CONV)/float(self.n_channels)
+		else:
+			loggging.warning("self.n_channels == 0. Unable to compute self.sampleRate!")
+			return None
+			
+	def SR_2_CR(self,SR):
+		if (self.n_channels != 0):
+			return (SR) * (self.n_channels/float(SAMPLES_PER_CONV))
+		else:
+			loggging.warning("self.n_channels == 0. Unable to compute self.sampleRate!")
+			return None
 		
 	def ADC_Status(self):
 		# Read and write pins
@@ -373,9 +444,10 @@ class ADS7865:
 		print("  _RD:\t%d" % _RD)
 		print("  _WR:\t%d" % _WR)
 	
-		# Sampling rate
-		sr = self.sampleRate
-		print("  sr:\t%d samples/sec" % sr)
+		# Conversion and sample rate
+		cr = self.convRate
+		print("  cr:\t%.2e conversions/sec" % cr)
+		print("  sr:\t%.2e samples/sec" % self.sampleRate)
 		
 		# Sample length
 		sl = self.sampleLength
@@ -395,23 +467,39 @@ class ADS7865:
 		for i in range(4):
 			print("  channel {}:\t{}".format(i, self.ch[i]))
 			
+	def Generate_Matching_Time_Array(self, M):
+		import pdb;pdb.set_trace()
+		"For plotting signals in the time domain, this function"
+		"Looks at it's sampling parameters, and generate a numpy array"
+		"of length M to corresponds with M samples of data per channel"
+		Ts = 1/self.sampleRate
+	
+		if (M*Ts/Ts <= M):
+			t 		= np.arange(0, M*Ts, Ts) 
+		elif (M*Ts/Ts > M):
+			t 		= np.arange(0, (M-0.1)*Ts, Ts) # Chalk it up to precision error
+		else:
+			print("Something crazy happened.")
+			t = None
+			
+		return t
 		
 	
 	############################
 	#### PRUSS Commands  #######
 	############################
-	def Ready_PRUSS_For_Burst(self, SR=None):
+	def Ready_PRUSS_For_Burst(self, CR=None):
 		# Initialize variables
-		if SR is None:
-			SR = self.sampleRate
+		if CR is None:
+			CR = self.convRate
 		else:
-			self.sampleRate = SR
+			self.convRate = CR
 			
-		if SR == 0:
-			print("SR currently set to 0. Please specify a sample rate.")
+		if CR == 0:
+			print("CR currently set to 0. Please specify a conversion rate.")
 			exit(1)
 			
-		SR_BITECODE = int(round(1.0/SR*fclk)) # Converts user SR input to Hex.
+		CR_BITECODE = int(round(1.0/CR*fclk)) # Converts user CR input to Hex.
 		
 		# Initialize evironment
 		pypruss.modprobe()	
@@ -425,7 +513,7 @@ class ADS7865:
 		pypruss.pru_write_memory(0, 0x0000, [0x0,]*0x0800) # clearing pru0 ram
 		pypruss.pru_write_memory(0, 0x0800, [0x0,]*0x0800) # clearing pru1 ram
 		pypruss.pru_write_memory(0, 0x4000, [0x0,]*300) # clearing ack bit from pru1
-		pypruss.pru_write_memory(0, PRU0_SR_Mem_Offset, [SR_BITECODE,]) # Setting samplerate
+		pypruss.pru_write_memory(0, PRU0_CR_Mem_Offset, [CR_BITECODE,]) # Setting conversion
 		
 		pypruss.exec_program(1, ADS7865_ClkAndSamplePRU) 		# Load firmware on PRU1
 		

@@ -468,7 +468,6 @@ class ADS7865:
 			print("  channel {}:\t{}".format(i, self.ch[i]))
 			
 	def Generate_Matching_Time_Array(self, M):
-		import pdb;pdb.set_trace()
 		"For plotting signals in the time domain, this function"
 		"Looks at it's sampling parameters, and generate a numpy array"
 		"of length M to corresponds with M samples of data per channel"

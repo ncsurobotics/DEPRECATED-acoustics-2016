@@ -2,12 +2,15 @@ import logging
 logging.basicConfig(level=logging.info, format='%(asctime)s - %(levelname)s - %(message)s')
 
 import getHeading
+import boot
+
+TARGET_FREQ = 22e3 #hz
 
 def main(ADC,plt=None):
 	"""Assume adc is already loaded"""
 	
 	"Establish various parameters"
-	fs = ADC.
+	fs = ADC.sampleRate
 	
 	"Arm the ADC."
 	ADC.Ready_PRUSS_For_Burst()
@@ -18,16 +21,18 @@ def main(ADC,plt=None):
 		"Exit gracefully when user ctrl-D"
 		try:
 	
-			"capture a set of samples
-			y,t = ADC_Obj.Burst()
+			"capture a set of samples"
+			y,t = ADC.Burst()
 			
 			"process simultaneous channels"
-			angle = getHeading.calculate_heading(y[0],y[1])	
+			angle = getHeading.calculate_heading(TARGET_FREQ, fs, y[0],y[1])	
 			
-			"print computation to the user
-			logging.info(
+			"print computation to the user"
+			logging.info("pinger is %d degrees right" % angle)
 		
 	
 		except KeyboardInterrupt:
 			print("Quitting program")
-			user_input = 'q'
+			break;
+	
+	boot.dearm()

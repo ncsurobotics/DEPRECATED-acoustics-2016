@@ -1,18 +1,6 @@
 import math
 from scipy.fftpack import fft
 from cmath import phase
-
-def load_matplotlib():
-	print("Loading Matplotlib library...")
-	import matplotlib
-	matplotlib.use('GTK')
-	import matplotlib.pyplot as plt
-	print("...done.")
-	
-	return plt
-	
-plt = load_matplotlib()
-
 	
 def phase_diff_to_x_and_y(phase_diff, fundamental_freq):
 	#Parameters
@@ -70,13 +58,6 @@ def calculate_heading(target_freq, fs, a, b):
 	b_phase = relative_wraparound(a_phase, b_phase)
 	print("a_phase = %f pi radians" % (a_phase/math.pi))
 	print("b_phase = %f pi radians" % (b_phase/math.pi))
-	
-	fig,ax = plt.subplots()
-	ax.plot(abs(fft(a)))
-	ax.plot(abs(fft(b)))
-	ax.legend(['a','b'])
-		
-	plt.show()
 	
 	#Compute phase difference
 	phase_diff = a_phase-b_phase

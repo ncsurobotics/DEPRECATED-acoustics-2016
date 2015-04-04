@@ -7,6 +7,7 @@ import watch_for_dead_bits
 import ADS7865_Sampler
 from LTC1564 import LTC1564
 import trackPinger
+import visFFT
 
 help_text = """quit: quit the program.
 help: display this help text."""
@@ -238,7 +239,7 @@ def adc_config(ADC_OBJ, loc):
 	response(loc.curr, "Exiting ADC config mode")
 	
 def adc_analysis_wizard(ADC_OBJ, Signal_Data, plt):
-	keys = ['noise_analysis', 'track_pinger']
+	keys = ['noise_analysis', 'track_pinger','live_fft']
 	
 	q = 0
 	while (q != 1):
@@ -262,6 +263,9 @@ def adc_analysis_wizard(ADC_OBJ, Signal_Data, plt):
 			adc_noise_analysis(ADC_OBJ, Signal_Data, plt)
 		elif ('track_pinger' == user_input) or ('2' == user_input):
 			trackPinger.main(ADC_OBJ,plt)
+		elif ('live_fft' == user_input) or ('3' == user_input):
+			visFFT.main(ADC_OBJ,plt)
+			
 			
 def adc_noise_analysis(ADC_OBJ, Signal_Data, plt=None):
 	# Ask user to select a channel of data for analysis
@@ -318,6 +322,7 @@ def load_matplotlib():
 	matplotlib.use('GTK')
 	import matplotlib.pyplot as plt
 	plt.ion()
+	plt.hold(False); plt.close()
 	print("...done.")
 	
 	return plt

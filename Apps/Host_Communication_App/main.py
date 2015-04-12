@@ -22,7 +22,7 @@ ser = serial.Serial(device, 9600)
 
 def cmd_listen():
 	print("listening...")
-	
+
 	while True:
 		print repr(ser.readline()[0:-2])
 
@@ -40,20 +40,20 @@ def cmd_unit_test():
 
 def main():
 	# Initialize connection
-	
+
 	cmd_listen()
 	exit(1)
-	
+
 	# Check if successful
 	cmd_helloBBB()
 	response = ser.readline()
 	if "hello" in response:
 		print(response)
 	else:
-		print("main: Hmmm. I didn't get any response from the" + 
+		print("main: Hmmm. I didn't get any response from the" +
 			" beaglebone... Check your connections.")
 		exit(1)
-		
+
 	# Connection successful. Now going to run through a list of things
 	#  the BBB should be able to handle.
 	cmd_unit_test()
@@ -69,4 +69,5 @@ if argc == 2:
 		print("--insert helpful text here--")
 		exit(1)
 
-main() #Run the main function ^^^^^^
+if __name__ == '__main__':
+	main()

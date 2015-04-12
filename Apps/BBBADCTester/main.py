@@ -11,16 +11,16 @@ def twos_comp(val, bits):
 
 def main():
 	# settings
-	scope = 'FULL'	
+	scope = 'FULL'
 	DB_pin_table = ['P8_08','P8_09','P8_10','P8_11','P8_12','P8_13','P8_14','P8_15','P8_16','P8_17','P8_18','P8_19']
 	WR_pin = 'P9_11'
 	BUSY_pin = 'P9_12'
 	CS_pin = 'P9_13'
 	RD_pin = 'P9_14'
 	CONVST_pin = 'P9_15'
-	
+
 	leave = False
-	
+
 	# program
 	io = {'PortDB': BBBIO.Port(DB_pin_table),
 		'/WR':BBBIO.Port(WR_pin),
@@ -40,7 +40,7 @@ def main():
 	##########
 	while leave == False:
 		# Select experiment
-		experiment = 'trace CH1'		
+		experiment = 'trace CH1'
 		if experiment == 'trace CH1':
 			ADS7865.Configure(256) # 0x100
 		if experiment == 'trace CH1 and CH2':
@@ -58,10 +58,10 @@ def main():
 			b = time.time()
 			if n == 0:
 				t0 = b - a
-			
+
 			t = (b - a - t0)
-		
-			trace = twos_comp(int(result,2), len(result)) 
+
+			trace = twos_comp(int(result,2), len(result))
 
 			print(trace)
 			data.append((t,trace))
@@ -71,4 +71,5 @@ def main():
 		leave = True
 	ADS7865.Close()
 
-main()
+if __name__ == '__main__':
+	main()

@@ -22,5 +22,5 @@ def read_input(ser_obj):
 def write_output(ser_obj, outp_string):
 	ser_obj.write(outp_string + TTY_BANG)
 
-main()
-
+if __name__ == '__main__':
+	main()

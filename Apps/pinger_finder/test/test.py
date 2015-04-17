@@ -19,4 +19,6 @@ def main():
 
 print("-" * 50)
 print("test.py: testing basic functionality...")
-main()
+
+if __name__ == '__main__':
+    main()

@@ -1,6 +1,8 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
+from .common import get_focii
+
 # Initialize parameters
 d = 12.01e-2  # Hydrophone spacing (meters)
 del_t = 67.889e-6 / 10  # time difference in signal arrival (seconds)
@@ -8,11 +10,6 @@ v = 1473  # Speed of sound in the medium (m/s)
 
 # Settings
 sz = "small"
-
-
-def getFocii(spacing_of_elements):
-    c = spacing_of_elements / 2
-    return c
 
 
 def hyperbola(a, b):
@@ -44,7 +41,7 @@ def hyperbolaCOE(c, del_t, v_medium):
 
 def main():
     # Compute first hyperbola
-    c = getFocii(d)
+    c = get_focii(d)
     (a, b) = hyperbolaCOE(c, del_t, v)
     (x, y) = hyperbola(a, b)
 

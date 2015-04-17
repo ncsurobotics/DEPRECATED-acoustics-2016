@@ -1,10 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
-
-def getFocii(spacing_of_elements):
-    c = spacing_of_elements / 2
-    return c
+from .common import get_focii
 
 
 def hyperbola(a, b):
@@ -36,7 +33,7 @@ def hyperbolaCOE(c, del_t, v_medium):
 
 def easyHyperbola(d, del_t, v):
     # Compute first hyperbola
-    c = getFocii(d)
+    c = get_focii(d)
     (a, b) = hyperbolaCOE(c, del_t, v)
     (x, y) = hyperbola(a, b)
     return (x, y)

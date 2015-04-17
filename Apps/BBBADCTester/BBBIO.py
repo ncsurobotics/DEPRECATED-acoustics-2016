@@ -111,7 +111,7 @@ class Port():
             self.createPort(assignment)
 
     def createPort(self, pinNameList):
-        if type(pinNameList) == type(""):
+        if isinstance(pinNameList, basestring):
             pinNameList = [pinNameList]
 
         GPIOList = batchLookupGPIO(pinNameList)

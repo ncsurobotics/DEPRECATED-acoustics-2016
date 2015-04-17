@@ -4,8 +4,10 @@ sys.path.insert(0, '../pinger_finder')
 
 import boot
 
+
 def enable_uart():
-	boot.uart()
+    boot.uart()
+
 
 def disable_uart():
-	boot.nouart()
+    boot.nouart()

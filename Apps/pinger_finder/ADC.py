@@ -428,14 +428,14 @@ class ADS7865:
         if (self.n_channels != 0):
             return (CR * SAMPLES_PER_CONV) / float(self.n_channels)
         else:
-            loggging.warning("self.n_channels == 0. Unable to compute self.sampleRate!")
+            logging.warning("self.n_channels == 0. Unable to compute self.sampleRate!")
             return None
 
     def SR_2_CR(self, SR):
         if (self.n_channels != 0):
             return (SR) * (self.n_channels / float(SAMPLES_PER_CONV))
         else:
-            loggging.warning("self.n_channels == 0. Unable to compute self.sampleRate!")
+            logging.warning("self.n_channels == 0. Unable to compute self.sampleRate!")
             return None
 
     def ADC_Status(self):
@@ -580,7 +580,7 @@ class ADS7865:
 
             # User may specify whether he wants values to come in
             # raw, or two's compliment.
-            if (raw == None) or (raw == 0):
+            if (raw is None) or (raw == 0):
                 i = 0
                 for samp in y[chan]:
                     y[chan][i] = twos_comp(samp, WORD_SIZE)

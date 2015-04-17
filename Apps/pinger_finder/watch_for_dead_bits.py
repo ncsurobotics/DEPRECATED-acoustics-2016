@@ -3,7 +3,7 @@ import pypruss  # Python PRUSS wrapper
 import time
 
 
-class mask:
+class Mask:
 
     def __init__(self):
         self.burn_bit = 1
@@ -55,7 +55,7 @@ def main(ADC_Obj):
     ADC_Obj.Ready_PRUSS_For_Burst()
 
     # Config burning maching
-    msk = mask()
+    msk = Mask()
 
     #
     print("normal or burn?")

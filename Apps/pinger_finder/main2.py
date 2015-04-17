@@ -42,7 +42,7 @@ def UI():
     HOME = "HOME"
     ADC_APP = "ADC_APP"
     ADC_CONF = "CONFIG"
-    loc = location(HOME)
+    loc = Location(HOME)
 
     # Print introductory text
     response(loc.curr, "Welcome! Please, type in a command:")
@@ -350,7 +350,7 @@ def usage():
     print('\n'.join(text))
 
 
-class location():
+class Location():
 
     def __init__(self, init):
         self.list = [init]

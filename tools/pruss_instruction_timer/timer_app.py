@@ -31,4 +31,6 @@ def main():
 
 print("-" * 50)
 print("timer_app.py: Timing a dummy loop...")
-main()
+
+if __name__ == '__main__':
+    main()

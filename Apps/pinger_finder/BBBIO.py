@@ -211,7 +211,7 @@ class Port():
         -- pinNameList[0] must represent the LSB, and
         pinNameList[-1] must represent the MSB."""
 
-        if type(pinNameList) == type(""):
+        if isinstance(pinNameList, basestring):
             pinNameList = [pinNameList]
 
         GPIOList = batchLookupGPIO(pinNameList)

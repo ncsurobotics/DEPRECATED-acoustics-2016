@@ -3,8 +3,10 @@
 import time
 import random
 
+
 def eq(a, b, err=1e-5):
     return (abs(a - b) < err)
+
 
 def mlat(receivers, delays, V=1497.0):
     x = [0, 0, 0, 0]
@@ -36,14 +38,14 @@ def mlat(receivers, delays, V=1497.0):
     z_lk = z_l - z_k
     z_ki = z_k - z_i
 
-    A = (R_ik*x_ji - R_ij*x_ki) / (R_ij*y_ki - R_ik*y_ji)
-    B = (R_ik*z_ji - R_ij*z_ki) / (R_ij*y_ki - R_ik*y_ji)
-    C = ((R_ik * (R_ij**2 + x_i**2 - x_j**2 + y_i**2 - y_j**2 + z_i**2 - z_j**2)) - 
-         (R_ij * (R_ik**2 + x_i**2 - x_k**2 + y_i**2 - y_k**2 + z_i**2 - z_k**2))) / (2 * (R_ij*y_ki - R_ik*y_ji))
-    D = (R_kl*x_jk - R_kj*x_lk) / (R_kj*y_lk - R_kl*y_jk)
-    E = (R_kl*z_jk - R_kj*z_lk) / (R_kj*y_lk - R_kl*y_jk)
-    F = ((R_kl * (R_kj**2 + x_k**2 - x_j**2 + y_k**2 - y_j**2 + z_k**2 - z_j**2)) - 
-         (R_kj * (R_kl**2 + x_k**2 - x_l**2 + y_k**2 - y_l**2 + z_k**2 - z_l**2))) / (2 * (R_kj*y_lk - R_kl*y_jk))
+    A = (R_ik * x_ji - R_ij * x_ki) / (R_ij * y_ki - R_ik * y_ji)
+    B = (R_ik * z_ji - R_ij * z_ki) / (R_ij * y_ki - R_ik * y_ji)
+    C = ((R_ik * (R_ij**2 + x_i**2 - x_j**2 + y_i**2 - y_j**2 + z_i**2 - z_j**2)) -
+         (R_ij * (R_ik**2 + x_i**2 - x_k**2 + y_i**2 - y_k**2 + z_i**2 - z_k**2))) / (2 * (R_ij * y_ki - R_ik * y_ji))
+    D = (R_kl * x_jk - R_kj * x_lk) / (R_kj * y_lk - R_kl * y_jk)
+    E = (R_kl * z_jk - R_kj * z_lk) / (R_kj * y_lk - R_kl * y_jk)
+    F = ((R_kl * (R_kj**2 + x_k**2 - x_j**2 + y_k**2 - y_j**2 + z_k**2 - z_j**2)) -
+         (R_kj * (R_kl**2 + x_k**2 - x_l**2 + y_k**2 - y_l**2 + z_k**2 - z_l**2))) / (2 * (R_kj * y_lk - R_kl * y_jk))
 
     # Set to 1 if both numerator and denominator are near 0
     if eq(E - B, 0) and eq(A - D, 0):
@@ -57,23 +59,23 @@ def mlat(receivers, delays, V=1497.0):
     else:
         H = (F - C) / (A - D)
 
-    I = A*G + B
-    J = A*H + C
-    K = R_ik**2 + x_i**2 - x_k**2 + y_i**2 - y_k**2 + z_i**2 - z_k**2 + 2*x_ki*H + 2*y_ki*J
-    L = 2 * (x_ki*G + y_ki*I + 2*z_ki)
-    M = (4*R_ik**2 * (G**2 + I**2 + 1)) - L**2
-    N = (8*R_ik**2 * (G*(x_i - H) + I*(y_i - J) + z_i)) + 2*L*K
-    O = (4*R_ik**2 * ((x_i - H)**2 + (y_i - J)**2 + z_i**2)) - K**2
-    
-    z_0 = (N / (2*M)) + ((N / (2*M))**2 - (O/M))**0.5
-    x_0 = G*z_0 + H
-    y_0 = I*z_0 + J
+    I = A * G + B
+    J = A * H + C
+    K = R_ik**2 + x_i**2 - x_k**2 + y_i**2 - y_k**2 + z_i**2 - z_k**2 + 2 * x_ki * H + 2 * y_ki * J
+    L = 2 * (x_ki * G + y_ki * I + 2 * z_ki)
+    M = (4 * R_ik**2 * (G**2 + I**2 + 1)) - L**2
+    N = (8 * R_ik**2 * (G * (x_i - H) + I * (y_i - J) + z_i)) + 2 * L * K
+    O = (4 * R_ik**2 * ((x_i - H)**2 + (y_i - J)**2 + z_i**2)) - K**2
+
+    z_0 = (N / (2 * M)) + ((N / (2 * M))**2 - (O / M))**0.5
+    x_0 = G * z_0 + H
+    y_0 = I * z_0 + J
     sol_0 = (x_0, y_0, z_0)
     err_0 = solution_error(receivers, delays, sol_0, V)
 
-    z_1 = (N / (2*M)) - ((N / (2*M))**2 - (O/M))**0.5
-    x_1 = G*z_1 + H
-    y_1 = I*z_1 + J
+    z_1 = (N / (2 * M)) - ((N / (2 * M))**2 - (O / M))**0.5
+    x_1 = G * z_1 + H
+    y_1 = I * z_1 + J
     sol_1 = (x_1, y_1, z_1)
     err_1 = solution_error(receivers, delays, sol_1, V)
 
@@ -81,6 +83,7 @@ def mlat(receivers, delays, V=1497.0):
         return sol_0, sol_1
     else:
         return sol_1, sol_0
+
 
 def solution_error(receivers, delays, solution, V=1497.0):
     t = 4 * [0]
@@ -105,12 +108,13 @@ def solution_error(receivers, delays, solution, V=1497.0):
 
     return err
 
+
 def test_0():
     receivers = [(0., 0., 0.),
                  (1., 0., 0.),
                  (0., 1., 0.),
                  (1., 1., 0.)]
-    
+
     t = [0, 0, 0, 0]
     t[0] = 3 / 1497.
     t[1] = 6**0.5 / 1497.
@@ -126,17 +130,18 @@ def test_0():
     t_0 = time.time()
     x, y, z = mlat(receivers, delay)[0]
     t_1 = time.time()
-    
+
     print "Solution should be approximately (2, 2, 1)"
     print " (%.3f, %.3f, %.3f)" % (x, y, z)
     print "Time to find solution: %0.6f" % (t_1 - t_0,)
+
 
 def test_1():
     receivers = [(0, 26566800, 0),
                  (-15338349, 15338349, 15338349),
                  (0, 6380000, 25789348),
                  (-18785564, 18785564, 0)]
-    
+
     t = [0, 0, 0, 0]
     t[0] = 67335898e-9
     t[1] = 78283279e-9
@@ -152,15 +157,17 @@ def test_1():
     t_0 = time.time()
     x, y, z = mlat(receivers, delay, 2.99792458e8)[0]
     t_1 = time.time()
-    
+
     print "Solution should be approximately (0, 638000, 0)"
-    print " (%d, %d, %d)" % (int(round(x/100)*100),
-                             int(round(y/100)*100),
-                             int(round(z/100)*100))
+    print " (%d, %d, %d)" % (int(round(x / 100) * 100),
+                             int(round(y / 100) * 100),
+                             int(round(z / 100) * 100))
     print "Time to find solution: %0.6f" % (t_1 - t_0,)
+
 
 def dist(a, b):
     return ((a[0] - b[0])**2 + (a[1] - b[1])**2 + (a[2] - b[2])**2)**0.5
+
 
 def gen_tests(n=100, V=1497.0):
     receivers = [(0., 0., 0.),
@@ -219,5 +226,5 @@ def gen_tests(n=100, V=1497.0):
 
 if __name__ == "__main__":
     gen_tests(1000)
-    #test_0()
-    #test_1()
+    # test_0()
+    # test_1()

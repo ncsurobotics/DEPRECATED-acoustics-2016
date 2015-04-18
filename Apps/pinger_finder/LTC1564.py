@@ -33,7 +33,7 @@ class LTC1564():
         "self.GainMode(...): Configures gain of the input stage."
         "mode: int value."
 
-        if ((mode <= 3) and (mode >= 0)):
+        if 0 <= mode <= 3:
             print("LTC1564: Writing %d to gain stage." % mode)
 
             self._CS.writeToPort(0)
@@ -48,7 +48,7 @@ class LTC1564():
     def FiltMode(self, mode):
         "self.FiltMode(...): Configures Fc of the input stage."
         "mode: int value."
-        if ((mode <= 1) and (mode >= 0)):
+        if 0 <= mode <= 1:
             print("LTC1564: Writing %d to filt stage." % mode)
 
             self._CS.writeToPort(0)

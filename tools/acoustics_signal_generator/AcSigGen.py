@@ -14,9 +14,9 @@ def main():
     # User Accessible Settings
     PLOT_STUFF = 0  # 0 for off. 1 for on.
 
-    SEL_REC = 1 			# int from 0 to 3... selects lab recording
+    SEL_REC = 1             # int from 0 to 3... selects lab recording
     SAMPLE_RATE = 200e3  # Hz
-    SAMPLE_LENGTH = 64 		# <----- Not used
+    SAMPLE_LENGTH = 64      # <----- Not used
 
     MAX_TIME_SHIFT = 0.1e-3  # seconds
     PHASE_DELAY = 0
@@ -36,7 +36,7 @@ def main():
     # load recording of hydrophone
     (raw_recording, sampling_interval) = import_real_data(SEL_REC, SAMPLE_RATE)
     """raw_recording is an array of voltage values collected over time.
-	It represents the signal that the hydrophone array will be receiving"""
+    It represents the signal that the hydrophone array will be receiving"""
 
     # plot the data
     if PLOT_STUFF:
@@ -48,12 +48,12 @@ def main():
                                                sampling_interval,
                                                PHASE)
     """hydrophone_recording is a list of arrays, where as each array is a
-	time delayed sampling of raw_recording. For instance:
-	---raw_recording[ref]= recording with the reference hydrophone
-	---raw_recording[h1]= recording with hydrophone1
-	---raw_recording[h2]= recording with hydrophone2
-	---raw_recording[h3]= recording with hydrophone3
-	"""
+    time delayed sampling of raw_recording. For instance:
+    ---raw_recording[ref]= recording with the reference hydrophone
+    ---raw_recording[h1]= recording with hydrophone1
+    ---raw_recording[h2]= recording with hydrophone2
+    ---raw_recording[h3]= recording with hydrophone3
+    """
 
     if PLOT_STUFF:
         plot(hydrophone_recording, "Output")

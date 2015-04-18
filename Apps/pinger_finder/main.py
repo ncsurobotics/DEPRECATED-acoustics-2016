@@ -5,7 +5,7 @@ from sys import argv
 import numpy as np
 
 
-def Shoot(ADC, length, CR):
+def shoot(ADC, length, CR):
     # Initialize empty variables
     sum = 0
     SAMP_PER_CONV = 2
@@ -105,6 +105,6 @@ ADS7865.Ready_PRUSS_For_Burst(CR)
 """At this point pruss module has been initialized, PRUSS-RAM has been
 wiped, and PRU1 firmware is loaded and running (PRU1 will idle until PRU0
 comes online to recognize and clear a CINT bit)."""
-y = Shoot(ADS7865, Samp_len, CR)
+y = shoot(ADS7865, Samp_len, CR)
 boot.dearm()
 ADS7865.Close()

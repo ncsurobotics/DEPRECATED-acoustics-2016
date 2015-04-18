@@ -40,14 +40,14 @@ def main():
     ##########
     ## LOOP ##
     ##########
-    while leave == False:
+    while leave is False:
         # Select experiment
         experiment = 'trace CH1'
         if experiment == 'trace CH1':
             ADS7865.Configure(256)  # 0x100
         if experiment == 'trace CH1 and CH2':
-            self.Configure(300)  # 0x104;
-            self.Configure(2304)  # 0x900
+            ADS7865.Configure(300)  # 0x104;
+            ADS7865.Configure(2304)  # 0x900
 
         n = 0
         data = []

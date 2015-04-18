@@ -204,7 +204,7 @@ class ADS7865:
         # CONVST), but the user must also take the extra precaution to disable the
         #"sub-sampling" portion of the PRUSS code in order for it to work.
 
-        if sel == None:
+        if sel is None:
             # Generate Query to user to see what kind of config he wants
             options = ["0a/0b differential channel pair",
                        "1a/1b differential channel pair",

@@ -1,8 +1,13 @@
-c_air = 343  # m/s
+
+class Air:
+    name = "air"
+
+    # Speed of Sound - m/s
+    c = 343
 
 
 class Water:
+    name = "water"
 
-    def __init__(self):
-        self.name = 'water'
-        self.c = 4.3 * c_air
+    # Speed of Sound - m/s
+    c = 1475  # roughly 4.3 x Air.c

@@ -8,9 +8,16 @@ import ADS7865_Sampler
 from LTC1564 import LTC1564
 import trackPinger
 import visFFT
+import functools
 
 help_text = """quit: quit the program.
 help: display this help text."""
+
+
+def match_against(comp, *args):
+    """ Useful for processing user command line input
+    """
+    return comp in args
 
 
 # 1. #####################################
@@ -57,6 +64,10 @@ def UI():
         # query user for input
         user_input = query(loc.path)
 
+        # Creates a function that will return true if user_input matches
+        # any of the provided variable arguments
+        input_matches = functools.partial(match_against, user_input)
+
         # Log user response
         pass
 
@@ -65,10 +76,10 @@ def UI():
         ################################
 
         # respond to user input
-        if ('quit' == user_input) or ('q' == user_input):
+        if input_matches('q', 'quit'):
             q = 1
 
-        elif ('help' == user_input) or ('h' == user_input):
+        elif input_matches('h', 'help'):
             print('-' * 50)
             usage()
             print('-' * 50)
@@ -77,13 +88,13 @@ def UI():
         ########### ADC cmd Class ######
         ################################
 
-        elif ('adc_status' == user_input) or ('s' == user_input):
+        elif input_matches('s', 'adc_status'):
             if ADC_active:
                 ADS7865.ADC_Status()
             else:
                 response(loc.curr, "Please run 'load_adc_app' first")
 
-        elif ('load_adc_app' == user_input) or ('l' == user_input):
+        elif input_matches('l', 'load_adc_app'):
             ADC_active = True
             ADC_app_splash()
             loc.push(ADC_APP)
@@ -91,29 +102,29 @@ def UI():
             ADS7865 = ADC.ADS7865()
             response(loc.curr, "Done loading app. Entering environment...")
 
-        elif ('unload_adc_app' == user_input) or ('u' == user_input):
+        elif input_matches('u', 'unload_adc_app'):
             response(loc.curr, "Closing app...")
             ADS7865.Close()
             loc.pop()
 
-        elif ('adc_debug_wizard' == user_input) or ('d' == user_input):
+        elif input_matches('d', 'adc_debug_wizard'):
             if ADC_active:
                 adc_debug_wizard(ADS7865)
             else:
                 response(loc.curr, "Please run 'load_adc_app' first")
 
-        elif ('adc_collect_data' == user_input) or ('data' == user_input):
+        elif input_matches('data', 'adc_collect_data'):
             if ADC_active:
                 Signal_Data['y'] = ADS7865_Sampler.main(ADS7865, plt)
             else:
                 response(loc.curr, "Please run 'load_adc_app' first")
 
-        elif ('adc_conf' == user_input) or ('o' == user_input):
+        elif input_matches('o', 'adc_conf'):
             loc.push(ADC_CONF)
             adc_config(ADS7865, loc)
             loc.pop()
 
-        elif ("adc_analysis" == user_input) or ('a' == user_input):
+        elif input_matches('a', 'adc_analysis'):
             if ADC_active:
                 adc_analysis_wizard(ADS7865, Signal_Data, plt)
             else:
@@ -121,11 +132,11 @@ def UI():
         # c ############################
         ########### Filter cmd Class ##
         ################################
-        elif ("lf" == user_input) or ("load_filts" == user_input):
+        elif input_matches('lf', 'load_filts'):
             LTC = LTC1564()
             LTC_active = True
 
-        elif ("Glf" == user_input) or ("conf_G" == user_input):
+        elif input_matches('Glf', 'conf_G'):
             if LTC_active:
                 print("Config Input Gain: enter a mode from 0 to 3")
                 mode = eval(raw_input(">> "))
@@ -133,7 +144,7 @@ def UI():
             else:
                 response(loc.curr, "Please run 'lf' (load_filts) first")
 
-        elif ("Flf" == user_input) or ("conf_F" == user_input):
+        elif input_matches('Flf', 'conf_F'):
             if LTC_active:
                 print("Config Input Fc: enter a mode from 0 to 1")
                 mode = eval(raw_input(">> "))
@@ -145,10 +156,10 @@ def UI():
         ########### utility cmd Class ##
         ################################
 
-        elif ('plot_en' == user_input) or ('p' == user_input):
+        elif input_matches('p', 'plot_en'):
             plt = load_matplotlib()
 
-        elif 'EOF' == user_input:
+        elif input_matches('EOF'):
             response(loc.curr, "End of input file reached")
 
         else:
@@ -185,20 +196,23 @@ def adc_debug_wizard(ADC_object):
         # Take user input
         user_input = query('adc_debug_wizard')
 
+        input_matches = functools.partial(match_against, user_input)
+
         # route user
-        if 'q' == user_input:
+        if input_matches('q'):
             q = 1
-        elif ('watch_for_dead_bits' == user_input) or ('1' == user_input):
+
+        elif input_matches('l', 'watch_for_dead_bits'):
             watch_for_dead_bits.main(ADC_object)
 
-        elif('3' == user_input):  # check_DBus
+        elif input_matches('3'):  # check_DBus
             temp = ADC_object.DBus.readStr()
             print("debug_wizard: DBus = %s" % temp)
 
-        elif('6' == user_input):
+        elif input_matches('6'):
             ADC_object.Read_Seq()
 
-        elif ('7' == user_input):
+        elif input_matches('7'):
             ADC_object.Read_Dac()
 
 
@@ -250,20 +264,25 @@ def adc_analysis_wizard(ADC_OBJ, Signal_Data, plt):
         # Take user input
         user_input = query('adc_analysis_wizard')
 
+        input_matches = functools.partial(match_against, user_input)
+
         # route user
-        if 'q' == user_input:
+        if input_matches('q'):
             q = 1
-        elif 's' == user_input:
+
+        elif input_matches('s'):
             # Print status
             print("current status:")
             ADC_OBJ.ADC_Status()
             print("")
 
-        elif ('noise_analysis' == user_input) or ('1' == user_input):
+        elif input_matches('1', 'noise_analysis'):
             adc_noise_analysis(ADC_OBJ, Signal_Data, plt)
-        elif ('track_pinger' == user_input) or ('2' == user_input):
+
+        elif input_matches('2', 'trackPinger'):
             trackPinger.main(ADC_OBJ, plt)
-        elif ('live_fft' == user_input) or ('3' == user_input):
+
+        elif input_matches('3', 'live_fft'):
             visFFT.main(ADC_OBJ, plt)
 
 

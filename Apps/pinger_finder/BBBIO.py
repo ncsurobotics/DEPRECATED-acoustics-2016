@@ -211,6 +211,10 @@ class Port():
         -- pinNameList[0] must represent the LSB, and
         pinNameList[-1] must represent the MSB."""
 
+        """If user supplies a string (which is convenient if he
+        only wants to allocate one pin), then convert that string
+        to a list with one element because that's the type that
+        works with self.batchLookupGPIO(...)"""
         if isinstance(pinNameList, basestring):
             pinNameList = [pinNameList]
 

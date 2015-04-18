@@ -17,8 +17,9 @@ Simply issue the following command
 Issue the following command to run the program
 
      python main.py      # << type "help" in immediate prompt for more instructions.
-                         # BUG: Usually doesn't work on first time after fresh boot. 
-                         #^^Try again if some error regarding the mmc shows up.
+                         # BUG: "(l)oad_ADC" Usually doesn't work on first time after fresh boot. 
+                         # type "(u)nload_ADC" and then "(l)oad_ADC" if a message of zero memory
+                         # allocation shows up.
 
 # Cleaning up
 If things get messy, just run

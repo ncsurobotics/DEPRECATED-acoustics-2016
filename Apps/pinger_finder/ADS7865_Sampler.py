@@ -25,6 +25,7 @@ def main(ADC_obj, plt):
 def plot_output(ADC_obj, y, plt):
 	# get plotting objects
 	fig,ax = plt.subplots()
+	ax.hold(True)
 	
 	# Compute parameters
 	n 		= ADC_obj.n_channels

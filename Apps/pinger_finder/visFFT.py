@@ -44,7 +44,8 @@ def main(ADC,plt):
 				plt.plot(y[ch])
 				
 				plt.subplot(212)
-				plt.plot(f, abs(fft(y[ch])))	
+				plt.plot(f, abs(fft(y[ch])))
+				plt.axis([0, 200e3, 0, 75])	
 		
 			plt.draw()
 			time.sleep(0.05)

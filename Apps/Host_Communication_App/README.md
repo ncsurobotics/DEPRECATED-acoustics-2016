@@ -14,9 +14,7 @@ in order to complete this project:
 
 cd into this project directory if you haven't already
 
-```
-root@beaglebone:~/Projects/acoustics# cd <proj-dir>/acoustics/Apps/Host_Communication_App/
-```
+    root@beaglebone:~/Projects/acoustics# cd <proj-dir>/acoustics/Apps/Host_Communication_App/
 
 Make sure the [FT232RL Breakout board](https://www.sparkfun.com/products/12731)
  is connected to the host computer. Also, make sure the board's breakout pins
@@ -37,9 +35,7 @@ Manually:
 
 The manual method involves running this list of commands:
 
-```
-root@beaglebone:~# config-pin -a P9.13 uart
-```
+    root@beaglebone:~# config-pin -a P9.13 uart
 
 This will enable the uart tx on  pin 13 header 9. (If you're ever unsure
 what a pin does, you have access to the `config-pin -q <pin>` or 
@@ -49,24 +45,17 @@ can be soon found in the wiki of this github)
 Now, sending commands is a matter of "echoing" text into the correct 
 file representing the UART system:
 
-```
-root@beaglebone:~# echo --insert message here-- > /dev/ttyO4
-```
+    root@beaglebone:~# echo --insert message here-- > /dev/ttyO4
 
 # Troubleshooting
 **BBB not reading uart input data**
 
 Possible that backend terminal processing is missing something that will tell it to "print <x> to screen". To check, enter
 
-```
-stty -F /dev/ttyO<uart_port#> -a
-
-```
+    stty -F /dev/ttyO<uart_port#> -a
 
 to check on the port's settings, or enter
 
-```
-stty -F /dev/ttyO<uart_port#> raw
-```
+    stty -F /dev/ttyO<uart_port#> raw
 
 To see circumvent terminal processing and verify that signals are reaching the target RX pin at all.

@@ -5,7 +5,6 @@ import boot
 import time
 import numpy as np
 
-
 def main(ADC, plt):
     "initialize plotting evironment"
     plt.figure()

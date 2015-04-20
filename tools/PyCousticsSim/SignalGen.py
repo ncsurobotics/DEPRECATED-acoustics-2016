@@ -2,16 +2,17 @@ import numpy as np
 
 
 class SG:
+    """
+    """
 
     def __init__(self, end=1e-3):
         self.tstart = 0
         self.tend = end
 
-    """Sin(): Function that delivers a sinusoidal pulse of set length based
-    on a starting time and an end time.
-    """
-
     def Sin(self, f, t):
+        """ Delivers a sinusoidal pulse of set length based on a starting time
+        and an end time.
+        """
         # Initialize constants
         pi = np.pi
         w = 2 * pi * f

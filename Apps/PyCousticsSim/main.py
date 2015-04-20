@@ -85,7 +85,7 @@ MD = Medium.Water()
 
 # Init medium parameters
 print("Medium: c_%s = %g m/s." % (MD.name, MD.c))
-print("Medium: The wavelength of the %ghHz Sinusoid in %s is %gcm." % (sig['f'] / 1000, MD.name, MD.c / sig['f'] * 100))
+print("Medium: The wavelength of the %gkHz Sinusoid in %s is %gcm." % (sig['f'] / 1000, MD.name, MD.c / sig['f'] * 100))
 
 #################################################
 ################# Hydrophone Rx #################

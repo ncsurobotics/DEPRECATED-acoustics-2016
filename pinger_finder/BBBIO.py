@@ -98,7 +98,7 @@ class GPIO:
         single pin as an object with configurable settings.
 
         Args:
-            gpio_pin: represents an integer corresponding with the
+            gpio_pin: An integer corresponding with the
                 GPIO pin ID, which will range from 0 to +117.
         """
 
@@ -120,10 +120,13 @@ class GPIO:
         self.__init__(self.gpio_pin)
 
     def setDirection(self, targetState):
-        """setDirection: method for setting a pin as an output or an
-        input. targetState represents a string dictating the state
-        the user wants for the pin, either 'out' or 'in'. This method
-        also assumes the responsibility of updating (str)self.direction"""
+        """ Sets a pin as an output or an input, also updates
+        (str)self.direction
+
+        Args:
+            targetState: A string dictating the state the user wants for the
+                pin, either 'out' or 'in'
+        """
 
         if (targetState == "out") or (targetState == "in"):
             os.system("echo %s > %sdirection" % (targetState, self.gpio_path))
@@ -133,12 +136,14 @@ class GPIO:
             print("pin%s: %s is not a valid direction" % (self.gpio_pin, targetState))
 
     def write(self, value):
-        """write: a method for getting a pin to output "value", which
-        is expected to be either a 1 or 0. This method will only work
-        if the pin is configured as an output before hand... which
-        can be done with the setDirection method.
-        --This method also assumes the responsibility of updating
-        (int)self.value."""
+        """ Outputs "value" on the pin, also updates (int)self.value
+
+        NOTE: This method will only work if the pin is configured as an
+        output before hand, done using the setDirection method.
+
+        Args:
+            value: Integer 0 or 1
+        """
 
         if self.direction == "out":
             os.system("echo %d > %svalue" % (value, self.gpio_path))
@@ -147,8 +152,8 @@ class GPIO:
             print("pin%s is not an output. You cannot set it's value." % self.gpio_pin)
 
     def read(self):
-        """ Returns a 1 or 0 representing the value/state of an input/output
-        pin. Also updates (str)self.value.
+        """ Returns the state of an input/output, either a 0 or 1
+        Also updates (str)self.value
         """
 
         # read op involve uneccessary \n char. Must take
@@ -285,7 +290,7 @@ class Port():
         self.portDirection = direction
 
     def close(self):
-        """ Closes every pin on a port. See: GPIO.close()
+        """ Closes every pin on a port. See: close() method on GPIO
         """
 
         for pin in self.pins:

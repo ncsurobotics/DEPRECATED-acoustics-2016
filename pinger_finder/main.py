@@ -2,7 +2,6 @@ import ADC
 import os
 import numpy as np
 
-# Python file
 import watch_for_dead_bits
 import ADS7865_Sampler
 from LTC1564 import LTC1564
@@ -10,8 +9,7 @@ import trackPinger
 import visFFT
 import functools
 
-help_text = """quit: quit the program.
-help: display this help text."""
+help_text = """quit: quit the program. \nhelp: display this help text."""
 
 
 def match_against(comp, *args):
@@ -54,11 +52,10 @@ def UI():
     # Print introductory text
     response(loc.curr, "Welcome! Please, type in a command:")
 
-    q = 0
     ADC_active = False
     LTC_active = False
 
-    while(q == 0):
+    while True:
         # build status variables
 
         # query user for input
@@ -77,7 +74,7 @@ def UI():
 
         # respond to user input
         if input_matches('q', 'quit'):
-            q = 1
+            break
 
         elif input_matches('h', 'help'):
             print('-' * 50)
@@ -129,6 +126,7 @@ def UI():
                 adc_analysis_wizard(ADS7865, Signal_Data, plt)
             else:
                 response(loc.curr, "Please run 'load_adc_app' first")
+
         # c ############################
         ########### Filter cmd Class ##
         ################################
@@ -181,8 +179,7 @@ def adc_debug_wizard(ADC_object):
             'read_dac',
             'q']
 
-    q = 0
-    while (q != 1):
+    while True:
         # Print status
         print("current status:")
         ADC_object.ADC_Status()
@@ -200,7 +197,7 @@ def adc_debug_wizard(ADC_object):
 
         # route user
         if input_matches('q'):
-            q = 1
+            break
 
         elif input_matches('1', 'watch_for_dead_bits'):
             watch_for_dead_bits.main(ADC_object)
@@ -226,7 +223,6 @@ def printDebugs(keys):
 def adc_config(ADC_OBJ, loc):
     # setup environment
     response(loc.curr, "You have entered the ADC config mode")
-    q = 0
 
     # Get user's sample length
     response(loc.curr, "Please enter a sample length")
@@ -253,8 +249,7 @@ def adc_config(ADC_OBJ, loc):
 def adc_analysis_wizard(ADC_OBJ, Signal_Data, plt):
     keys = ['noise_analysis', 'track_pinger', 'live_fft']
 
-    q = 0
-    while (q != 1):
+    while True:
 
         # Print debug options
         print("enter one of the following analysis commands")
@@ -268,7 +263,7 @@ def adc_analysis_wizard(ADC_OBJ, Signal_Data, plt):
 
         # route user
         if input_matches('q'):
-            q = 1
+            break
 
         elif input_matches('s'):
             # Print status

@@ -33,6 +33,13 @@ def relative_wraparound(host_angle, guest_angle):
 
 
 def calculate_heading(target_freq, fs, a, b):
+    """
+    Args:
+        target_freq:
+        fs:
+        a:
+        b:
+    """
 
     # 200 kHz sample rate (Hz)
     sample_rate = fs

@@ -5,40 +5,42 @@ import boot
 import time
 import numpy as np
 
+
 def main(ADC, plt):
-    "initialize plotting evironment"
+    # Initialize plotting evironment
     plt.figure()
     plt.subplot(212)
     plt.subplot(211)
     plt.hold(True)
 
-    "Query user to select a channel"
+    # Query user to select a channel
     ADC.ADC_Status()
     s = raw_input("Please enter a comma-separated list of chans"
                   + " you want to watch (any # from 0 - 3): ")
     ch_list = map(int, s.split(','))
 
-    "low hanging variables"
+    # low hanging variables
     fs = ADC.sampleRate
     M = ADC.sampleLength / ADC.n_channels
     fdelta = fs / M
     f = np.arange(0, M * fdelta, fdelta)
+
     import pdb
     pdb.set_trace()
 
-    "Arm the ADC."
+    # Arm the ADC
     ADC.Ready_PRUSS_For_Burst()
 
-    "Loop sample collection and processing"
-    while(1):
+    # Loop sample collection and processing
+    while True:
 
-        "Exit gracefully when user ctrl-D"
+        # Stop gracefully on CTRL+D
         try:
 
-            "capture a set of samples"
+            # Capture a set of samples
             y, t = ADC.Burst()
 
-            "process simultaneous channels"
+            # Process simultanous channels
             for ch in ch_list:
                 plt.subplot(211)
                 plt.plot(y[ch])

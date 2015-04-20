@@ -90,34 +90,33 @@ CONVST_pin = 'P9_29'
 
 class ADS7865:
 
+    """ Allows the user to instantiate an object representing the system
+    ADS7865, an analog to digital converter IC by Texas Instruments.
+    Incorporates attributes relating to ADC's config, and functions
+    for changing the config as well as functions for collecting strings of
+    samples in realtime
     """
-    ADS7865: Class that allows the user to instantiate an object
-    representing the system ADS7865, an analog to digital converter
-    IC by Texas Instruments. The object incorporates attributes
-    relating to ADC's config, and function for changing the config
-    as well as functions for collecting a string of samples in
-    realtime. """
 
     def __init__(self, CR=0.0, L=0):
-        """Initialization will configure several BBB pins as necessary
-        to hold the adc in an idle state. """
+        """ Configures several BBB pins as necessary to hold the ADC in an idle state
+        """
 
-        """Parameters (in order of initialization)
-        self.DBus
-        self.WR
-        self._RD
-        self._CONVST
-        self._CS
-        ** Just ignore ddr stuff **
-        self.n_channels
-        self.ConveRate
-        self.arm_status
-        self.seq_desc
-        self.ch
-        self.threshold
-        self.CR_specd
+        # Parameters (in order of initialization):
+        #     self.DBus
+        #     self.WR
+        #     self._RD
+        #     self._CONVST
+        #     self._CS
+        # Just ignore ddr stuff
+        #     self.n_channels
+        #     self.ConveRate
+        #     self.arm_status
+        #     self.seq_desc
+        #     self.ch
+        #     self.threshold
+        #     self.CR_specd
 
-        self.LSB"""
+        #     self.LSB
 
         # GPIO Stuff
         self.DBus = BBBIO.Port(DB_pin_table)
@@ -171,11 +170,11 @@ class ADS7865:
     #### GPIO Commands  #######
     ############################
     def Config(self, cmd_list):
-        """Config: Method that takes a list of hex values (cmd_list)
-        and bitbangs the ADC accordingly. User may refer to the
-        datasheet for an explanation of what the hex values actually
-        mean. Additionally, user may refer to (self).EZConfig for
-        examples of how to correctly apply this command."""
+        """ Takes a list of hex values (cmd_list) and bitbangs the ADC
+        accordingly. User may refer to the datasheet for an explanation
+        of what the hex values actually mean. For examples of correct
+        application, see: EZConfig() method
+        """
 
         # Callee save the port direction
         #callee_sPD = self.DBus.portDirection
@@ -193,9 +192,11 @@ class ADS7865:
         self.DBus.setPortDir("in")  # Return DB pins back to inputs.
 
     def EZConfig(self, sel=None):
-        """EZConfig: method allowing the user to access commonly
-        used config command (presets). sel is an integer from 0 to 5
-        representing a particular preset."""
+        """ Allows the user to access commonly used config command (presets).
+
+        Args:
+            sel: An integer from 0 to 5 representing a particular preset
+        """
 
         # NOTES TO USER
         #--At powerup, sequencer_register=0x000
@@ -411,9 +412,9 @@ class ADS7865:
         return int(round(Vin / self.LSB))
 
     def Conv_Dac_Str_to_Voltage(self, dac_s):
-        """Conv_Dac_Str_to_Voltage: Method for interpreting the data
-        12 bit binary output of an ADC DAC read cmd, represented
-        by the string dac_s."""
+        """ Interprets the data 12 bit binary output of an ADC DAC read cmd,
+        represented by the string dac_s
+        """
 
         # DAC value Conversion Constant
         V_per_bit = 0.00244  # Volts/bit
@@ -469,9 +470,11 @@ class ADS7865:
             print("  channel {}:\t{}".format(i, self.ch[i]))
 
     def Generate_Matching_Time_Array(self, M):
-        "For plotting signals in the time domain, this function"
-        "Looks at it's sampling parameters, and generate a numpy array"
-        "of length M to corresponds with M samples of data per channel"
+        """ For plotting signals in the time domain.
+
+        Looks at it's sampling parameters, and generate a numpy array
+        of length M to corresponds with M samples of data per channel
+        """
         Ts = 1 / self.sampleRate
 
         if (M * Ts / Ts <= M):
@@ -520,16 +523,22 @@ class ADS7865:
         boot.arm()
 
     def Reload(self):
-        """This method re-initializes the PRU's interrupt that this
-        library uses to tell python that it can continue running code again.
-        This must be called at the end of a function that utilizes this
-        interrupt. The calling function should not be responsible for
-        reloading PRUs."""
+        """ Re-initializes the PRU's interrupt that this library uses to tell
+        python that it can continue running code again. This must be called at
+        the end of a function that utilizes this interrupt. The calling
+        function should not be responsible for reloading PRUs."""
         pypruss.init()      # Init the PRU
         pypruss.open(0)     # Open PRU event 0 which is PRU0_ARM_INTERRUPT
         pypruss.pruintc_init()  # Init the interrupt controller
 
     def Burst(self, length=None, n_channels=None, raw=None, fmt_volts=1):
+        """
+        Args:
+            length:
+            n_channels:
+            raw:
+            fmt_volts:
+        """
         if length is None:  # Optional argument for sample length
             length = self.sampleLength
         else:

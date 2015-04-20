@@ -202,7 +202,7 @@ def adc_debug_wizard(ADC_object):
         if input_matches('q'):
             q = 1
 
-        elif input_matches('l', 'watch_for_dead_bits'):
+        elif input_matches('1', 'watch_for_dead_bits'):
             watch_for_dead_bits.main(ADC_object)
 
         elif input_matches('3'):  # check_DBus

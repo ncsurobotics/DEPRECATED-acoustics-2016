@@ -38,7 +38,6 @@ import Rx
 import DSP
 import Medium
 import ADC
-
 import numpy as np
 import matplotlib.pyplot as plt
 print('-' * 50)
@@ -71,6 +70,7 @@ SG.tstart = 0  # sec
 SG.tend = 1e-3  # sec
 
 # Generate the test signal
+import pdb; pdb.set_trace()
 sig['x'] = SG.Sin(sig['f'], env['t'])
 print("Diagnostics: %gkHz test signal. Current config yields %g samples per period."
       % (sig['f'] / 1000, env['df'] / sig['f']))

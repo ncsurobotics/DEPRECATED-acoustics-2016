@@ -25,6 +25,7 @@ def relative_wraparound(host_angle, guest_angle):
     if (guest_angle < host_angle - math.pi):
         # add 2pi
         guest_angle += 2 * math.pi
+
     elif (guest_angle > host_angle + math.pi):
         # subtract 2pi
         guest_angle -= 2 * math.pi

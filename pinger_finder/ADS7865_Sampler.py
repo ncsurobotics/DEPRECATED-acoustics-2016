@@ -46,5 +46,6 @@ def plot_output(ADC_obj, y, plt):
             xmax=None,
             ymin=-2.5,
             ymax=2.5)
+
     ax.legend(legend_list)
     plt.show()

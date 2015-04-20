@@ -15,6 +15,7 @@ def main(ADC, plt):
 
     # Query user to select a channel
     ADC.ADC_Status()
+
     s = raw_input("Please enter a comma-separated list of chans"
                   + " you want to watch (any # from 0 - 3): ")
     ch_list = map(int, s.split(','))

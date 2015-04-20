@@ -71,14 +71,14 @@ def twos_comp(val, bits):
 
 
 def CR_Warn_Programmer():
-    logger.warning("Your code updates the conversion rate instead of the"
-                   + " sample rate at the end user level. This goes against the"
-                   + " design spec, and you should fix it such that your code"
-                   + " accepts sample rates at the user level")
+    logging.warning("Your code updates the conversion rate instead of the"
+                    + " sample rate at the end user level. This goes against the"
+                    + " design spec, and you should fix it such that your code"
+                    + " accepts sample rates at the user level")
 
-######################################
-######    ADS7865 Class ##############
-#####################################
+###################################
+######    ADS7865 Class ###########
+###################################
 
 DB_pin_table = ['P9_26', 'P8_46', 'P8_45', 'P8_44', 'P8_43', 'P8_42', 'P8_41', 'P8_40', 'P8_39', 'P8_29', 'P8_28', 'P8_27']
 WR_pin = 'P9_31'
@@ -99,24 +99,23 @@ class ADS7865:
 
     def __init__(self, CR=0.0, L=0):
         """ Configures several BBB pins as necessary to hold the ADC in an idle state
+
+        Parameters (in order of initialization):
+            self.DBus
+            self.WR
+            self._RD
+            self._CONVST
+            self._CS
+        Just ignore ddr stuff
+            self.n_channels
+            self.ConveRate
+            self.arm_status
+            self.seq_desc
+            self.ch
+            self.threshold
+            self.CR_specd
+            self.LSB
         """
-
-        # Parameters (in order of initialization):
-        #     self.DBus
-        #     self.WR
-        #     self._RD
-        #     self._CONVST
-        #     self._CS
-        # Just ignore ddr stuff
-        #     self.n_channels
-        #     self.ConveRate
-        #     self.arm_status
-        #     self.seq_desc
-        #     self.ch
-        #     self.threshold
-        #     self.CR_specd
-
-        #     self.LSB
 
         # GPIO Stuff
         self.DBus = BBBIO.Port(DB_pin_table)
@@ -148,10 +147,12 @@ class ADS7865:
         self.ddr['end'] = 0x10000000 + self.ddr['size']
 
         print("ADS7865: Allowing one 32bit memory block per sample, it is "
-              + "possible to collect %.1fK Samples in a single burst. These "
-              % (self.ddr['size'] / 1000)
+              + "possible to collect {samp:.1f}K Samples in a single burst. These "
               + "sample points are stored in DDRAM, which is found at the "
-              + "address range starting at %s" % (hex(self.ddr['addr'])))
+              + "address range starting at {addr}".format(
+                samp=self.ddr['size'] / 1000.0,
+                addr=str(hex(self.ddr['addr'])))
+              )
 
         self.n_channels = 0
         self.convRate = CR
@@ -479,8 +480,10 @@ class ADS7865:
 
         if (M * Ts / Ts <= M):
             t = np.arange(0, M * Ts, Ts)
+
         elif (M * Ts / Ts > M):
             t = np.arange(0, (M - 0.1) * Ts, Ts)  # Chalk it up to precision error
+
         else:
             print("Something crazy happened.")
             t = None
@@ -526,7 +529,8 @@ class ADS7865:
         """ Re-initializes the PRU's interrupt that this library uses to tell
         python that it can continue running code again. This must be called at
         the end of a function that utilizes this interrupt. The calling
-        function should not be responsible for reloading PRUs."""
+        function should not be responsible for reloading PRUs
+        """
         pypruss.init()      # Init the PRU
         pypruss.open(0)     # Open PRU event 0 which is PRU0_ARM_INTERRUPT
         pypruss.pruintc_init()  # Init the interrupt controller
@@ -603,4 +607,5 @@ class ADS7865:
                     y[chan] = y[chan] * self.LSB
 
         self.Reload()
+
         return y, t

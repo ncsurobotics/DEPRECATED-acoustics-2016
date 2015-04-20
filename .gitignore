@@ -11,10 +11,4 @@
 *.py~
 *ipynb*
 
-/Apps/LTC1564_Tester/Debug/
-/Apps/LTC1564_Tester/Release/
-
-/Apps/URCHydrophoneTester/Debug/
-/Apps/URCHydrophoneTester/Release/
-
 /Pics

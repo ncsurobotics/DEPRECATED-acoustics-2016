@@ -14,8 +14,8 @@ all:
 
 
 clean:
-	rm -rf bin/$(FILENAME0).bin
-	rm -rf bin/$(FILENAME1).bin
-	rm -rf bin/$(FILENAME2).bin
-	rm -rf bin/$(FILENAME3).bin
-	rm -rf *.pyc
+	rm bin/$(FILENAME0).bin
+	rm bin/$(FILENAME1).bin
+	rm bin/$(FILENAME2).bin
+	rm bin/$(FILENAME3).bin
+	rm *.pyc

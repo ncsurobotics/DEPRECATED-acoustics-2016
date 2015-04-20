@@ -11,6 +11,9 @@ DEFAULT_CS = 1
 
 class LTC1564():
 
+    """
+    """
+
     def __init__(self):
         # Init all pins
         self.F = BBBIO.Port(F_PINS)
@@ -30,8 +33,11 @@ class LTC1564():
         self.Gval = DEFAULT_G
 
     def GainMode(self, mode):
-        "self.GainMode(...): Configures gain of the input stage."
-        "mode: int value."
+        """ Configures gain of the input stage.
+
+            Args:
+                mode: int
+        """
 
         if 0 <= mode <= 3:
             print("LTC1564: Writing %d to gain stage." % mode)
@@ -46,8 +52,12 @@ class LTC1564():
             print("LTC1564: mode %s is outside the range of possible gain states" % mode)
 
     def FiltMode(self, mode):
-        "self.FiltMode(...): Configures Fc of the input stage."
-        "mode: int value."
+        """ Configures Fc of the input stage
+
+            Args:
+                mode: int
+        """
+
         if 0 <= mode <= 1:
             print("LTC1564: Writing %d to filt stage." % mode)
 
@@ -60,14 +70,16 @@ class LTC1564():
             print("LTC1564: mode %s is outside the range of possible filt states" % mode)
 
     def Terminate(self):
-        """self.Terminate(): Terminates control of the LTC1564.
+        """ Terminates control of the LTC1564.
+
         WARNING: Careless use of this cmd is rather discouraged unless
         user wishes to physically move control of the LTC1564 to
         a new set of BBB pins... reason being that although this
         method will turn the BBB pins to inputs, the level shifting
         circuit will always act as an output. It makes some sense to
         just remove the level shifters pins from the board whenever this
-        subsystem is not in use"""
+        subsystem is not in use
+        """
 
         # unexport pins
         self.F.close()

@@ -1,3 +1,3 @@
 # acoustics
-Acoustics 2014
+Acoustics code for ncsurobotics' 2015 robot, Seawolf VI
 

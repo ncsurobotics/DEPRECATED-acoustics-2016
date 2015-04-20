@@ -1,9 +1,18 @@
 import boot
 import pypruss  # Python PRUSS wrapper
 import time
+import functools
+
+
+def match_against(comp, *args):
+    """ Useful for processing user command line input
+    """
+    return comp in args
 
 
 class Mask:
+    """
+    """
 
     def __init__(self):
         self.burn_bit = 1
@@ -61,8 +70,12 @@ def main(ADC_Obj):
     print("normal or burn?")
     user_input = raw_input(" >> ")
 
+    # Creates a function that will return true if user_input matches
+    # any of the provided variable arguments
+    input_matches = functools.partial(match_against, user_input)
+
     # Some error handling
-    if user_input == 'burn':
+    if input_matches('burn'):
         print("What value should burn (1 or 0)?")
         msk.burn_bit = raw_input(" >> ")
 

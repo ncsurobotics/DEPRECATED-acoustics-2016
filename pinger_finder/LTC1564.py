@@ -38,8 +38,9 @@ class LTC1564():
             Args:
                 mode: int
         """
-
-        if 0 <= mode <= 3:
+		n = 2**self.G.length
+        if 0 <= mode <= n-1: "n-1 is the max bit value that can be used"
+        
             print("LTC1564: Writing %d to gain stage." % mode)
 
             self._CS.writeToPort(0)

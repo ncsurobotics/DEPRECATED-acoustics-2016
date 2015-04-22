@@ -8,10 +8,12 @@ TTY_BANG = '\n'
 
 def main():
     x = read_input(ser)
+
     if (x == "getAngle.py"):
         theta = getAngle.main()
         print("Acoustics: The pinger is %d degrees left" % theta)
         write_output(ser, str(theta))
+
     else:
         print("What!? I don't understand")
 

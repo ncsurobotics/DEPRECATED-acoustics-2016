@@ -1,4 +1,6 @@
-COMPILER=pasm -b
+CC = pasm
+CFLAGS = -b
+
 FILENAME0=init0
 FILENAME1=init1
 FILENAME2=ADS7865_sample
@@ -7,10 +9,10 @@ FILENAME3=pru1
 .PHONY: clean all
 
 all:
-	$(COMPILER) $(FILENAME0).p -b bin/$(FILENAME0)
-	$(COMPILER) $(FILENAME1).p -b bin/$(FILENAME1)
-	$(COMPILER) $(FILENAME2).p -b bin/$(FILENAME2)
-	$(COMPILER) $(FILENAME3).p -b bin/$(FILENAME3)
+	$(CC) $(CFLAGS) $(FILENAME0).p -b bin/$(FILENAME0)
+	$(CC) $(CFLAGS) $(FILENAME1).p -b bin/$(FILENAME1)
+	$(CC) $(CFLAGS) $(FILENAME2).p -b bin/$(FILENAME2)
+	$(CC) $(CFLAGS) $(FILENAME3).p -b bin/$(FILENAME3)
 
 
 clean:

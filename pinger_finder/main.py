@@ -110,7 +110,7 @@ def UI():
 
         elif input_matches('d', 'debug_wizard'):
             if ADC_active:
-                adc_debug_wizard(ADS7865,LTC,plt)
+                debug_wizard(ADS7865,LTC,plt)
             else:
                 response(loc.curr, "Please run 'load_adc_app' first")
 
@@ -140,7 +140,7 @@ def UI():
 
         elif input_matches('Glf', 'conf_G'):
             if LTC_active:
-                print("Config Input Gain: enter a mode from 0 to 3")
+                print("Config Input Gain: enter a mode from 0 to %d" % (LTC.GetNGainStates()-1))
                 mode = eval(raw_input(">> "))
                 LTC.GainMode(mode)
             else:
@@ -181,7 +181,7 @@ def debug_wizard(ADC_object,filt_obj=None, plt=None):
             'dummy_read_dac',
             'read_seq',
             'read_dac',
-            'unittest_filts
+            'unittest_filts',
             'q']
 
     while True:
@@ -218,8 +218,8 @@ def debug_wizard(ADC_object,filt_obj=None, plt=None):
             ADC_object.Read_Dac()
             
         elif input_matches('8'):
-        	from ut_filters import testFilt
-        	testFilt(ADC_object, filt_obj, plt)
+        	from ut_filters import testFilts
+        	testFilts(ADC_object, filt_obj, plt)
         	
         	
 

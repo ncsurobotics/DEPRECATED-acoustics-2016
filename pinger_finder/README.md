@@ -113,4 +113,15 @@ BUSY:
 WR:
 CONVST:
 
+# Troubleshooting
+**Segmentation faults**  
+getting...
+
+    ...
+    AM33XX
+    File bin/init0.bin open failed
+    Segmentation fault
+
+
+...means that the .bin files haven't been compiled yet (.bins hold the binary that is loaded on the PRUs). Simply issue a "Make" command from the commandline to generate the .bin files.
 

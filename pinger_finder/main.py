@@ -1,3 +1,6 @@
+import sys
+sys.path.insert(0, '../tools/unittests/')
+
 import ADC
 import os
 import numpy as np
@@ -42,6 +45,7 @@ def UI():
     # Important parameters
     Signal_Data = {'y': []}
     plt = None
+    LTC = None
 
     # Generate location expressions
     HOME = "HOME"
@@ -104,9 +108,9 @@ def UI():
             ADS7865.Close()
             loc.pop()
 
-        elif input_matches('d', 'adc_debug_wizard'):
+        elif input_matches('d', 'debug_wizard'):
             if ADC_active:
-                adc_debug_wizard(ADS7865)
+                debug_wizard(ADS7865,LTC,plt)
             else:
                 response(loc.curr, "Please run 'load_adc_app' first")
 
@@ -136,7 +140,7 @@ def UI():
 
         elif input_matches('Glf', 'conf_G'):
             if LTC_active:
-                print("Config Input Gain: enter a mode from 0 to 3")
+                print("Config Input Gain: enter a mode from 0 to %d" % (LTC.GetNGainStates()-1))
                 mode = eval(raw_input(">> "))
                 LTC.GainMode(mode)
             else:
@@ -169,7 +173,7 @@ def UI():
 ##########################################
 
 
-def adc_debug_wizard(ADC_object):
+def debug_wizard(ADC_object,filt_obj=None, plt=None):
     keys = ['watch_for_dead_bits',
             'read_DBus',
             'check_DBus',
@@ -177,6 +181,7 @@ def adc_debug_wizard(ADC_object):
             'dummy_read_dac',
             'read_seq',
             'read_dac',
+            'unittest_filts',
             'q']
 
     while True:
@@ -211,6 +216,12 @@ def adc_debug_wizard(ADC_object):
 
         elif input_matches('7'):
             ADC_object.Read_Dac()
+            
+        elif input_matches('8'):
+        	from ut_filters import testFilts
+        	testFilts(ADC_object, filt_obj, plt)
+        	
+        	
 
 
 def printDebugs(keys):
@@ -359,7 +370,7 @@ def usage():
             "  adc_(s)tatus: prints data regarding the adc.\n",
             "  (u)nload_adc_app: Close adc environment.\n",
             "  adc_c(o)nf: Change Settings of the ADC.\n",
-            "  adc_(d)ebugger: debug the ADC.\n",
+            "  (d)ebugger: debug stuff.\n",
             "  adc_(a)nalysis: Grab some experimental data."]
     print('\n'.join(text))
 

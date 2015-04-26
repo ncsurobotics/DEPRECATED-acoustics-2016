@@ -10,7 +10,8 @@ def main(ADC_obj, plt):
     raw_input("Press enter when ready...")
 
     # grab data
-    import pdb; pdb.set_trace()
+    import pdb
+    pdb.set_trace()
     (y, temp) = ADC_obj.Burst()
 
     if plt:

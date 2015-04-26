@@ -2,7 +2,7 @@ import BBBIO
 
 CS_PIN = ''
 F_PINS = ''
-G_PINS = ['P9_11','P9_12','P9_13', 'P9_14']
+G_PINS = ['P9_11', 'P9_12', 'P9_13', 'P9_14']
 
 DEFAULT_F = 0
 DEFAULT_G = 0
@@ -10,6 +10,7 @@ DEFAULT_CS = 1
 
 
 class LTC1564():
+
     def __init__(self):
         # Init all pins
         if F_PINS:
@@ -28,7 +29,7 @@ class LTC1564():
 
             # Init parameter
         if F_PINS:
-            self.Fval = DEFAULT_F 
+            self.Fval = DEFAULT_F
 
             self.Gval = DEFAULT_G
 
@@ -39,18 +40,23 @@ class LTC1564():
                 mode: int
         """
         n = self.GetNGainStates()
-        if (0 <= mode <= n-1): #"n-1 is the max bit value that can be used" 
+
+        if (0 <= mode <= n - 1):  # n-1 is the max bit value that can be used
             print("LTC1564: Writing %d to gain stage." % mode)
 
-            if CS_PIN: self._CS.writeToPort(0)
+            if CS_PIN:
+                self._CS.writeToPort(0)
+
             self.G.writeToPort(mode)
-            if CS_PIN: self._CS.writeToPort(1)
+
+            if CS_PIN:
+                self._CS.writeToPort(1)
 
             self.Gval = mode
 
         else:
-                print("LTC1564: mode %s is outside the range of possible gain states" % mode)
-    
+            print("LTC1564: mode %s is outside the range of possible gain states" % mode)
+
     def GetNGainStates(self):
         return 2**(self.G.length)
 
@@ -64,9 +70,11 @@ class LTC1564():
         if 0 <= mode <= 1:
             print("LTC1564: Writing %d to filt stage." % mode)
 
-            if CS_PIN: self._CS.writeToPort(0)
+            if CS_PIN:
+                self._CS.writeToPort(0)
             self.F.writeToPort(mode)
-            if CS_PIN: self._CS.writeToPort(1)
+            if CS_PIN:
+                self._CS.writeToPort(1)
 
             self.Fval = mode
         else:

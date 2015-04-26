@@ -1,10 +1,10 @@
 CC = pasm
 CFLAGS = -b
 
-FILENAME0=init0
-FILENAME1=init1
-FILENAME2=ADS7865_sample
-FILENAME3=pru1
+FILENAME0 = init0
+FILENAME1 = init1
+FILENAME2 = ADS7865_sample
+FILENAME3 = pru1
 
 .PHONY: clean all
 

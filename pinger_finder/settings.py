@@ -1,1 +1,1 @@
-bin_directory = "bin/"
+bin_directory = "pru/bin/"

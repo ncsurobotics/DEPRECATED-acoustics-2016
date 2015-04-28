@@ -1,6 +1,7 @@
 from __future__ import print_function
 import pypruss  # Python PRUSS wrapper
 import mmap
+from os import path
 import struct
 import boot         #
 import time  # sleep
@@ -17,11 +18,13 @@ PRU0_THR_Mem_Offset = 4
 HC_CR = 0xBEBC200
 fclk = 200e6
 
-BIN = settings.bin_directory
-INIT0 = BIN + "init0.bin"
-INIT1 = BIN + "init1.bin"
-ADS7865_MasterPRU = BIN + "ADS7865_sample.bin"
-ADS7865_ClkAndSamplePRU = BIN + "pru1.bin"
+BIN_DIR = settings.bin_directory
+
+INIT0 = path.join(BIN_DIR, "init0.bin")
+INIT1 = path.join(BIN_DIR, "init1.bin")
+ADS7865_MasterPRU = path.join(BIN_DIR, "ADS7865_sample.bin")
+ADS7865_ClkAndSamplePRU = path.join(BIN_DIR, "pru1.bin")
+
 WORD_SIZE = 12
 
 BYTES_PER_SAMPLE = 4

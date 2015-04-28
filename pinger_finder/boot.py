@@ -1,9 +1,17 @@
 import os
+import linecache
 
-UART_RX = "P9.11"
-UART_TX = "P9.13"
+# Typical Control Variable for UART
+UART_RX = "P8.38"
+RX_PINMUX_LINE = 51
+UART_TX = "P8.37"
 BAUD = 9600
-UART_DEV_FILE = "ttyO4"
+UART_DEV_FILE = "ttyO5"
+
+# Complicated SysFS path stuff
+MUX_PATH = "/sys/kernel/debug/pinctrl/44e10800.pinmux/"
+PINS_FILE = 'pins'
+PIN_LOOKUPTABLE = MUX_PATH + PINS_FILE
 
 
 def load():
@@ -53,7 +61,9 @@ def dearm():
 
 
 def uart():
-    print("booy.py: Loading uart pins %s (RX) and " % UART_RX
+    rx_config = linecache.getline(PIN_LOOKUPTABLE, RX_PINMUX_LINE)
+    rx_config_b = rx_config[18:26]
+    print("boot.py: Loading uart pins %s (RX) and " % UART_RX
           + "%s (TX)" % UART_TX)
 
     os.system("config-pin -a %s uart" % UART_RX)

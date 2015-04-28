@@ -48,8 +48,14 @@ file representing the UART system:
     root@beaglebone:~# echo --insert message here-- > /dev/ttyO4
 
 # Troubleshooting
-**BBB not reading uart input data**
+**Don't know port to initialize for pyserial**  
+Run this command in the terminal to show a list of possible serial ports
 
+    python -m serial.tools.list_ports
+
+On the beaglebone, this command will take ~30 seconds to complete, but it should show a concise list of all the available serial ports on the beaglebone.
+
+**BBB not reading uart input data**  
 Possible that backend terminal processing is missing something that will tell it to "print <x> to screen". To check, enter
 
     stty -F /dev/ttyO<uart_port#> -a

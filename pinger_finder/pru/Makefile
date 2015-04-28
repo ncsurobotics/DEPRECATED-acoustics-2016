@@ -20,4 +20,4 @@ clean:
 	rm bin/$(FILENAME1).bin
 	rm bin/$(FILENAME2).bin
 	rm bin/$(FILENAME3).bin
-	rm *.pyc
+	rm ../*.pyc

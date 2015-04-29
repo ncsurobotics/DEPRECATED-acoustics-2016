@@ -22,12 +22,12 @@ def main():
     P1 = s.Serial(DEVICE1, 9600, timeout=0.1)
 
     # Send and read hello in one direction
-    P1.write(TEST_WORD+"\n")
-    print("Tx'ed %r" % TEST_WORD)
+    P1.write(TEST_WORD)
+    print("Tx'ed %r" % (TEST_WORD))
     result = P1.readline()
 
     # Check value
-    print("Rx'ed %r." % result)
+    print("Rx'ed %r" % result)
     if (result == TEST_WORD):
         print("SUCCESS! The board is working!")
     else:

@@ -1,5 +1,5 @@
 import sys
-sys.path.insert(0, '../')
+sys.path.insert(0, '../host_communication')
 
 import serial as s
 import uart         # 
@@ -17,8 +17,15 @@ def main():
     P2 = s.Serial(DEVICE2, 9600)
 
     # Send and read hello in one direction
-    P1.write("Hello\n")
-    P2.readline()
+    test_word1 = "Hello Acoustics\n"
+    P1.write(test_word1)
+    response1 = P2.readline()
+
+    if (test_word1==response1):
+        print("Success!")
+    else:
+        print("Failure")
+
 
     # Send and read hello in the other direction
 

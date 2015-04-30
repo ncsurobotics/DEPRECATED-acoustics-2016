@@ -2,18 +2,20 @@ import sys
 sys.path.insert(0, '../host_communication')
 
 import serial as s
-import uart #enable_uart()
+import uart  # enable_uart()
 
 DEVICE1 = "/dev/ttyO5"
 TEST_WORD = "Hello"
 
+
 def INIT():
     uart.enable_uart()
+
 
 def main():
     # Ask user to setup for test
     print("Please do the following:\n"
-    + " 1. Short the RX and TX pins of UART5 together on the beaglebone.\n")
+          + " 1. Short the RX and TX pins of UART5 together on the beaglebone.\n")
     raw_input("Press ENTER when you're ready to begin the test: ")
 
     # Initialize ports

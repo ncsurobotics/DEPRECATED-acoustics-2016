@@ -10,5 +10,6 @@
 *.idea
 *.py~
 *ipynb*
+*.bin
 
 /Pics

@@ -51,6 +51,6 @@ Go to the Pypruss Bitbucket repository(https://bitbucket.org/intelligentagent/py
      vim ~/.bashrc #Append "export LD_LIBRARY_PATH=/usr/local/lib" to end of file
      source ~/.bashrc
 
-After all this, you are totally ready to run the this pinger_finder software. Instructions for how to do this are at the top.
+After all this, you are totally ready to run the the pinger_finder software. Instructions for how to do this are at the top.
 
 

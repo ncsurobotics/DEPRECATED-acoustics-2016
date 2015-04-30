@@ -25,11 +25,12 @@ Install SciPy using your package manager, eg.
     sudo apt-get install python-scipy
      
 **Install steinkuehler's BBB universal device tree scripts**  
+
      git clone https://github.com/cdsteinkuehler/beaglebone-universal-io.git
      cd /beaglebone-universal-io/
      make 
      make install
-     
+ 
 Now you can issue the command "config-pin" from the commandline and use it for easily manipulate some of the IO/Muxes. The boot.py script takes advantage of this. Also, the makefile had several .dtbo files get copied to the firmware directory as well.
  
 **Disable the HDMI control**  

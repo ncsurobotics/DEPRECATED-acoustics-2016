@@ -8,6 +8,7 @@ import time  # sleep
 import BBBIO  # Yields functions for working with GPIO
 import settings  # Same function as a .YAML file
 import numpy as np
+import os
 
 import logging
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -318,6 +319,21 @@ class ADS7865:
         else:
             CR_Warn_Programmer()
 
+    def Preset(self, sel):
+        if sel==0:
+            self.Set_SL(1e3)
+            self.Update_SR(400e3)
+            self.threshold = 0
+            self.EZConfig(4)
+        if sel==1:
+            self.Set_SL(1e3)
+            self.Update_SR(800e3)
+            self.threshold = 0
+            self.EZConfig(0)
+            
+        else:
+            logging.warning("Unknown preset!")
+            
     def Read_Seq(self):
         # Send cmd telling ADC to output it's SEQ config
         self.Config([CODE_READSEQ])
@@ -369,6 +385,10 @@ class ADS7865:
         if (self.convRate > CONV_RATE_LIMIT):
             logging.warning("Your spec'd conversion rate"
                             + " exceeds the system's spec (%dKHz)" % CONV_RATE_LIMIT / 1000)
+    
+    def Set_SL(self,SL):
+        self.sampleLength = int(SL)
+        
 
     def SW_Reset(self):
         print("Performing ADC device reset...")

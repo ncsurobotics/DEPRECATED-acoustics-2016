@@ -11,7 +11,7 @@ import numpy as np
 import os
 
 import logging
-logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(level=logging.DEBUG, format='%(module)s.py: %(asctime)s - %(levelname)s - %(message)s')
 
 # Global ADC program Constants
 PRU0_CR_Mem_Offset = 3
@@ -110,14 +110,16 @@ class ADS7865:
             self._RD
             self._CONVST
             self._CS
-        Just ignore ddr stuff
+            self."ddr stuff"
             self.n_channels
-            self.ConveRate
+            self.convRate
             self.arm_status
             self.seq_desc
             self.ch
             self.threshold
             self.CR_specd
+            self.modified
+            self.dacVoltage
             self.LSB
         """
 
@@ -166,8 +168,10 @@ class ADS7865:
         self.ch = ['unknown'] * 4
         self.threshold = DEFAULT_THRESHOLD
         self.SR_specd = 0  # parameter for keeping the up with the last spec
+        self.modified = True
 
-        # Load overlays: Does not configure any GPIO to pruin or pruout
+        # Loads overlays: For that will be later needed for 
+        # muxing pins from GPIO to pruout/pruin types and vice versa. 
         boot.load()
         self.SW_Reset()
 
@@ -325,7 +329,8 @@ class ADS7865:
             self.Update_SR(400e3)
             self.threshold = 0
             self.EZConfig(4)
-        if sel==1:
+            
+        elif sel==1:
             self.Set_SL(1e3)
             self.Update_SR(800e3)
             self.threshold = 0
@@ -367,6 +372,10 @@ class ADS7865:
         self.LSB = self.dacVoltage / (2**(WORD_SIZE - 1))  # Volts
 
     def Update_CR(self, CR):
+        # Update modified bit
+        self.modified = True
+        
+        # Update Conversioning bit
         self.convRate = float(CR)
         self.sampleRate = self.CR_2_SR(CR)
 
@@ -377,6 +386,10 @@ class ADS7865:
         self.SR_specd = 0
 
     def Update_SR(self, SR):
+        # Update modified bit
+        self.modified = True
+        
+        # Update sampling bits
         self.sampleRate = float(SR)
         self.convRate = self.SR_2_CR(SR)
 
@@ -408,6 +421,7 @@ class ADS7865:
         # Update other parameters
         self.n_channels = 2
         self.Update_CR(self.convRate)
+        self.modified = True
 
         # Let user know work is done
         print("... done.")
@@ -517,6 +531,10 @@ class ADS7865:
     #### PRUSS Commands  #######
     ############################
     def Ready_PRUSS_For_Burst(self, CR=None):
+        """Arms the ADC for sample collection. This removes some GPIO control
+        from the BBB, and replaces it with PRUIN/OUT control.
+        """
+        
         # Initialize variables
         if CR is None:
             CR = self.convRate
@@ -547,6 +565,19 @@ class ADS7865:
 
         # end readying process by arming the PRUs
         boot.arm()
+        self.arm_status = 'armed'
+        self.modified =False
+    
+    def Unready(self):
+        """Gives GPIO control back to the the beaglebone.
+        """
+        
+        if (self.arm_status == 'unarmed'):
+            logging.warning("ADC Already dearmed!!! You are double dearming somewhere.")
+        else:
+            print('ADS7865: Dearming the PRUSS')
+            boot.dearm()
+            self.arm_status = 'unarmed'
 
     def Reload(self):
         """ Re-initializes the PRU's interrupt that this library uses to tell
@@ -632,3 +663,12 @@ class ADS7865:
         self.Reload()
 
         return y, t
+        
+    def GetData(self):
+        if not (self.arm_status=='armed' and self.modified==False):
+            self.Ready_PRUSS_For_Burst()
+        
+        y, t = self.Burst()
+        return y
+        
+       

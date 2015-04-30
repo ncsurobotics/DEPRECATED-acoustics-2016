@@ -14,7 +14,7 @@ def main(ADC_obj, plt):
 
     plot_output(ADC_obj, y, plt)
 
-    boot.dearm()
+    ADC_obj.Unready()
     return y
 
 

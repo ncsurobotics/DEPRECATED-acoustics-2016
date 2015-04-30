@@ -6,14 +6,32 @@ import locPinger
 
 def main():
     cmd = argv[1]
+    
     if (cmd=='competition'):
+        # Load ADC Stuff
+        ADC = ADS7865()
+        ADC.Preset(1)
+        locPinger.main(ADC, dearm=False)
+
+        # Dearm ADC outside of locPinger.py.
+        ADC.Unready()
+
+    elif (cmd=='competition-cont'):
         # Load ADC Stuff
         ADC = ADS7865()
         ADC.Preset(1)
 
         # Locate pinger
-        locPinger.main(ADC)
+        while(1):
+            # Exits on CTRL-C
+            try:
+                locPinger.main(ADC, dearm=False)
+            except KeyboardInterrupt:
+                print("Quitting program")
+                break
 
+        # Dearm ADC outside of locPinger.py.
+        ADC.Unready()
         
     elif(cmd=='plt'):
         # Load plotting stuff

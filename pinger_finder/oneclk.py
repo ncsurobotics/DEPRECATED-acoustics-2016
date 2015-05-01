@@ -6,8 +6,8 @@ import locPinger
 
 def main():
     cmd = argv[1]
-    
-    if (cmd=='competition'):
+
+    if (cmd == 'competition'):
         # Load ADC Stuff
         ADC = ADS7865()
         ADC.Preset(1)
@@ -16,7 +16,7 @@ def main():
         # Dearm ADC outside of locPinger.py.
         ADC.Unready()
 
-    elif (cmd=='competition-cont'):
+    elif (cmd == 'competition-cont'):
         # Load ADC Stuff
         ADC = ADS7865()
         ADC.Preset(1)
@@ -32,15 +32,16 @@ def main():
 
         # Dearm ADC outside of locPinger.py.
         ADC.Unready()
-        
-    elif(cmd=='plt'):
+
+    elif(cmd == 'plt'):
         # Load plotting stuff
         plt = load_matplotlib()
 
         # Load ADC Stuff
         ADC = ADS7865()
         ADC.Preset(0)
-        QikSampNPlt.main(ADC,plt)
+        QikSampNPlt.main(ADC, plt)
+
 
 def load_matplotlib():
     print("Loading Matplotlib library...")
@@ -56,5 +57,3 @@ def load_matplotlib():
 
 if __name__ == '__main__':
     main()
-
-

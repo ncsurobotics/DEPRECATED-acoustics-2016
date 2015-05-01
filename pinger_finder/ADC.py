@@ -170,8 +170,8 @@ class ADS7865:
         self.SR_specd = 0  # parameter for keeping the up with the last spec
         self.modified = True
 
-        # Loads overlays: For that will be later needed for 
-        # muxing pins from GPIO to pruout/pruin types and vice versa. 
+        # Loads overlays: For that will be later needed for
+        # muxing pins from GPIO to pruout/pruin types and vice versa.
         boot.load()
         self.SW_Reset()
 
@@ -324,21 +324,21 @@ class ADS7865:
             CR_Warn_Programmer()
 
     def Preset(self, sel):
-        if sel==0:
+        if sel == 0:
             self.Set_SL(1e3)
             self.Update_SR(400e3)
             self.threshold = 0
             self.EZConfig(4)
-            
-        elif sel==1:
+
+        elif sel == 1:
             self.Set_SL(1e3)
             self.Update_SR(800e3)
             self.threshold = 0
             self.EZConfig(0)
-            
+
         else:
             logging.warning("Unknown preset!")
-            
+
     def Read_Seq(self):
         # Send cmd telling ADC to output it's SEQ config
         self.Config([CODE_READSEQ])
@@ -374,7 +374,7 @@ class ADS7865:
     def Update_CR(self, CR):
         # Update modified bit
         self.modified = True
-        
+
         # Update Conversioning bit
         self.convRate = float(CR)
         self.sampleRate = self.CR_2_SR(CR)
@@ -388,7 +388,7 @@ class ADS7865:
     def Update_SR(self, SR):
         # Update modified bit
         self.modified = True
-        
+
         # Update sampling bits
         self.sampleRate = float(SR)
         self.convRate = self.SR_2_CR(SR)
@@ -398,10 +398,9 @@ class ADS7865:
         if (self.convRate > CONV_RATE_LIMIT):
             logging.warning("Your spec'd conversion rate"
                             + " exceeds the system's spec (%dKHz)" % CONV_RATE_LIMIT / 1000)
-    
-    def Set_SL(self,SL):
+
+    def Set_SL(self, SL):
         self.sampleLength = int(SL)
-        
 
     def SW_Reset(self):
         print("Performing ADC device reset...")
@@ -534,7 +533,7 @@ class ADS7865:
         """Arms the ADC for sample collection. This removes some GPIO control
         from the BBB, and replaces it with PRUIN/OUT control.
         """
-        
+
         # Initialize variables
         if CR is None:
             CR = self.convRate
@@ -566,12 +565,12 @@ class ADS7865:
         # end readying process by arming the PRUs
         boot.arm()
         self.arm_status = 'armed'
-        self.modified =False
-    
+        self.modified = False
+
     def Unready(self):
         """Gives GPIO control back to the the beaglebone.
         """
-        
+
         if (self.arm_status == 'unarmed'):
             logging.warning("ADC Already dearmed!!! You are double dearming somewhere.")
         else:
@@ -663,12 +662,10 @@ class ADS7865:
         self.Reload()
 
         return y, t
-        
+
     def GetData(self):
-        if not (self.arm_status=='armed' and self.modified==False):
+        if not (self.arm_status == 'armed' and self.modified == False):
             self.Ready_PRUSS_For_Burst()
-        
+
         y, t = self.Burst()
         return y
-        
-       

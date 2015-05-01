@@ -1,9 +1,11 @@
-import math
-from scipy.fftpack import fft
-from cmath import phase
-import boot
 import time
+import math
+from cmath import phase
+
 import numpy as np
+from scipy.fftpack import fft
+
+import boot
 
 
 def main(ADC, plt):

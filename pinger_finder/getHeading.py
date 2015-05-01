@@ -1,6 +1,7 @@
 import math
-from scipy.fftpack import fft
 from cmath import phase
+
+from scipy.fftpack import fft
 
 
 def phase_diff_to_x_and_y(phase_diff, fundamental_freq):

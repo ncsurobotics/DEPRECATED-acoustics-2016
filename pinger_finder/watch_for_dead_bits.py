@@ -1,7 +1,9 @@
-import boot
-import pypruss  # Python PRUSS wrapper
 import time
 import functools
+
+import pypruss  # Python PRUSS wrapper
+
+import boot
 
 
 def match_against(comp, *args):

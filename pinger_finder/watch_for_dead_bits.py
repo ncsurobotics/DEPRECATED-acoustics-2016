@@ -3,7 +3,7 @@ import functools
 
 import pypruss  # Python PRUSS wrapper
 
-import boot
+from bbbio import boot
 
 
 def match_against(comp, *args):

@@ -1,4 +1,4 @@
-import BBBIO
+from . import BBBIO
 
 CS_PIN = ''
 F_PINS = ''

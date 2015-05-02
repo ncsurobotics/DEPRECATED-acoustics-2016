@@ -1,16 +1,18 @@
 import sys
 sys.path.insert(0, '../tests/')
 
-import ADC
 import os
+import functools
+
 import numpy as np
+
+from bbbio import ADC
+from bbbio.LTC1564 import LTC1564
 
 import watch_for_dead_bits
 import ADS7865_Sampler
-from LTC1564 import LTC1564
 import trackPinger
 import visFFT
-import functools
 
 help_text = """quit: quit the program. \nhelp: display this help text."""
 

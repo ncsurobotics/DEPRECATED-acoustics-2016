@@ -1,6 +1,6 @@
 import numpy as np
 
-import boot
+from bbbio import boot
 
 SAMPLES_PER_CONV = 2
 

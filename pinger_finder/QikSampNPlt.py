@@ -1,7 +1,5 @@
 import numpy as np
 
-import boot
-
 SAMPLES_PER_CONV = 2
 
 

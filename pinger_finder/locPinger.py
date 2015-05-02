@@ -1,7 +1,6 @@
 import logging
 
 import getHeading
-import boot
 
 logging.basicConfig(level=logging.info, format='%(asctime)s - %(levelname)s - %(message)s')
 

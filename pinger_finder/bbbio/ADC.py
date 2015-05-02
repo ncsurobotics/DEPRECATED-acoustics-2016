@@ -9,9 +9,9 @@ from os import path
 import pypruss  # Python PRUSS wrapper
 import numpy as np
 
-import boot         #
-import BBBIO  # Yields functions for working with GPIO
-import settings  # Same function as a .YAML file
+from . import boot         #
+from . import BBBIO  # Yields functions for working with GPIO
+from . import settings  # Same function as a .YAML file
 
 logging.basicConfig(level=logging.DEBUG, format='%(module)s.py: %(asctime)s - %(levelname)s - %(message)s')
 
@@ -666,7 +666,7 @@ class ADS7865:
         return y, t
 
     def GetData(self):
-        if not (self.arm_status == 'armed' and self.modified == False):
+        if self.arm_status != 'armed' or self.modified is True:
             self.Ready_PRUSS_For_Burst()
 
         y, t = self.Burst()

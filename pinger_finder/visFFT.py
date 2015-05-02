@@ -5,7 +5,7 @@ from cmath import phase
 import numpy as np
 from scipy.fftpack import fft
 
-import boot
+from bbbio import boot
 
 
 def main(ADC, plt):

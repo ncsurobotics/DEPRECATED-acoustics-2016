@@ -1,5 +1,11 @@
+from os import path
+
+# Get variables for navigating the file system.
+root_directory = path.dirname(path.dirname(path.dirname(path.realpath(__file__))))
+hc_directory = path.join(root_directory, "host_communication")
+
 import sys
-sys.path.insert(0, '../')
+sys.path.insert(0, hc_directory)
 
 import serial as s
 import uart #enable_uart()

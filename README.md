@@ -10,6 +10,7 @@ This code depends on some external libraries, namely SciPy and PyPRUSS. To run t
   * **pypruss**: a python wrapper for the c library responsible for sending high level commands to the PRUSS-ICSS.
   * **pasm**: Compiler for the PRU assembly code. Seems to be included with beaglebones manufactured after April.
   * **beaglebone-universal-io**: Collection of scripts that allow user to assign PRUSS.
+  * **Make a cron job for terminal app**: This allows seawolf to interact with acoustics without ssh.
 
 To take care of these dependencies, please follow the steps below.
 
@@ -51,6 +52,19 @@ Go to the Pypruss Bitbucket repository(https://bitbucket.org/intelligentagent/py
      vim ~/.bashrc #Append "export LD_LIBRARY_PATH=/usr/local/lib" to end of file
      source ~/.bashrc
 
-After all this, you are totally ready to run the the pinger_finder software. Instructions for how to do this are at the top.
+**Make a cron job for acoustics terminal**  
+Doing this will get the BBB to run `acoustics_terminal.py` at startup. With the FT232RL connected and every thing, getting seawolf to communicate with acoustics is only a matter of sending commands out of seawolf's USB port. There will be no ssh/login overhead. To get this to work, simply type
 
+    crontab -e
+    ## to end of file, replacing <path_to_proj_dir> with the path to 
+    ## this very directory 
+    sudo reboot #For the changes to take effect
+
+then append then append the following to the end of the text file.
+
+@reboot python <path_to_proj_dir>/host_communication/test/acoustics_echoterm &
+
+Replacing <path_to_proj_dir> with the path to this very directory
+
+After all this, you are totally ready to run the the `pinger_finder` software. Instructions for how to do this are at the top.
 

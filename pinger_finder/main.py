@@ -6,8 +6,8 @@ import functools
 
 import numpy as np
 
-from bbbio import ADC
-from bbbio.LTC1564 import LTC1564
+from bbb import ADC
+from bbb.LTC1564 import LTC1564
 
 import watch_for_dead_bits
 import ADS7865_Sampler
@@ -93,7 +93,7 @@ def UI():
 
         elif input_matches('s', 'adc_status'):
             if ADC_active:
-                ADS7865.ADC_Status()
+                ADS7865.adc_status()
             else:
                 response(loc.curr, "Please run 'load_adc_app' first")
 
@@ -107,7 +107,7 @@ def UI():
 
         elif input_matches('u', 'unload_adc_app'):
             response(loc.curr, "Closing app...")
-            ADS7865.Close()
+            ADS7865.close()
             loc.pop()
 
         elif input_matches('d', 'debug_wizard'):
@@ -142,17 +142,17 @@ def UI():
 
         elif input_matches('Glf', 'conf_G'):
             if LTC_active:
-                print("Config Input Gain: enter a mode from 0 to %d" % (LTC.GetNGainStates() - 1))
+                print("config Input Gain: enter a mode from 0 to %d" % (LTC.get_n_gain_states() - 1))
                 mode = eval(raw_input(">> "))
-                LTC.GainMode(mode)
+                LTC.gain_mode(mode)
             else:
                 response(loc.curr, "Please run 'lf' (load_filts) first")
 
         elif input_matches('Flf', 'conf_F'):
             if LTC_active:
-                print("Config Input Fc: enter a mode from 0 to 1")
+                print("config Input Fc: enter a mode from 0 to 1")
                 mode = eval(raw_input(">> "))
-                LTC.FiltMode(mode)
+                LTC.filter_mode(mode)
             else:
                 response(loc.curr, "Please run 'lf' (load_filts) first")
 
@@ -189,7 +189,7 @@ def debug_wizard(ADC_object, filt_obj=None, plt=None):
     while True:
         # Print status
         print("current status:")
-        ADC_object.ADC_Status()
+        ADC_object.adc_status()
         print("")
 
         # Print debug options
@@ -214,10 +214,10 @@ def debug_wizard(ADC_object, filt_obj=None, plt=None):
             print("debug_wizard: DBus = %s" % temp)
 
         elif input_matches('6'):
-            ADC_object.Read_Seq()
+            ADC_object.read_sequence()
 
         elif input_matches('7'):
-            ADC_object.Read_Dac()
+            ADC_object.read_dac()
 
         elif input_matches('8'):
             from ut_filters import testFilts
@@ -243,7 +243,7 @@ def adc_config(ADC_OBJ, loc):
     # Get user's conversion rate
     response(loc.curr, "Please enter a sample rate")
     SR = query(loc.curr)
-    ADC_OBJ.Update_SR(eval(SR))
+    ADC_OBJ.update_SR(eval(SR))
 
     # Get user's threshold value
     response(loc.curr, "Please enter a threshold value (Volts)")
@@ -251,7 +251,7 @@ def adc_config(ADC_OBJ, loc):
     ADC_OBJ.threshold = eval(THR)
 
     # Get user's config
-    ADC_OBJ.EZConfig()  # Empty argument means to use a wizard like this one
+    ADC_OBJ.ez_config()  # Empty argument means to use a wizard like this one
 
     # exit environment
     response(loc.curr, "Exiting ADC config mode")
@@ -279,7 +279,7 @@ def adc_analysis_wizard(ADC_OBJ, Signal_Data, plt):
         elif input_matches('s'):
             # Print status
             print("current status:")
-            ADC_OBJ.ADC_Status()
+            ADC_OBJ.adc_status()
             print("")
 
         elif input_matches('1', 'noise_analysis'):
@@ -294,7 +294,7 @@ def adc_analysis_wizard(ADC_OBJ, Signal_Data, plt):
 
 def adc_noise_analysis(ADC_OBJ, Signal_Data, plt=None):
     # Ask user to select a channel of data for analysis
-    ADC_OBJ.ADC_Status()
+    ADC_OBJ.adc_status()
     channel_sel = eval(raw_input("Please enter a channel (0 thru 3) for analysis: "))
     y = Signal_Data['y'][channel_sel]
 
@@ -368,7 +368,7 @@ def usage():
             "  (p)lot_en: enable plotting (needs X11 port forwarding).\n",
             "  (l)oad_adc_app: Startup the adc enviroment.\n",
             "  adc_(s)tatus: prints data regarding the adc.\n",
-            "  (u)nload_adc_app: Close adc environment.\n",
+            "  (u)nload_adc_app: close adc environment.\n",
             "  adc_c(o)nf: Change Settings of the ADC.\n",
             "  (d)ebugger: debug stuff.\n",
             "  adc_(a)nalysis: Grab some experimental data."]

@@ -15,7 +15,7 @@ def main(ADC, plt=None, dearm=True):
     fs = ADC.sampleRate
 
     # capture a set of samples
-    y = ADC.GetData()
+    y = ADC.get_data()
 
     # process simultaneous channels
     angle = getHeading.calculate_heading(TARGET_FREQ, fs, y[0], y[1])
@@ -25,4 +25,4 @@ def main(ADC, plt=None, dearm=True):
 
     # dearm if user doesn't assert otherwise
     if dearm:
-        ADC.Unready()
+        ADC.unready()

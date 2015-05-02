@@ -1,7 +1,7 @@
 import logging
 
 import getHeading
-from bbbio import boot
+from bbb import boot
 
 logging.basicConfig(level=logging.info, format='%(asctime)s - %(levelname)s - %(message)s')
 
@@ -15,7 +15,7 @@ def main(ADC, plt=None):
     fs = ADC.sampleRate
 
     # Arm the ADC
-    ADC.Ready_PRUSS_For_Burst()
+    ADC.ready_PRUSS_for_burst()
 
     # Loop sample collection and processing
     while(1):
@@ -24,7 +24,7 @@ def main(ADC, plt=None):
         try:
 
             # capture a set of samples
-            y, t = ADC.Burst()
+            y, t = ADC.burst()
 
             # process simultaneous channels
             angle = getHeading.calculate_heading(TARGET_FREQ, fs, y[0], y[1])

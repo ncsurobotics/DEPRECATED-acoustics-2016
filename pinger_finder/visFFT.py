@@ -5,7 +5,7 @@ from cmath import phase
 import numpy as np
 from scipy.fftpack import fft
 
-from bbbio import boot
+from bbb import boot
 
 
 def main(ADC, plt):
@@ -16,7 +16,7 @@ def main(ADC, plt):
     plt.hold(True)
 
     # Query user to select a channel
-    ADC.ADC_Status()
+    ADC.adc_status()
 
     s = raw_input("Please enter a comma-separated list of chans"
                   + " you want to watch (any # from 0 - 3): ")
@@ -32,7 +32,7 @@ def main(ADC, plt):
     pdb.set_trace()
 
     # Arm the ADC
-    ADC.Ready_PRUSS_For_Burst()
+    ADC.ready_PRUSS_for_burst()
 
     # Loop sample collection and processing
     while True:
@@ -41,7 +41,7 @@ def main(ADC, plt):
         try:
 
             # Capture a set of samples
-            y, t = ADC.Burst()
+            y, t = ADC.burst()
 
             # Process simultanous channels
             for ch in ch_list:

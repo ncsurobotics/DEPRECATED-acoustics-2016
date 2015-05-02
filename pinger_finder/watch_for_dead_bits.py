@@ -3,7 +3,7 @@ import functools
 
 import pypruss  # Python PRUSS wrapper
 
-from bbbio import boot
+from bbb import boot
 
 
 def match_against(comp, *args):
@@ -61,11 +61,11 @@ class Mask:
 
 
 def main(ADC_Obj):
-    # Config the ADC for success
-    ADC_Obj.Config([0x100])
-    ADC_Obj.Ready_PRUSS_For_Burst()
+    # config the ADC for success
+    ADC_Obj.config([0x100])
+    ADC_Obj.ready_PRUSS_for_burst()
 
-    # Config burning maching
+    # config burning maching
     msk = Mask()
 
     #
@@ -88,7 +88,7 @@ def main(ADC_Obj):
     while (user_input != 'q'):
         try:
             # Capture Data
-            y, t = ADC_Obj.Burst(raw=1)
+            y, t = ADC_Obj.burst(raw=1)
 
             # Parse The Data
             if user_input == 'burn':

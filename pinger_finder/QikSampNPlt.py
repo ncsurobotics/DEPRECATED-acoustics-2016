@@ -4,17 +4,17 @@ SAMPLES_PER_CONV = 2
 
 
 def main(ADC_obj, plt):
-    ADC_obj.Ready_PRUSS_For_Burst()
+    ADC_obj.ready_PRUSS_for_burst()
 
     #print("ADC is armed and ready.")
     #raw_input("Press enter when ready...")
 
     # grab data
-    (y, temp) = ADC_obj.Burst()
+    (y, temp) = ADC_obj.burst()
 
     plot_output(ADC_obj, y, plt)
 
-    ADC_obj.Unready()
+    ADC_obj.unready()
     return y
 
 
@@ -29,7 +29,7 @@ def plot_output(ADC_obj, y, plt):
 
     fs = ADC_obj.sampleRate
 
-    t = ADC_obj.Generate_Matching_Time_Array(M)
+    t = ADC_obj.gen_matching_time_array(M)
 
     # Plot the data
     legend_list = [''] * ADC_obj.n_channels

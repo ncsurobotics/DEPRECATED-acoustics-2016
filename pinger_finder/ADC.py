@@ -1,16 +1,18 @@
 from __future__ import print_function
-import pypruss  # Python PRUSS wrapper
-import mmap
-from os import path
-import struct
-import boot         #
+
 import time  # sleep
+import mmap
+import struct
+import logging
+from os import path
+
+import pypruss  # Python PRUSS wrapper
+import numpy as np
+
+import boot         #
 import BBBIO  # Yields functions for working with GPIO
 import settings  # Same function as a .YAML file
-import numpy as np
-import os
 
-import logging
 logging.basicConfig(level=logging.DEBUG, format='%(module)s.py: %(asctime)s - %(levelname)s - %(message)s')
 
 # Global ADC program Constants

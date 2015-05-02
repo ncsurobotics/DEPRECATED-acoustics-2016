@@ -1,8 +1,10 @@
 import logging
-logging.basicConfig(level=logging.info, format='%(asctime)s - %(levelname)s - %(message)s')
 
 import getHeading
 import boot
+
+logging.basicConfig(level=logging.info, format='%(asctime)s - %(levelname)s - %(message)s')
+
 
 TARGET_FREQ = 22e3  # hz
 

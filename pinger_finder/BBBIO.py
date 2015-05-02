@@ -5,6 +5,9 @@ import sys
 
 
 def batchLookupGPIO(pinList):
+    """ Given a list of pin names, returns a list of pin numbers
+    """
+
     # Generate list of len(pinList) None's
     GPIOList = [None for pin in pinList]
 
@@ -84,7 +87,7 @@ def batchLookupGPIO(pinList):
             GPIOList[i] = lookupTable[pin]
 
     except KeyError:
-        print("BBBIO: Uh oh. pin{pin} does not exist in the BBBIO.py\'s database. Check your spelling or update the lookup table.".format(pin=pin))
+        print("BBBIO: Uh oh. pin '{pin}\' does not exist in the BBBIO.py\'s database. Check your spelling or update the lookup table.".format(pin=pin))
         sys.exit(1)
 
     return GPIOList

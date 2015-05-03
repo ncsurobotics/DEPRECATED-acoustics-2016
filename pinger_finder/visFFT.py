@@ -32,16 +32,14 @@ def main(ADC, plt):
     pdb.set_trace()
 
     # Arm the ADC
-    ADC.ready_PRUSS_for_burst()
+    ADC.ready_pruss_for_burst()
 
     # Loop sample collection and processing
     while True:
-
         # Stop gracefully on CTRL+D
         try:
-
             # Capture a set of samples
-            y, t = ADC.burst()
+            y, _ = ADC.burst()
 
             # Process simultanous channels
             for ch in ch_list:

@@ -77,4 +77,4 @@ def calculate_heading(target_freq, fs, a, b):
     print("x=%f meters and y=%f meters." % (x, y))
 
     # Calculate and return heading using tan-1(y/x)
-    return (math.atan2(y, x)) * 180 / math.pi
+    return math.atan2(y, x) * 180 / math.pi

@@ -5,42 +5,43 @@ from bbb import boot
 SAMPLES_PER_CONV = 2
 
 
-def main(ADC_obj, plt):
-    ADC_obj.ready_PRUSS_for_burst()
+def main(adc, plt):
+    adc.ready_pruss_for_burst()
 
     print("ADC is armed and ready.")
     raw_input("Press enter when ready...")
 
     # grab data
-    (y, temp) = ADC_obj.burst()
+    (y, _) = adc.burst()
 
     if plt:
         user_input = raw_input("Would you like to plot the data?")
         if "y" == user_input:
-            plot_output(ADC_obj, y, plt)
+            plot_output(adc, y, plt)
 
     boot.dearm()
     return y
 
 
-def plot_output(ADC_obj, y, plt):
+def plot_output(adc, y, plt):
     # get plotting objects
     fig, ax = plt.subplots()
     ax.hold(True)
 
     # Compute parameters
-    n = ADC_obj.n_channels
+    n = adc.n_channels
     M = y[0].size
 
-    fs = ADC_obj.sampleRate
+    fs = adc.sampleRate
 
-    t = ADC_obj.gen_matching_time_array(M)
+    t = adc.gen_matching_time_array(M)
 
     # Plot the data
-    legend_list = [''] * ADC_obj.n_channels
-    for chan in range(ADC_obj.n_channels):
+    legend_list = ['' for channel in adc.n_channels]
+
+    for chan in range(adc.n_channels):
         ax.plot(t, y[chan])
-        legend_list[chan] = ADC_obj.ch[chan]
+        legend_list[chan] = adc.ch[chan]
         plt.xlabel('time (seconds)')
         plt.ylabel('Voltage')
         plt.title('Voltage vs Time, Fs=%dKHz' % (fs / 1000))

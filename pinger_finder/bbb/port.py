@@ -6,27 +6,27 @@ class Port():
     """ Each instance of Port represents a group of pins on the beaglebone.
     This group of pins is actually a group of GPIO instances. The Caller
     may specify this group during instantiation, or afterwards with the
-    (self).createPort(...) method.
+    (self).create_port(...) method.
     """
 
     def __init__(self, assignment=None):
         """
         Args:
-            assignment (optional): in case the caller would like to define the port during
-        instantiation. See: the pinNameList argument of the createPort() method
+            assignment (optional): Define the port during instantiation.
+                See: the pinNameList argument of the create_port() method
         """
 
         self.en = True
         self.pins = []
         self.direction = []
-        self.portDirection = ''
+        self.port_direction = ''
         self.value = []
         self.nValue = 0
         self.length = 0
         if assignment:
-            self.createPort(assignment)
+            self.create_port(assignment)
 
-    def createPort(self, pinNameList):
+    def create_port(self, pin_name_list):
         """ Assigns a port, which is just a group of pins.
 
         Args:
@@ -36,20 +36,20 @@ class Port():
                 on that particular header (including leading zeros). Thus,
                 strings such as "P8_01", "P8_46", "P9_02" are valid.
 
-                pinNameList[0] must represent the LSB,
-                pinNameList[-1] must represent the MSB
+                pin_name_list[0] must represent the LSB,
+                pin_name_list[-1] must represent the MSB
         """
 
         # If user supplies a string (which is convenient if he
         # only wants to allocate one pin), then convert that string
         # to a list with one element because that's the type that
         # works with self.batchLookupGPIO(...)
-        if isinstance(pinNameList, basestring):
-            pinNameList = [pinNameList]
+        if isinstance(pin_name_list, basestring):
+            pin_name_list = [pin_name_list]
 
-        GPIOList = gpio.batch_lookup(pinNameList)
+        gpio_list = gpio.batch_lookup(pin_name_list)
 
-        for pin in GPIOList:
+        for pin in gpio_list:
             # print(pinNameList) ; print(GPIOList)
 
             obj_pin = gpio.GPIO(pin)
@@ -59,7 +59,7 @@ class Port():
 
         self.length = len(self.pins)  # self.length
 
-    def readStr(self):
+    def read_str(self):
         """ Reads values of all pins that make up a port (self) and returns a
         binary string with the MSB on the left and the LSB on the right
         """
@@ -70,11 +70,12 @@ class Port():
             a = pin.read()
             s = str(a) + s
             self.value[i] = a
+
         return s
 
-    def writeToPort(self, value):
+    def write_to_port(self, value):
         """ Takes the integer 'value' and converts it to a
-        string formated in binary representation, which is parsed in
+        string formatted in binary representation, which is parsed in
         the for loop in order to configure each pin on the port.
         """
 
@@ -86,9 +87,9 @@ class Port():
             b = int(binaryVal[s_i])
             self.pins[i].write(b)
 
-    def setPortDir(self, direction):
+    def set_port_dir(self, direction):
         """ Sets all pins on a port to a direction and updates
-        self.portDirection and self.direction accordingly.
+        self.port_direction and self.direction accordingly.
 
         Args:
             direction: String "in" or "out", to update
@@ -100,7 +101,7 @@ class Port():
             self.direction[i] = pin.direction
             i += 1
 
-        self.portDirection = direction
+        self.port_direction = direction
 
     def close(self):
         """ Closes every pin on a port. See: close() method on GPIO

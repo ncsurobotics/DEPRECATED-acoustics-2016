@@ -17,17 +17,17 @@ class LTC1564():
         # Init all pins
         if F_PINS:
             self.F = Port(F_PINS)
-            self.F.setPortDir('out')
-            self.F.writeToPort(DEFAULT_F)
+            self.F.set_port_dir('out')
+            self.F.write_to_port(DEFAULT_F)
 
         self.G = Port(G_PINS)
-        self.G.setPortDir('out')
-        self.G.writeToPort(DEFAULT_G)
+        self.G.set_port_dir('out')
+        self.G.write_to_port(DEFAULT_G)
 
         if CS_PIN:
             self._CS = Port(CS_PIN)
-            self._CS.setPortDir('out')
-            self._CS.writeToPort(DEFAULT_CS)
+            self._CS.set_port_dir('out')
+            self._CS.write_to_port(DEFAULT_CS)
 
             # Init parameter
         if F_PINS:
@@ -46,12 +46,12 @@ class LTC1564():
             print("LTC1564: Writing %d to gain stage." % mode)
 
             if CS_PIN:
-                self._CS.writeToPort(0)
+                self._CS.write_to_port(0)
 
-            self.G.writeToPort(mode)
+            self.G.write_to_port(mode)
 
             if CS_PIN:
-                self._CS.writeToPort(1)
+                self._CS.write_to_port(1)
 
             self.Gval = mode
         else:
@@ -73,12 +73,12 @@ class LTC1564():
             print("LTC1564: Writing %d to filt stage." % mode)
 
             if CS_PIN:
-                self._CS.writeToPort(0)
+                self._CS.write_to_port(0)
 
-            self.F.writeToPort(mode)
+            self.F.write_to_port(mode)
 
             if CS_PIN:
-                self._CS.writeToPort(1)
+                self._CS.write_to_port(1)
 
             self.Fval = mode
         else:

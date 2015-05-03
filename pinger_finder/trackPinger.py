@@ -15,7 +15,7 @@ def main(ADC, plt=None):
     fs = ADC.sampleRate
 
     # Arm the ADC
-    ADC.ready_PRUSS_for_burst()
+    ADC.ready_pruss_for_burst()
 
     # Loop sample collection and processing
     while(1):
@@ -24,7 +24,7 @@ def main(ADC, plt=None):
         try:
 
             # capture a set of samples
-            y, t = ADC.burst()
+            y, _ = ADC.burst()
 
             # process simultaneous channels
             angle = getHeading.calculate_heading(TARGET_FREQ, fs, y[0], y[1])

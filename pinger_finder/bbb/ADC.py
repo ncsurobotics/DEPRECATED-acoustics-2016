@@ -70,7 +70,7 @@ def read_sample(user_mem, sample_length):
 def twos_comp(val, bits):
     """ Compute the 2's compliment of int value val, of n bits """
     if (val & (1 << (bits - 1))) != 0:
-        val = val - (1 << bits)
+        val -= (1 << bits)
 
     return val
 
@@ -126,23 +126,23 @@ class ADS7865():
 
         # GPIO Stuff
         self.DBus = Port(DB_pin_table)
-        self.DBus.setPortDir("in")
+        self.DBus.set_port_dir("in")
 
         self.WR = Port(WR_pin)
-        self.WR.setPortDir("out")
-        self.WR.writeToPort(1)
+        self.WR.set_port_dir("out")
+        self.WR.write_to_port(1)
 
         self._RD = Port(RD_pin)
-        self._RD.setPortDir("out")
-        self._RD.writeToPort(1)
+        self._RD.set_port_dir("out")
+        self._RD.write_to_port(1)
 
         self._CONVST = Port(CONVST_pin)
-        self._CONVST.setPortDir("out")
-        self._CONVST.writeToPort(1)
+        self._CONVST.set_port_dir("out")
+        self._CONVST.write_to_port(1)
 
         self._CS = Port(CS_pin)
-        self._CS.setPortDir("out")
-        self._CS.writeToPort(0)
+        self._CS.set_port_dir("out")
+        self._CS.write_to_port(0)
 
         # PRUSS Stuff
         self.ddr = {}
@@ -193,15 +193,15 @@ class ADS7865():
 
         #
         for cmd in cmd_list:
-            self.WR.writeToPort(0)  # Open ADC's input Latch
+            self.WR.write_to_port(0)  # Open ADC's input Latch
 
-            self.DBus.setPortDir("out")  # Latch open, safe to make DB pins an out
-            self.DBus.writeToPort(cmd)  # Write the value to the DB pins
+            self.DBus.set_port_dir("out")  # Latch open, safe to make DB pins an out
+            self.DBus.write_to_port(cmd)  # Write the value to the DB pins
 
-            print('ADS7865: Databus cmd %s has been sent.' % self.DBus.readStr())
-            self.WR.writeToPort(1)  # Latch down the input
+            print('ADS7865: Databus cmd %s has been sent.' % self.DBus.read_str())
+            self.WR.write_to_port(1)  # Latch down the input
 
-        self.DBus.setPortDir("in")  # Return DB pins back to inputs.
+        self.DBus.set_port_dir("in")  # Return DB pins back to inputs.
 
     def ez_config(self, sel=None):
         """ Allows the user to access commonly used config command (presets).
@@ -353,9 +353,9 @@ class ADS7865():
         self.config([CODE_READSEQ])
 
         # Read ADC's databus
-        self._RD.writeToPort(0)
-        seq = self.DBus.readStr()
-        self._RD.writeToPort(1)
+        self._RD.write_to_port(0)
+        seq = self.DBus.read_str()
+        self._RD.write_to_port(1)
 
         # print config to the user
         print("config of sequencer: %s" % seq)
@@ -368,9 +368,9 @@ class ADS7865():
         self.config([CODE_READDAC])
 
         # Read ADC's databus
-        self._RD.writeToPort(0)
-        dac_s = self.DBus.readStr()
-        self._RD.writeToPort(1)
+        self._RD.write_to_port(0)
+        dac_s = self.DBus.read_str()
+        self._RD.write_to_port(1)
 
         # print config to the user
         print("config of DAC: %s" % dac_s)
@@ -460,7 +460,7 @@ class ADS7865():
         """
         """
 
-        self._CS.writeToPort(1)
+        self._CS.write_to_port(1)
         self.DBus.close()
         self.WR.close()
         self._RD.close()
@@ -524,8 +524,8 @@ class ADS7865():
         """
 
         # Read and write pins
-        _RD = eval(self._RD.readStr())
-        _WR = eval(self._RD.readStr())
+        _RD = eval(self._RD.read_str())
+        _WR = eval(self._RD.read_str())
         print("  _RD:\t%d" % _RD)
         print("  _WR:\t%d" % _WR)
 
@@ -575,7 +575,7 @@ class ADS7865():
     ############################
     #### PRUSS Commands  #######
     ############################
-    def ready_PRUSS_for_burst(self, CR=None):
+    def ready_pruss_for_burst(self, CR=None):
         """ Arms the ADC for sample collection. This removes some GPIO control
         from the BBB, and replaces it with PRUIN/OUT control.
         """
@@ -672,7 +672,7 @@ class ADS7865():
         pypruss.exec_program(0, ADS7865_MasterPRU)  # Load firmware on PRU0
 
         # Wait for PRU to finish its job.
-        pypruss.wait_for_event(0)  # Wait for event 0 which is conn to PRU0_ARM_INTERUPT
+        pypruss.wait_for_event(0)  # Wait for event 0 which is conn to PRU0_ARM_INTERRUPT
         b = time.time()
         t = b - a
 
@@ -694,8 +694,8 @@ class ADS7865():
             # raw, or two's compliment.
             if raw is None or raw == 0:
                 i = 0
-                for samp in y[chan]:
-                    y[chan][i] = twos_comp(samp, WORD_SIZE)
+                for sample in y[chan]:
+                    y[chan][i] = twos_comp(sample, WORD_SIZE)
                     i += 1
 
                 # Assuming that the user is requesting 2 compliment values,
@@ -714,7 +714,7 @@ class ADS7865():
         """
 
         if self.arm_status != 'armed' or self.modified is True:
-            self.ready_PRUSS_for_burst()
+            self.ready_pruss_for_burst()
 
         y, _ = self.burst()
         return y

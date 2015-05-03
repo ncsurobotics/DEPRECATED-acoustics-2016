@@ -16,7 +16,7 @@ def gain_test(ADC, filt, plt):  # Testing gain
           + "	 * Ensure settings are correct on ADC.\n")
 
     # Arm the ADC
-    ADC.ready_PRUSS_for_burst()
+    ADC.ready_pruss_for_burst()
 
     # get user confirmation
     u = raw_input("ut_filters: Hit enter to begin the test. Or q to quit.\n>> ")

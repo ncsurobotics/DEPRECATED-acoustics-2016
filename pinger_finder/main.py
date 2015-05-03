@@ -210,7 +210,7 @@ def debug_wizard(ADC_object, filt_obj=None, plt=None):
             watch_for_dead_bits.main(ADC_object)
 
         elif input_matches('3'):  # check_DBus
-            temp = ADC_object.DBus.readStr()
+            temp = ADC_object.DBus.read_str()
             print("debug_wizard: DBus = %s" % temp)
 
         elif input_matches('6'):

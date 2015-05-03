@@ -117,6 +117,7 @@ class GPIO():
             self.direction = f.read().rstrip("\n")
 
         # update known value of pin
+        self.value = None
         self.read()
 
     def reInit(self):

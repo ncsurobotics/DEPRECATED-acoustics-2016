@@ -8,14 +8,14 @@ logging.basicConfig(level=logging.info, format='%(asctime)s - %(levelname)s - %(
 TARGET_FREQ = 22e3  # hz
 
 
-def main(ADC, plt=None, dearm=True):
+def main(adc, plt=None, dearm=True):
     # Assume adc is already loaded
 
     # Establish various parameters
-    fs = ADC.sampleRate
+    fs = adc.sampleRate
 
     # capture a set of samples
-    y = ADC.get_data()
+    y = adc.get_data()
 
     # process simultaneous channels
     angle = getHeading.calculate_heading(TARGET_FREQ, fs, y[0], y[1])
@@ -25,4 +25,4 @@ def main(ADC, plt=None, dearm=True):
 
     # dearm if user doesn't assert otherwise
     if dearm:
-        ADC.unready()
+        adc.unready()

@@ -1,3 +1,5 @@
+from __future__ import division
+
 import time
 import functools
 
@@ -20,6 +22,11 @@ class Mask:
         self.burn_bit = 1
         self.capture = [0] * 12
         self.word_size = 12
+
+
+    # Consider replacing both of these functions with a single function
+    # that has a burn=True keyword argument.  That way, there's no
+    # duplication of the same code - dralley
 
     def burn(self, samples, delay):
         format_code = '0' + str(self.word_size) + 'b'
@@ -63,7 +70,7 @@ class Mask:
 def main(ADC_Obj):
     # config the ADC for success
     ADC_Obj.config([0x100])
-    ADC_Obj.ready_PRUSS_for_burst()
+    ADC_Obj.ready_pruss_for_burst()
 
     # config burning maching
     msk = Mask()
@@ -85,21 +92,22 @@ def main(ADC_Obj):
         print("I don't recognize that. Quitting program.")
         user_input = 'q'
 
-    while (user_input != 'q'):
+    while user_input != 'q':
         try:
             # Capture Data
-            y, t = ADC_Obj.burst(raw=1)
+            y, _ = ADC_Obj.burst(raw=1)
 
             # Parse The Data
             if user_input == 'burn':
                 msk.burn(y[0], .1)
-            if user_input == 'normal':
+
+            elif user_input == 'normal':
                 msk.normal(y[0], .1)
 
             # Uncomment to allow for user loop control
-            #user_input = raw_input('Press enter to continue...')
+            # user_input = raw_input('Press enter to continue...')
         except KeyboardInterrupt:
             print("Quitting program")
-            user_input = 'q'
+            break
 
     boot.dearm()

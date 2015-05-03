@@ -9,8 +9,8 @@ from os import path
 import pypruss  # Python PRUSS wrapper
 import numpy as np
 
-from . import boot         #
-from . import BIN_DIR  # Same function as a .YAML file
+from . import boot
+from . import BIN_DIR
 from .port import Port
 
 logging.basicConfig(level=logging.DEBUG, format='%(module)s.py: %(asctime)s - %(levelname)s - %(message)s')
@@ -602,7 +602,7 @@ class ADS7865():
         pypruss.open(0)     # Open PRU event 0 which is PRU0_ARM_INTERRUPT
         pypruss.pruintc_init()  # Init the interrupt controller
 
-        # INIT PRU Registers
+        # init PRU Registers
         pypruss.exec_program(0, INIT0)  # Cleaning the registers
         pypruss.exec_program(1, INIT1)  # Cleaning the registers
         pypruss.pru_write_memory(0, 0x0000, [0x0, ] * 0x0800)  # clearing pru0 ram
@@ -707,7 +707,7 @@ class ADS7865():
                 # if the user has set raw to True, then this option is
                 # unavailable.
                 if fmt_volts:
-                    y[chan] *= self.LSB
+                    y[chan] = y[chan] * self.LSB
 
         self.reload()
 

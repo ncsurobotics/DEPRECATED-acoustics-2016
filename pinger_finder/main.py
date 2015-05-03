@@ -220,8 +220,8 @@ def debug_wizard(adc, filt_obj=None, plt=None):
             adc.read_dac()
 
         elif input_matches('8'):
-            from ut_filters import testFilts
-            testFilts(adc, filt_obj, plt)
+            from test_filters import test_filters
+            test_filters(adc, filt_obj, plt)
 
 
 def print_debugs(keys):

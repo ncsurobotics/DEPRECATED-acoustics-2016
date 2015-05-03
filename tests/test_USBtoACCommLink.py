@@ -10,7 +10,7 @@ AC = "acoustics"
 SW = "seawolf"
 
 
-def INIT():
+def init():
     uart.enable_uart()
 
 
@@ -24,7 +24,7 @@ def main():
     raw_input("Press ENTER when you're ready to begin the test: ")
 
     # Initialize ports
-    INIT()
+    init()
     pAC = s.Serial(DEV_AC, 9600, timeout=0.1)
     pSW = s.Serial(DEV_SW, 9600, timeout=0.1)
 
@@ -36,7 +36,7 @@ def main():
     response1 = pAC.readline()
     print(AC + " RX'd %r" % (response1))
 
-    if (test_word1 == response1):
+    if test_word1 == response1:
         print("Success! The USB---->Acoustics link works!")
     else:
         print("Failure. USB--x-->Acoustics!")
@@ -49,7 +49,7 @@ def main():
     response2 = pSW.readline()
     print(SW + " RX'd %r" % (response2))
 
-    if (test_word2 == response2):
+    if test_word2 == response2:
         print("Success! The Acoustics---->USB link works!")
     else:
         print("Failure. Acoustics--x-->USB!")

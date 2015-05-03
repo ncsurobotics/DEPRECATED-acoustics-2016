@@ -4,7 +4,7 @@ logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %
 import numpy as np
 
 
-def gain_test(ADC, filt, plt):  # Testing gain
+def test_gain(ADC, filt, plt):  # Testing gain
     # Init some empty data structures
     legend_list = [''] * ADC.n_channels
     Vpp = [0] * ADC.n_channels
@@ -84,16 +84,16 @@ def gain_test(ADC, filt, plt):  # Testing gain
     return
 
 
-def testFilts(ADC=None, filt=None, plt=None):
-    if ADC is None:
+def test_filters(adc=None, filter=None, plt=None):
+    if adc is None:
         print("ut_filters: You haven't activated your ADC yet!")
         return
 
-    if filt is None:
+    if filter is None:
         print("ut_filters: You haven't activated your LTC1564s yet!")
         return
 
     u = raw_input('Testing (g)ain ctrl or (f)requency ctrl?\n>> ')
 
-    if (u is 'g'):
-        gain_test(ADC, filt, plt)
+    if u is 'g':
+        test_gain(adc, filter, plt)

@@ -27,7 +27,7 @@ def plot_output(adc, y, plt):
     n = adc.n_channels
     M = y[0].size
 
-    fs = adc.sampleRate
+    fs = adc.sample_rate
 
     t = adc.gen_matching_time_array(M)
 

@@ -61,7 +61,7 @@ def read_sample(user_mem, sample_length):
         a = user_mem['start'] + i * 4
         b = a + 4
         c = struct.unpack("L", ddr_mem[a:b])[0]  # Parse the data
-        y = y + [c, ]
+        y.append(c)
         # print(c)
 
     return y
@@ -84,6 +84,7 @@ def CR_Warn_Programmer():
 ###################################
 ######    ADS7865 Class ###########
 ###################################
+###################################
 
 DB_pin_table = ['P9_26', 'P8_46', 'P8_45', 'P8_44', 'P8_43', 'P8_42', 'P8_41', 'P8_40', 'P8_39', 'P8_29', 'P8_28', 'P8_27']
 WR_pin = 'P9_31'
@@ -105,6 +106,8 @@ class ADS7865():
     def __init__(self, CR=0.0, L=0):
         """ Configures several BBB pins as necessary to hold the ADC in an idle state
 
+        OUT OF DATE
+
         Parameters (in order of initialization):
             self.DBus
             self.WR
@@ -113,14 +116,14 @@ class ADS7865():
             self._CS
             self."ddr stuff"
             self.n_channels
-            self.convRate
+            self.conversion_rate
             self.arm_status
             self.seq_desc
             self.ch
             self.threshold
-            self.CR_specd
+            self.cr_specd
             self.modified
-            self.dacVoltage
+            self.dac_voltage
             self.LSB
         """
 
@@ -163,20 +166,21 @@ class ADS7865():
 
         self.n_channels = 0
         self.conversion_rate = CR
-        self.sampleLength = int(L)
+        self.sample_length = int(L)
         self.arm_status = "unknown"
         self.seq_desc = "unknown"
         self.ch = ['unknown'] * 4
         self.threshold = DEFAULT_THRESHOLD
-        self.SR_specd = 0  # parameter for keeping the up with the last spec
+        self.sr_specd = 0  # parameter for keeping the up with the last spec
         self.modified = True
+        self.sample_rate = None
+        self.dac_voltage = DEFAULT_DAC_VOLTAGE
+        self.LSB = self.dac_voltage / (2**(WORD_SIZE - 1))  # Volts
 
         # Loads overlays: For that will be later needed for
         # muxing pins from GPIO to pruout/pruin types and vice versa.
         boot.load()
         self.sw_reset()
-
-        self.sample_rate = None
 
     ############################
     #### GPIO Commands  #######
@@ -321,7 +325,7 @@ class ADS7865():
             # Update n channels
             self.n_channels = 4
 
-        if self.SR_specd:       # Last parameter that the user specd was SR
+        if self.sr_specd:       # Last parameter that the user specd was SR
             self.update_SR(self.sample_rate)
         else:
             CR_Warn_Programmer()
@@ -401,7 +405,7 @@ class ADS7865():
             logging.warning("Your spec'd conversion rate"
                             + " exceeds the system's spec (%dKHz)" % CONV_RATE_LIMIT / 1000)
 
-        self.SR_specd = 0
+        self.sr_specd = 0
 
     def update_SR(self, sr):
         """ Update the sample rate
@@ -416,7 +420,7 @@ class ADS7865():
         self.sample_rate = float(sr)
         self.conversion_rate = self.sr_to_cr(sr)
 
-        self.SR_specd = 1
+        self.sr_specd = 1
 
         if self.conversion_rate > CONV_RATE_LIMIT:
             logging.warning("Your spec'd conversion rate"
@@ -428,7 +432,7 @@ class ADS7865():
         Args:
             sl: sample length
         """
-        self.sampleLength = int(sl)
+        self.sample_length = int(sl)
 
     def sw_reset(self):
         """
@@ -535,7 +539,7 @@ class ADS7865():
         print("  sr:\t%.2e samples/sec" % self.sample_rate)
 
         # Sample length
-        sl = self.sampleLength
+        sl = self.sample_length
         print("  sl:\t%d samples" % sl)
 
         # Threshold
@@ -643,9 +647,9 @@ class ADS7865():
             fmt_volts:
         """
         if length is None:  # Optional argument for sample length
-            length = self.sampleLength
+            length = self.sample_length
         else:
-            self.sampleLength = int(length)
+            self.sample_length = int(length)
 
         if n_channels is None:
             n_channels = self.n_channels

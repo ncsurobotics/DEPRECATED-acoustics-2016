@@ -3,8 +3,6 @@ from __future__ import division
 import time
 import functools
 
-import pypruss  # Python PRUSS wrapper
-
 from bbb import boot
 
 
@@ -33,10 +31,10 @@ class Mask:
         T = delay / float(len(samples))
 
         # Grab a sample
-        for samp in samples:
+        for sample in samples:
 
             # Convert it to binary
-            b_samp = format(samp, format_code)
+            b_sample = format(sample, format_code)
 
             # Burn in those values
             for i in range(self.word_size):
@@ -45,7 +43,7 @@ class Mask:
 
                 # Inspect each bit for burn-in
                 #import pdb; pdb.set_trace()
-                if (b_samp[index] == str(self.burn_bit)):
+                if b_sample[index] == str(self.burn_bit):
                     self.capture[index] = self.burn_bit
 
             # Wait certain amount of time for next loop
@@ -57,20 +55,20 @@ class Mask:
         T = delay / float(len(samples))
 
         # Grab a sample
-        for samp in samples:
+        for sample in samples:
 
             # Convert it to binary
-            b_samp = format(samp, format_code)
+            b_sample = format(sample, format_code)
 
             # Wait certain amount of time for next loop
-            print(b_samp)
+            print(b_sample)
             time.sleep(T)
 
 
-def main(ADC_Obj):
+def main(adc):
     # config the ADC for success
-    ADC_Obj.config([0x100])
-    ADC_Obj.ready_pruss_for_burst()
+    adc.config([0x100])
+    adc.ready_pruss_for_burst()
 
     # config burning maching
     msk = Mask()
@@ -95,7 +93,7 @@ def main(ADC_Obj):
     while user_input != 'q':
         try:
             # Capture Data
-            y, _ = ADC_Obj.burst(raw=1)
+            y, _ = adc.burst(raw=1)
 
             # Parse The Data
             if user_input == 'burn':

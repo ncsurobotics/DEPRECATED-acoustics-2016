@@ -2,7 +2,7 @@ from sys import argv
 
 from bbb.ADC import ADS7865
 import QikSampNPlt
-import locPinger
+import locate_pinger
 
 
 def main():
@@ -10,38 +10,38 @@ def main():
 
     if (cmd == 'competition'):
         # Load ADC Stuff
-        ADC = ADS7865()
-        ADC.preset(1)
-        locPinger.main(ADC, dearm=False)
+        adc = ADS7865()
+        adc.preset(1)
+        locate_pinger.main(adc, dearm=False)
 
-        # Dearm ADC outside of locPinger.py.
-        ADC.unready()
+        # Dearm ADC outside of locate_pinger.py.
+        adc.unready()
 
     elif (cmd == 'competition-cont'):
         # Load ADC Stuff
-        ADC = ADS7865()
-        ADC.preset(1)
+        adc = ADS7865()
+        adc.preset(1)
 
         # Locate pinger
         while True:
             # Exits on CTRL-C
             try:
-                locPinger.main(ADC, dearm=False)
+                locate_pinger.main(adc, dearm=False)
             except KeyboardInterrupt:
                 print("Quitting program")
                 break
 
-        # Dearm ADC outside of locPinger.py.
-        ADC.unready()
+        # Dearm ADC outside of locate_pinger.py.
+        adc.unready()
 
     elif (cmd == 'plt'):
         # Load plotting stuff
         plt = load_matplotlib()
 
         # Load ADC Stuff
-        ADC = ADS7865()
-        ADC.preset(0)
-        QikSampNPlt.main(ADC, plt)
+        adc = ADS7865()
+        adc.preset(0)
+        QikSampNPlt.main(adc, plt)
 
 
 def load_matplotlib():

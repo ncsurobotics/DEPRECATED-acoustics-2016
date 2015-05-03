@@ -28,9 +28,6 @@ def main(adc, plt):
     fdelta = fs / M
     f = np.arange(0, M * fdelta, fdelta)
 
-    import pdb
-    pdb.set_trace()
-
     # Arm the ADC
     adc.ready_pruss_for_burst()
 

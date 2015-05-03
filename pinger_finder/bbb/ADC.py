@@ -51,7 +51,6 @@ CODE_READSEQ = 0x106
 
 
 def read_sample(user_mem, sample_length):
-    print("ADC: Still have to write documentation about the structure of user_mem variable...")
 
     with open("/dev/mem", "r+b") as f:  # Open the physical memory device
         ddr_mem = mmap.mmap(f.fileno(), user_mem['filelen'], offset=user_mem['offset'])  # mmap the right area
@@ -156,13 +155,15 @@ class ADS7865():
         self.ddr['offset'] = self.ddr['addr'] - 0x10000000
         self.ddr['end'] = 0x10000000 + self.ddr['size']
 
-        print("ADS7865: Allowing one 32bit memory block per sample, it is "
-              + "possible to collect {samp:.1f}K Samples in a single burst. These "
-              + "sample points are stored in DDRAM, which is found at the "
-              + "address range starting at {addr}".format(
-                samp=self.ddr['size'] / 1000.0,
-                addr=str(hex(self.ddr['addr'])))
-              )
+        msg = ("ADS7865: Allowing one 32bit memory block per sample, it is "
+              "possible to collect {samp:.1f}K Samples in a single burst. These "
+              "sample points are stored in DDRAM, which is found at the "
+              "address range starting at {addr}")
+              
+        print(msg.format(samp=self.ddr['size'] / 1000.0,
+                        addr=str(hex(self.ddr['addr']))
+                        )
+             )
 
         self.n_channels = 0
         self.conversion_rate = CR
@@ -424,7 +425,9 @@ class ADS7865():
 
         if self.conversion_rate > CONV_RATE_LIMIT:
             logging.warning("Your spec'd conversion rate"
-                            + " exceeds the system's spec (%dKHz)" % CONV_RATE_LIMIT / 1000)
+                            + " (%dKHz)" % (self.conversion_rate/1000)
+                            + " exceeds the system's limit"
+                            + " (%dKHz)" % (CONV_RATE_LIMIT/1000))
 
     def set_SL(self, sl):
         """ Sets the sample length
@@ -707,7 +710,7 @@ class ADS7865():
                 # if the user has set raw to True, then this option is
                 # unavailable.
                 if fmt_volts:
-                    y[chan] *= self.LSB
+                    y[chan] = y[chan]*self.LSB
 
         self.reload()
 

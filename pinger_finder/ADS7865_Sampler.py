@@ -37,7 +37,7 @@ def plot_output(adc, y, plt):
     t = adc.gen_matching_time_array(M)
 
     # Plot the data
-    legend_list = ['' for channel in adc.n_channels]
+    legend_list = ['' for channel in range(adc.n_channels)]
 
     for chan in range(adc.n_channels):
         ax.plot(t, y[chan])

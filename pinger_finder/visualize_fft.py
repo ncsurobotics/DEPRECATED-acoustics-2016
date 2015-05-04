@@ -5,43 +5,38 @@ from cmath import phase
 import numpy as np
 from scipy.fftpack import fft
 
-import boot
+from bbb import boot
 
 
-def main(ADC, plt):
-    # Initialize plotting evironment
+def main(adc, plt):
+    # Initialize plotting environment
     plt.figure()
     plt.subplot(212)
     plt.subplot(211)
     plt.hold(True)
 
     # Query user to select a channel
-    ADC.ADC_Status()
+    adc.adc_status()
 
-    s = raw_input("Please enter a comma-separated list of chans"
+    s = raw_input("Please enter a comma-separated list of channels"
                   + " you want to watch (any # from 0 - 3): ")
     ch_list = map(int, s.split(','))
 
     # low hanging variables
-    fs = ADC.sampleRate
-    M = ADC.sampleLength / ADC.n_channels
+    fs = adc.sample_rate
+    M = adc.sample_length / adc.n_channels
     fdelta = fs / M
     f = np.arange(0, M * fdelta, fdelta)
 
-    import pdb
-    pdb.set_trace()
-
     # Arm the ADC
-    ADC.Ready_PRUSS_For_Burst()
+    adc.ready_pruss_for_burst()
 
     # Loop sample collection and processing
     while True:
-
         # Stop gracefully on CTRL+D
         try:
-
             # Capture a set of samples
-            y, t = ADC.Burst()
+            y, _ = adc.burst()
 
             # Process simultanous channels
             for ch in ch_list:

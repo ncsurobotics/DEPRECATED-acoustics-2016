@@ -8,7 +8,7 @@ DEVICE1 = "/dev/ttyO5"
 TEST_WORD = "Hello"
 
 
-def INIT():
+def init():
     uart.enable_uart()
 
 
@@ -19,7 +19,7 @@ def main():
     raw_input("Press ENTER when you're ready to begin the test: ")
 
     # Initialize ports
-    INIT()
+    init()
     P1 = s.Serial(DEVICE1, 9600, timeout=0.1)
 
     # Send and read hello in one direction
@@ -29,7 +29,7 @@ def main():
 
     # Check value
     print("Rx'ed %r" % result)
-    if (result == TEST_WORD):
+    if result == TEST_WORD:
         print("SUCCESS! The board is working!")
     else:
         print("FAILURE!!! Something on the board/BBB is not working.")

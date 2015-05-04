@@ -4,7 +4,7 @@ logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %
 import numpy as np
 
 
-def gain_test(ADC, filt, plt):  # Testing gain
+def test_gain(ADC, filt, plt):  # Testing gain
     # Init some empty data structures
     legend_list = [''] * ADC.n_channels
     Vpp = [0] * ADC.n_channels
@@ -16,7 +16,7 @@ def gain_test(ADC, filt, plt):  # Testing gain
           + "	 * Ensure settings are correct on ADC.\n")
 
     # Arm the ADC
-    ADC.Ready_PRUSS_For_Burst()
+    ADC.ready_pruss_for_burst()
 
     # get user confirmation
     u = raw_input("ut_filters: Hit enter to begin the test. Or q to quit.\n>> ")
@@ -37,10 +37,10 @@ def gain_test(ADC, filt, plt):  # Testing gain
             axes[r, c].hold(True)
 
         # Select gain mode
-        filt.GainMode(n)
+        filt.gain_mode(n)
 
         # Get samples
-        y, f_time = ADC.Burst()
+        y, f_time = ADC.burst()
 
         # Analyze each sample
         for chan in range(ADC.n_channels):
@@ -52,7 +52,7 @@ def gain_test(ADC, filt, plt):  # Testing gain
                 # Generate time array
                 if chan is 0:
                     M = y[0].size
-                    t = ADC.Generate_Matching_Time_Array(M)
+                    t = ADC.gen_matching_time_array(M)
 
                 # Record plot name
                 legend_list[chan] = ADC.ch[chan]
@@ -79,21 +79,21 @@ def gain_test(ADC, filt, plt):  # Testing gain
         plt.show()
 
     # Return filter back to zero
-    filt.GainMode(0)
+    filt.gain_mode(0)
 
     return
 
 
-def testFilts(ADC=None, filt=None, plt=None):
-    if ADC is None:
+def test_filters(adc=None, filter=None, plt=None):
+    if adc is None:
         print("ut_filters: You haven't activated your ADC yet!")
         return
 
-    if filt is None:
+    if filter is None:
         print("ut_filters: You haven't activated your LTC1564s yet!")
         return
 
     u = raw_input('Testing (g)ain ctrl or (f)requency ctrl?\n>> ')
 
-    if (u is 'g'):
-        gain_test(ADC, filt, plt)
+    if u is 'g':
+        test_gain(adc, filter, plt)

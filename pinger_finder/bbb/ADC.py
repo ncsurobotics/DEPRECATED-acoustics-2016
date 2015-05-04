@@ -9,9 +9,9 @@ from os import path
 import pypruss  # Python PRUSS wrapper
 import numpy as np
 
-import boot         #
-import BBBIO  # Yields functions for working with GPIO
-import settings  # Same function as a .YAML file
+from . import boot
+from . import BIN_DIR
+from .port import Port
 
 logging.basicConfig(level=logging.DEBUG, format='%(module)s.py: %(asctime)s - %(levelname)s - %(message)s')
 
@@ -20,8 +20,6 @@ PRU0_CR_Mem_Offset = 3
 PRU0_THR_Mem_Offset = 4
 HC_CR = 0xBEBC200
 fclk = 200e6
-
-BIN_DIR = settings.bin_directory
 
 INIT0 = path.join(BIN_DIR, "init0.bin")
 INIT1 = path.join(BIN_DIR, "init1.bin")
@@ -52,27 +50,27 @@ CODE_READSEQ = 0x106
 # Global Functions
 
 
-def Read_Sample(user_mem, Sample_Length):
-    print("ADC: Still have to write documentation about the structure of user_mem variable...")
+def read_sample(user_mem, sample_length):
 
     with open("/dev/mem", "r+b") as f:  # Open the physical memory device
         ddr_mem = mmap.mmap(f.fileno(), user_mem['filelen'], offset=user_mem['offset'])  # mmap the right area
 
     y = []
-    for i in range(Sample_Length):
+    for i in range(sample_length):
         a = user_mem['start'] + i * 4
         b = a + 4
         c = struct.unpack("L", ddr_mem[a:b])[0]  # Parse the data
-        y = y + [c, ]
+        y.append(c)
         # print(c)
 
     return y
 
 
 def twos_comp(val, bits):
-    """compute the 2's compliment of int value val, of n bits."""
-    if((val & (1 << (bits - 1))) != 0):
-        val = val - (1 << bits)
+    """ Compute the 2's compliment of int value val, of n bits """
+    if (val & (1 << (bits - 1))) != 0:
+        val -= (1 << bits)
+
     return val
 
 
@@ -85,6 +83,7 @@ def CR_Warn_Programmer():
 ###################################
 ######    ADS7865 Class ###########
 ###################################
+###################################
 
 DB_pin_table = ['P9_26', 'P8_46', 'P8_45', 'P8_44', 'P8_43', 'P8_42', 'P8_41', 'P8_40', 'P8_39', 'P8_29', 'P8_28', 'P8_27']
 WR_pin = 'P9_31'
@@ -94,7 +93,7 @@ RD_pin = 'P9_30'
 CONVST_pin = 'P9_29'
 
 
-class ADS7865:
+class ADS7865():
 
     """ Allows the user to instantiate an object representing the system
     ADS7865, an analog to digital converter IC by Texas Instruments.
@@ -106,6 +105,8 @@ class ADS7865:
     def __init__(self, CR=0.0, L=0):
         """ Configures several BBB pins as necessary to hold the ADC in an idle state
 
+        OUT OF DATE
+
         Parameters (in order of initialization):
             self.DBus
             self.WR
@@ -114,36 +115,36 @@ class ADS7865:
             self._CS
             self."ddr stuff"
             self.n_channels
-            self.convRate
+            self.conversion_rate
             self.arm_status
             self.seq_desc
             self.ch
             self.threshold
-            self.CR_specd
+            self.cr_specd
             self.modified
-            self.dacVoltage
+            self.dac_voltage
             self.LSB
         """
 
         # GPIO Stuff
-        self.DBus = BBBIO.Port(DB_pin_table)
-        self.DBus.setPortDir("in")
+        self.DBus = Port(DB_pin_table)
+        self.DBus.set_port_dir("in")
 
-        self.WR = BBBIO.Port(WR_pin)
-        self.WR.setPortDir("out")
-        self.WR.writeToPort(1)
+        self.WR = Port(WR_pin)
+        self.WR.set_port_dir("out")
+        self.WR.write_to_port(1)
 
-        self._RD = BBBIO.Port(RD_pin)
-        self._RD.setPortDir("out")
-        self._RD.writeToPort(1)
+        self._RD = Port(RD_pin)
+        self._RD.set_port_dir("out")
+        self._RD.write_to_port(1)
 
-        self._CONVST = BBBIO.Port(CONVST_pin)
-        self._CONVST.setPortDir("out")
-        self._CONVST.writeToPort(1)
+        self._CONVST = Port(CONVST_pin)
+        self._CONVST.set_port_dir("out")
+        self._CONVST.write_to_port(1)
 
-        self._CS = BBBIO.Port(CS_pin)
-        self._CS.setPortDir("out")
-        self._CS.writeToPort(0)
+        self._CS = Port(CS_pin)
+        self._CS.set_port_dir("out")
+        self._CS.write_to_port(0)
 
         # PRUSS Stuff
         self.ddr = {}
@@ -154,37 +155,42 @@ class ADS7865:
         self.ddr['offset'] = self.ddr['addr'] - 0x10000000
         self.ddr['end'] = 0x10000000 + self.ddr['size']
 
-        print("ADS7865: Allowing one 32bit memory block per sample, it is "
-              + "possible to collect {samp:.1f}K Samples in a single burst. These "
-              + "sample points are stored in DDRAM, which is found at the "
-              + "address range starting at {addr}".format(
-                samp=self.ddr['size'] / 1000.0,
-                addr=str(hex(self.ddr['addr'])))
-              )
+        msg = ("ADS7865: Allowing one 32bit memory block per sample, it is "
+              "possible to collect {samp:.1f}K Samples in a single burst. These "
+              "sample points are stored in DDRAM, which is found at the "
+              "address range starting at {addr}")
+              
+        print(msg.format(samp=self.ddr['size'] / 1000.0,
+                        addr=str(hex(self.ddr['addr']))
+                        )
+             )
 
         self.n_channels = 0
-        self.convRate = CR
-        self.sampleLength = int(L)
+        self.conversion_rate = CR
+        self.sample_length = int(L)
         self.arm_status = "unknown"
         self.seq_desc = "unknown"
         self.ch = ['unknown'] * 4
         self.threshold = DEFAULT_THRESHOLD
-        self.SR_specd = 0  # parameter for keeping the up with the last spec
+        self.sr_specd = 0  # parameter for keeping the up with the last spec
         self.modified = True
+        self.sample_rate = None
+        self.dac_voltage = DEFAULT_DAC_VOLTAGE
+        self.LSB = self.dac_voltage / (2**(WORD_SIZE - 1))  # Volts
 
         # Loads overlays: For that will be later needed for
         # muxing pins from GPIO to pruout/pruin types and vice versa.
         boot.load()
-        self.SW_Reset()
+        self.sw_reset()
 
     ############################
     #### GPIO Commands  #######
     ############################
-    def Config(self, cmd_list):
+    def config(self, cmd_list):
         """ Takes a list of hex values (cmd_list) and bitbangs the ADC
         accordingly. User may refer to the datasheet for an explanation
         of what the hex values actually mean. For examples of correct
-        application, see: EZConfig() method
+        application, see: ez_config() method
         """
 
         # Callee save the port direction
@@ -192,17 +198,17 @@ class ADS7865:
 
         #
         for cmd in cmd_list:
-            self.WR.writeToPort(0)  # Open ADC's input Latch
+            self.WR.write_to_port(0)  # Open ADC's input Latch
 
-            self.DBus.setPortDir("out")  # Latch open, safe to make DB pins an out
-            self.DBus.writeToPort(cmd)  # Write the value to the DB pins
+            self.DBus.set_port_dir("out")  # Latch open, safe to make DB pins an out
+            self.DBus.write_to_port(cmd)  # Write the value to the DB pins
 
-            print('ADS7865: Databus cmd %s has been sent.' % self.DBus.readStr())
-            self.WR.writeToPort(1)  # Latch down the input
+            print('ADS7865: Databus cmd %s has been sent.' % self.DBus.read_str())
+            self.WR.write_to_port(1)  # Latch down the input
 
-        self.DBus.setPortDir("in")  # Return DB pins back to inputs.
+        self.DBus.set_port_dir("in")  # Return DB pins back to inputs.
 
-    def EZConfig(self, sel=None):
+    def ez_config(self, sel=None):
         """ Allows the user to access commonly used config command (presets).
 
         Args:
@@ -210,11 +216,11 @@ class ADS7865:
         """
 
         # NOTES TO USER
-        #--At powerup, sequencer_register=0x000
-        #--Capturing one channel (non-pair) in isolation is doable by selecting sel=0
+        # --At powerup, sequencer_register=0x000
+        # --Capturing one channel (non-pair) in isolation is doable by selecting sel=0
         # or sel=1 (since ADS7865 resets the data_output pointer at the beginning of every
         # CONVST), but the user must also take the extra precaution to disable the
-        #"sub-sampling" portion of the PRUSS code in order for it to work.
+        # "sub-sampling" portion of the PRUSS code in order for it to work.
 
         if sel is None:
             # Generate Query to user to see what kind of config he wants
@@ -236,24 +242,24 @@ class ADS7865:
         # Single channel (pair) enable
         if sel == 0:
             # User has chosen to sample the 0a/0b differential channel pair.
-            self.Config([0x100])
+            self.config([0x100])
 
             # Update statuses
             seq = "CHA0" + PLUSMINUS + "/CHB0" + PLUSMINUS
             chans = [DIFF_PAIR_1, DIFF_PAIR_3, '', '']
-            self.Update_Config_Text(seq, chans)
+            self.update_config_text(seq, chans)
 
             # Update n channels
             self.n_channels = 2
 
         elif sel == 1:
             # User has chosen to sample the 1a/1b differential channel pair.
-            self.Config([0xD00])
+            self.config([0xD00])
 
             # Update statuses
             seq = "CHA1" + PLUSMINUS + "/CHB1" + PLUSMINUS
             chans = [DIFF_PAIR_2, DIFF_PAIR_4, '', '']
-            self.Update_Config_Text(seq, chans)
+            self.update_config_text(seq, chans)
 
             # Update n channels
             self.n_channels = 2
@@ -264,13 +270,13 @@ class ADS7865:
             # User has chosen to sample the 0a/0b differential channel pair
             # while disabling the sequencer register. NOTE: The reason why
             # this would ever be necessary is unclear, as it seems to have
-            # the same functionality of EZConfig 0.
-            self.Config([0x104, 0x000])
+            # the same functionality of ez_config 0.
+            self.config([0x104, 0x000])
 
             # Update statuses
             seq = "CHA0" + PLUSMINUS + "/CHB0" + PLUSMINUS
             chans = [DIFF_PAIR_1, DIFF_PAIR_3, '', '']
-            self.Update_Config_Text(seq, chans)
+            self.update_config_text(seq, chans)
 
             # Update n channels
             self.n_channels = 2
@@ -279,13 +285,13 @@ class ADS7865:
             # User has chosen to sample the 1a/1b differential channel pair
             # while disabling the sequencer register NOTE: The reason why
             # this would ever be necessary is unclear, as it seems to have
-            # the same functionality of EZConfig 1.
-            self.Config([0x304, 0x000])
+            # the same functionality of ez_config 1.
+            self.config([0x304, 0x000])
 
             # Update statuses
             seq = "CHA1" + PLUSMINUS + "/CHB1" + PLUSMINUS
             chans = [DIFF_PAIR_2, DIFF_PAIR_4, '', '']
-            self.Update_Config_Text(seq, chans)
+            self.update_config_text(seq, chans)
 
             # Update n channels
             self.n_channels = 2
@@ -294,123 +300,153 @@ class ADS7865:
         # Dual channel (pair) enable
         elif sel == 4:
             # User has chosen to sample the 0a/0b -> 1a/1b in FIFO style
-            self.Config([0x104, 0x230])
+            self.config([0x104, 0x230])
 
             # Update statuses
             seq1 = "CHA0" + PLUSMINUS + "/CHB0" + PLUSMINUS
             seq2 = "CHA0" + PLUSMINUS + "/CHB0" + PLUSMINUS
             seq = seq1 + " -> " + seq2
             chans = [DIFF_PAIR_1, DIFF_PAIR_3, DIFF_PAIR_2, DIFF_PAIR_4]
-            self.Update_Config_Text(seq, chans)
+            self.update_config_text(seq, chans)
 
             # Update n channels
             self.n_channels = 4
 
         elif sel == 5:
             # User has chosen to sample the 1a/1b -> 0a/0b in FIFO style
-            self.Config([0x104, 0x2c0])
+            self.config([0x104, 0x2c0])
 
             # Update statuses
             seq1 = "CHA1" + PLUSMINUS + "/CHB1" + PLUSMINUS
             seq2 = "CHA1" + PLUSMINUS + "/CHB1" + PLUSMINUS
             seq = seq1 + " -> " + seq2
             chans = [DIFF_PAIR_2, DIFF_PAIR_4, DIFF_PAIR_1, DIFF_PAIR_3]
-            self.Update_Config_Text(seq, chans)
+            self.update_config_text(seq, chans)
 
             # Update n channels
             self.n_channels = 4
 
-        if self.SR_specd:       # Last parameter that the user specd was SR
-            self.Update_SR(self.sampleRate)
+        if self.sr_specd:       # Last parameter that the user specd was SR
+            self.update_SR(self.sample_rate)
         else:
             CR_Warn_Programmer()
 
-    def Preset(self, sel):
+    def preset(self, sel):
+        """
+        """
+
         if sel == 0:
-            self.Set_SL(1e3)
-            self.Update_SR(400e3)
+            self.set_SL(1e3)
+            self.update_SR(400e3)
             self.threshold = 0
-            self.EZConfig(4)
+            self.ez_config(4)
 
         elif sel == 1:
-            self.Set_SL(1e3)
-            self.Update_SR(800e3)
+            self.set_SL(1e3)
+            self.update_SR(800e3)
             self.threshold = 0
-            self.EZConfig(0)
+            self.ez_config(0)
 
         else:
             logging.warning("Unknown preset!")
 
-    def Read_Seq(self):
+    def read_sequence(self):
+        """
+        """
+
         # Send cmd telling ADC to output it's SEQ config
-        self.Config([CODE_READSEQ])
+        self.config([CODE_READSEQ])
 
         # Read ADC's databus
-        self._RD.writeToPort(0)
-        seq = self.DBus.readStr()
-        self._RD.writeToPort(1)
+        self._RD.write_to_port(0)
+        seq = self.DBus.read_str()
+        self._RD.write_to_port(1)
 
         # print config to the user
-        print("Config of sequencer: %s" % seq)
+        print("config of sequencer: %s" % seq)
 
-    def Read_Dac(self):
+    def read_dac(self):
+        """ Read from digital-analog converter
+        """
+
         # Send cmd telling ADC to output it's SEQ config
-        self.Config([CODE_READDAC])
+        self.config([CODE_READDAC])
 
         # Read ADC's databus
-        self._RD.writeToPort(0)
-        dac_s = self.DBus.readStr()
-        self._RD.writeToPort(1)
+        self._RD.write_to_port(0)
+        dac_s = self.DBus.read_str()
+        self._RD.write_to_port(1)
 
         # print config to the user
-        print("Config of DAC: %s" % dac_s)
+        print("config of DAC: %s" % dac_s)
 
         # interpret value
-        dac_voltage_readout = self.Conv_Dac_Str_to_Voltage(dac_s)
+        dac_voltage_readout = self.dac_str_to_voltage(dac_s)
         print("... Vdac = %.5f volts" % dac_voltage_readout)
 
         # Update DAC related atributes
-        self.dacVoltage = dac_voltage_readout
-        self.LSB = self.dacVoltage / (2**(WORD_SIZE - 1))  # Volts
+        self.dac_voltage = dac_voltage_readout
+        self.LSB = self.dac_voltage / (2**(WORD_SIZE - 1))  # Volts
 
-    def Update_CR(self, CR):
+    def update_CR(self, cr):
+        """ Update the conversion rate
+
+        Args:
+            cr: conversion rate
+        """
+
         # Update modified bit
         self.modified = True
 
         # Update Conversioning bit
-        self.convRate = float(CR)
-        self.sampleRate = self.CR_2_SR(CR)
+        self.conversion_rate = float(cr)
+        self.sample_rate = self.cr_to_sr(cr)
 
-        if (CR > CONV_RATE_LIMIT):
+        if cr > CONV_RATE_LIMIT:
             logging.warning("Your spec'd conversion rate"
                             + " exceeds the system's spec (%dKHz)" % CONV_RATE_LIMIT / 1000)
 
-        self.SR_specd = 0
+        self.sr_specd = 0
 
-    def Update_SR(self, SR):
+    def update_SR(self, sr):
+        """ Update the sample rate
+
+        Args:
+            sr: Sample rate
+        """
         # Update modified bit
         self.modified = True
 
         # Update sampling bits
-        self.sampleRate = float(SR)
-        self.convRate = self.SR_2_CR(SR)
+        self.sample_rate = float(sr)
+        self.conversion_rate = self.sr_to_cr(sr)
 
-        self.SR_specd = 1
+        self.sr_specd = 1
 
-        if (self.convRate > CONV_RATE_LIMIT):
+        if self.conversion_rate > CONV_RATE_LIMIT:
             logging.warning("Your spec'd conversion rate"
-                            + " exceeds the system's spec (%dKHz)" % CONV_RATE_LIMIT / 1000)
+                            + " (%dKHz)" % (self.conversion_rate/1000)
+                            + " exceeds the system's limit"
+                            + " (%dKHz)" % (CONV_RATE_LIMIT/1000))
 
-    def Set_SL(self, SL):
-        self.sampleLength = int(SL)
+    def set_SL(self, sl):
+        """ Sets the sample length
 
-    def SW_Reset(self):
+        Args:
+            sl: sample length
+        """
+        self.sample_length = int(sl)
+
+    def sw_reset(self):
+        """
+        """
+
         print("Performing ADC device reset...")
-        self.Config([CODE_SWRESET])
+        self.config([CODE_SWRESET])
 
         # DAC outputs the default voltage
-        self.dacVoltage = DEFAULT_DAC_VOLTAGE
-        self.LSB = self.dacVoltage / (2**(WORD_SIZE - 1))  # Volts
+        self.dac_voltage = DEFAULT_DAC_VOLTAGE
+        self.LSB = self.dac_voltage / (2**(WORD_SIZE - 1))  # Volts
 
         # Update sequencer and channel descriptions
         self.seq_desc = "CHA0" + PLUSMINUS + "/CHB0" + PLUSMINUS
@@ -421,25 +457,30 @@ class ADS7865:
 
         # Update other parameters
         self.n_channels = 2
-        self.Update_CR(self.convRate)
+        self.update_CR(self.conversion_rate)
         self.modified = True
 
         # Let user know work is done
         print("... done.")
 
-    def Close(self):
-        self._CS.writeToPort(1)
+    def close(self):
+        """
+        """
+
+        self._CS.write_to_port(1)
         self.DBus.close()
         self.WR.close()
         self._RD.close()
-        # do not close# self.BUSY.close()
+        # do not close # self.BUSY.close()
         self._CS.close()
         self._CONVST.close()
 
     ############################
     # General ADC Commands  #####
     ############################
-    def Update_Config_Text(self, seq, channels):
+    def update_config_text(self, seq, channels):
+        """
+        """
         # Update human readable description
         self.seq_desc = seq
 
@@ -448,9 +489,11 @@ class ADS7865:
             self.ch[i] = channels[i]
 
     def V_to_12bit_Hex(self, Vin):
+        """
+        """
         return int(round(Vin / self.LSB))
 
-    def Conv_Dac_Str_to_Voltage(self, dac_s):
+    def dac_str_to_voltage(self, dac_s):
         """ Interprets the data 12 bit binary output of an ADC DAC read cmd,
         represented by the string dac_s
         """
@@ -464,34 +507,42 @@ class ADS7865:
 
         return dac_v
 
-    def CR_2_SR(self, CR):
-        if (self.n_channels != 0):
-            return (CR * SAMPLES_PER_CONV) / float(self.n_channels)
+    def cr_to_sr(self, cr):
+        """
+        """
+        if self.n_channels != 0:
+            return (cr * SAMPLES_PER_CONV) / float(self.n_channels)
         else:
             logging.warning("self.n_channels == 0. Unable to compute self.sampleRate!")
             return None
 
-    def SR_2_CR(self, SR):
-        if (self.n_channels != 0):
-            return (SR) * (self.n_channels / float(SAMPLES_PER_CONV))
+    def sr_to_cr(self, sr):
+        """
+        """
+
+        if self.n_channels != 0:
+            return sr * (self.n_channels / float(SAMPLES_PER_CONV))
         else:
             logging.warning("self.n_channels == 0. Unable to compute self.sampleRate!")
             return None
 
-    def ADC_Status(self):
+    def adc_status(self):
+        """
+        """
+
         # Read and write pins
-        _RD = eval(self._RD.readStr())
-        _WR = eval(self._RD.readStr())
+        _RD = eval(self._RD.read_str())
+        _WR = eval(self._RD.read_str())
         print("  _RD:\t%d" % _RD)
         print("  _WR:\t%d" % _WR)
 
         # Conversion and sample rate
-        cr = self.convRate
+        cr = self.conversion_rate
         print("  cr:\t%.2e conversions/sec" % cr)
-        print("  sr:\t%.2e samples/sec" % self.sampleRate)
+        print("  sr:\t%.2e samples/sec" % self.sample_rate)
 
         # Sample length
-        sl = self.sampleLength
+        sl = self.sample_length
         print("  sl:\t%d samples" % sl)
 
         # Threshold
@@ -508,13 +559,13 @@ class ADS7865:
         for i in range(4):
             print("  channel {}:\t{}".format(i, self.ch[i]))
 
-    def Generate_Matching_Time_Array(self, M):
+    def gen_matching_time_array(self, M):
         """ For plotting signals in the time domain.
 
         Looks at it's sampling parameters, and generate a numpy array
         of length M to corresponds with M samples of data per channel
         """
-        Ts = 1 / self.sampleRate
+        Ts = 1 / self.sample_rate
 
         if (M * Ts / Ts <= M):
             t = np.arange(0, M * Ts, Ts)
@@ -531,16 +582,16 @@ class ADS7865:
     ############################
     #### PRUSS Commands  #######
     ############################
-    def Ready_PRUSS_For_Burst(self, CR=None):
-        """Arms the ADC for sample collection. This removes some GPIO control
+    def ready_pruss_for_burst(self, CR=None):
+        """ Arms the ADC for sample collection. This removes some GPIO control
         from the BBB, and replaces it with PRUIN/OUT control.
         """
 
         # Initialize variables
         if CR is None:
-            CR = self.convRate
+            CR = self.conversion_rate
         else:
-            self.convRate = CR
+            self.conversion_rate = CR
 
         if CR == 0:
             print("CR currently set to 0. Please specify a conversion rate.")
@@ -548,13 +599,13 @@ class ADS7865:
 
         CR_BITECODE = int(round(1.0 / CR * fclk))  # Converts user CR input to Hex.
 
-        # Initialize evironment
+        # Initialize environment
         pypruss.modprobe()
         pypruss.init()      # Init the PRU
         pypruss.open(0)     # Open PRU event 0 which is PRU0_ARM_INTERRUPT
         pypruss.pruintc_init()  # Init the interrupt controller
 
-        # INIT PRU Registers
+        # init PRU Registers
         pypruss.exec_program(0, INIT0)  # Cleaning the registers
         pypruss.exec_program(1, INIT1)  # Cleaning the registers
         pypruss.pru_write_memory(0, 0x0000, [0x0, ] * 0x0800)  # clearing pru0 ram
@@ -569,18 +620,18 @@ class ADS7865:
         self.arm_status = 'armed'
         self.modified = False
 
-    def Unready(self):
-        """Gives GPIO control back to the the beaglebone.
+    def unready(self):
+        """ Gives GPIO control back to the the beaglebone
         """
 
-        if (self.arm_status == 'unarmed'):
+        if self.arm_status == 'unarmed':
             logging.warning("ADC Already dearmed!!! You are double dearming somewhere.")
         else:
             print('ADS7865: Dearming the PRUSS')
             boot.dearm()
             self.arm_status = 'unarmed'
 
-    def Reload(self):
+    def reload(self):
         """ Re-initializes the PRU's interrupt that this library uses to tell
         python that it can continue running code again. This must be called at
         the end of a function that utilizes this interrupt. The calling
@@ -590,7 +641,7 @@ class ADS7865:
         pypruss.open(0)     # Open PRU event 0 which is PRU0_ARM_INTERRUPT
         pypruss.pruintc_init()  # Init the interrupt controller
 
-    def Burst(self, length=None, n_channels=None, raw=None, fmt_volts=1):
+    def burst(self, length=None, n_channels=None, raw=None, fmt_volts=1):
         """
         Args:
             length:
@@ -599,9 +650,9 @@ class ADS7865:
             fmt_volts:
         """
         if length is None:  # Optional argument for sample length
-            length = self.sampleLength
+            length = self.sample_length
         else:
-            self.sampleLength = int(length)
+            self.sample_length = int(length)
 
         if n_channels is None:
             n_channels = self.n_channels
@@ -613,7 +664,7 @@ class ADS7865:
 
         # Share SL with PRU0: pru_SL_mapping just incorporates
         # some math that translates the user specified SL parameter
-        # to a byte addressible memory size value that the PRU will use to
+        # to a byte addressable memory size value that the PRU will use to
         # check whether it has finished writing it's data to the
         # memory
         pru_SL_mapping = (length - MIN_SAMPLE_LENGTH) * BYTES_PER_SAMPLE
@@ -628,7 +679,7 @@ class ADS7865:
         pypruss.exec_program(0, ADS7865_MasterPRU)  # Load firmware on PRU0
 
         # Wait for PRU to finish its job.
-        pypruss.wait_for_event(0)  # Wait for event 0 which is conn to PRU0_ARM_INTERUPT
+        pypruss.wait_for_event(0)  # Wait for event 0 which is conn to PRU0_ARM_INTERRUPT
         b = time.time()
         t = b - a
 
@@ -637,7 +688,7 @@ class ADS7865:
         # pypruss.exit()         # Exit PRU
 
         # Read the memory
-        raw_data = Read_Sample(self.ddr, length)
+        raw_data = read_sample(self.ddr, length)
 
         y = [0] * n_channels
         for chan in range(n_channels):
@@ -648,10 +699,10 @@ class ADS7865:
 
             # User may specify whether he wants values to come in
             # raw, or two's compliment.
-            if (raw is None) or (raw == 0):
+            if raw is None or raw == 0:
                 i = 0
-                for samp in y[chan]:
-                    y[chan][i] = twos_comp(samp, WORD_SIZE)
+                for sample in y[chan]:
+                    y[chan][i] = twos_comp(sample, WORD_SIZE)
                     i += 1
 
                 # Assuming that the user is requesting 2 compliment values,
@@ -661,13 +712,16 @@ class ADS7865:
                 if fmt_volts:
                     y[chan] = y[chan] * self.LSB
 
-        self.Reload()
+        self.reload()
 
         return y, t
 
-    def GetData(self):
-        if not (self.arm_status == 'armed' and self.modified == False):
-            self.Ready_PRUSS_For_Burst()
+    def get_data(self):
+        """
+        """
 
-        y, t = self.Burst()
+        if self.arm_status != 'armed' or self.modified is True:
+            self.ready_pruss_for_burst()
+
+        y, _ = self.burst()
         return y

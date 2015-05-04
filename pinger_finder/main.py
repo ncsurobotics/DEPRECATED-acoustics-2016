@@ -1,16 +1,18 @@
 import sys
 sys.path.insert(0, '../tests/')
 
-import ADC
 import os
+import functools
+
 import numpy as np
+
+from bbb import ADC
+from bbb.LTC1564 import LTC1564
 
 import watch_for_dead_bits
 import ADS7865_Sampler
-from LTC1564 import LTC1564
-import trackPinger
-import visFFT
-import functools
+import track_pinger
+import visualize_fft
 
 help_text = """quit: quit the program. \nhelp: display this help text."""
 
@@ -89,12 +91,6 @@ def UI():
         ########### ADC cmd Class ######
         ################################
 
-        elif input_matches('s', 'adc_status'):
-            if ADC_active:
-                ADS7865.ADC_Status()
-            else:
-                response(loc.curr, "Please run 'load_adc_app' first")
-
         elif input_matches('l', 'load_adc_app'):
             ADC_active = True
             ADC_app_splash()
@@ -103,9 +99,15 @@ def UI():
             ADS7865 = ADC.ADS7865()
             response(loc.curr, "Done loading app. Entering environment...")
 
+        elif input_matches('s', 'adc_status'):
+            if ADC_active:
+                ADS7865.adc_status()
+            else:
+                response(loc.curr, "Please run 'load_adc_app' first")
+
         elif input_matches('u', 'unload_adc_app'):
             response(loc.curr, "Closing app...")
-            ADS7865.Close()
+            ADS7865.close()
             loc.pop()
 
         elif input_matches('d', 'debug_wizard'):
@@ -140,17 +142,17 @@ def UI():
 
         elif input_matches('Glf', 'conf_G'):
             if LTC_active:
-                print("Config Input Gain: enter a mode from 0 to %d" % (LTC.GetNGainStates() - 1))
+                print("config Input Gain: enter a mode from 0 to %d" % (LTC.get_n_gain_states() - 1))
                 mode = eval(raw_input(">> "))
-                LTC.GainMode(mode)
+                LTC.gain_mode(mode)
             else:
                 response(loc.curr, "Please run 'lf' (load_filts) first")
 
         elif input_matches('Flf', 'conf_F'):
             if LTC_active:
-                print("Config Input Fc: enter a mode from 0 to 1")
+                print("config Input Fc: enter a mode from 0 to 1")
                 mode = eval(raw_input(">> "))
-                LTC.FiltMode(mode)
+                LTC.filter_mode(mode)
             else:
                 response(loc.curr, "Please run 'lf' (load_filts) first")
 
@@ -173,7 +175,7 @@ def UI():
 ##########################################
 
 
-def debug_wizard(ADC_object, filt_obj=None, plt=None):
+def debug_wizard(adc, filt_obj=None, plt=None):
     keys = ['watch_for_dead_bits',
             'read_DBus',
             'check_DBus',
@@ -187,12 +189,12 @@ def debug_wizard(ADC_object, filt_obj=None, plt=None):
     while True:
         # Print status
         print("current status:")
-        ADC_object.ADC_Status()
+        adc.adc_status()
         print("")
 
         # Print debug options
         print("enter one of the following debugging commands")
-        printDebugs(keys)
+        print_debugs(keys)
         print("")
 
         # Take user input
@@ -205,64 +207,64 @@ def debug_wizard(ADC_object, filt_obj=None, plt=None):
             break
 
         elif input_matches('1', 'watch_for_dead_bits'):
-            watch_for_dead_bits.main(ADC_object)
+            watch_for_dead_bits.main(adc)
 
         elif input_matches('3'):  # check_DBus
-            temp = ADC_object.DBus.readStr()
+            temp = adc.DBus.read_str()
             print("debug_wizard: DBus = %s" % temp)
 
         elif input_matches('6'):
-            ADC_object.Read_Seq()
+            adc.read_sequence()
 
         elif input_matches('7'):
-            ADC_object.Read_Dac()
+            adc.read_dac()
 
         elif input_matches('8'):
-            from ut_filters import testFilts
-            testFilts(ADC_object, filt_obj, plt)
+            from test_filters import test_filters
+            test_filters(adc, filt_obj, plt)
 
 
-def printDebugs(keys):
+def print_debugs(keys):
     row = 1
     for key in keys:
         print("\t%d: %s" % (row, key))
         row += 1
 
 
-def adc_config(ADC_OBJ, loc):
+def adc_config(adc, loc):
     # setup environment
     response(loc.curr, "You have entered the ADC config mode")
 
     # Get user's sample length
     response(loc.curr, "Please enter a sample length")
     SL = query(loc.curr)
-    ADC_OBJ.sampleLength = int(eval(SL))
+    adc.sample_length = int(eval(SL))
 
     # Get user's conversion rate
     response(loc.curr, "Please enter a sample rate")
     SR = query(loc.curr)
-    ADC_OBJ.Update_SR(eval(SR))
+    adc.update_SR(eval(SR))
 
     # Get user's threshold value
     response(loc.curr, "Please enter a threshold value (Volts)")
     THR = query(loc.curr)
-    ADC_OBJ.threshold = eval(THR)
+    adc.threshold = eval(THR)
 
     # Get user's config
-    ADC_OBJ.EZConfig()  # Empty argument means to use a wizard like this one
+    adc.ez_config()  # Empty argument means to use a wizard like this one
 
     # exit environment
     response(loc.curr, "Exiting ADC config mode")
 
 
-def adc_analysis_wizard(ADC_OBJ, Signal_Data, plt):
+def adc_analysis_wizard(adc, signal_data, plt):
     keys = ['noise_analysis', 'track_pinger', 'live_fft']
 
     while True:
 
         # Print debug options
         print("enter one of the following analysis commands")
-        printDebugs(keys)
+        print_debugs(keys)
         print("")
 
         # Take user input
@@ -277,24 +279,24 @@ def adc_analysis_wizard(ADC_OBJ, Signal_Data, plt):
         elif input_matches('s'):
             # Print status
             print("current status:")
-            ADC_OBJ.ADC_Status()
+            adc.adc_status()
             print("")
 
         elif input_matches('1', 'noise_analysis'):
-            adc_noise_analysis(ADC_OBJ, Signal_Data, plt)
+            adc_noise_analysis(adc, signal_data, plt)
 
         elif input_matches('2', 'trackPinger'):
-            trackPinger.main(ADC_OBJ, plt)
+            track_pinger.main(adc, plt)
 
         elif input_matches('3', 'live_fft'):
-            visFFT.main(ADC_OBJ, plt)
+            visualize_fft.main(adc, plt)
 
 
-def adc_noise_analysis(ADC_OBJ, Signal_Data, plt=None):
+def adc_noise_analysis(adc, signal_data, plt=None):
     # Ask user to select a channel of data for analysis
-    ADC_OBJ.ADC_Status()
+    adc.adc_status()
     channel_sel = eval(raw_input("Please enter a channel (0 thru 3) for analysis: "))
-    y = Signal_Data['y'][channel_sel]
+    y = signal_data['y'][channel_sel]
 
     # Ask user to make sure that channel has no VLF components
     print("Please understand that the presense of VLF components on the "
@@ -302,10 +304,10 @@ def adc_noise_analysis(ADC_OBJ, Signal_Data, plt=None):
             + "is okay though.")
 
     # Null the DC component
-    y = y - np.average(y)
+    y -= np.average(y)
 
     # Get T
-    Ts = 1 / ADC_OBJ.convRate
+    Ts = 1 / adc.conversion_rate
     T = y.size * Ts
 
     # Compute Noise RMS
@@ -313,7 +315,7 @@ def adc_noise_analysis(ADC_OBJ, Signal_Data, plt=None):
     Vnrms_sq = 0
 
     for samp in y:
-        Vnrms_sq += 1 / T * samp**2 * Ts
+        Vnrms_sq += (1 / T * samp**2 * Ts)
     print("You got %f VoltsRMS noise here." % np.sqrt(Vnrms_sq))
 
     # plot if user has imported matplot lib
@@ -366,7 +368,7 @@ def usage():
             "  (p)lot_en: enable plotting (needs X11 port forwarding).\n",
             "  (l)oad_adc_app: Startup the adc enviroment.\n",
             "  adc_(s)tatus: prints data regarding the adc.\n",
-            "  (u)nload_adc_app: Close adc environment.\n",
+            "  (u)nload_adc_app: close adc environment.\n",
             "  adc_c(o)nf: Change Settings of the ADC.\n",
             "  (d)ebugger: debug stuff.\n",
             "  adc_(a)nalysis: Grab some experimental data."]

@@ -2,16 +2,16 @@ import os
 import linecache
 
 # Typical Control Variable for UART
+UART_DEV_FILE = "ttyO5"
+UART_TX = "P8.37"
 UART_RX = "P8.38"
 RX_PINMUX_LINE = 51
-UART_TX = "P8.37"
 BAUD = 9600
-UART_DEV_FILE = "ttyO5"
 
 # Complicated SysFS path stuff
 MUX_PATH = "/sys/kernel/debug/pinctrl/44e10800.pinmux/"
 PINS_FILE = 'pins'
-PIN_LOOKUPTABLE = MUX_PATH + PINS_FILE
+PIN_LOOKUPTABLE = os.path.join(MUX_PATH, PINS_FILE)
 
 
 def load():

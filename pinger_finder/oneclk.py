@@ -1,8 +1,8 @@
 from sys import argv
 
-from ADC import ADS7865
+from bbb.ADC import ADS7865
 import QikSampNPlt
-import locPinger
+import locate_pinger
 
 
 def main(cmd=None):
@@ -18,44 +18,47 @@ def main(cmd=None):
         ADC.Preset(1)
         val = locPinger.main(ADC, dearm=False) # degrees right
 
-        # Dearm ADC outside of locPinger.py.
-        ADC.Unready()
+        # Dearm ADC outside of locate_pinger.py.
+        adc.unready()
 
         # return value to the user
         return val
 
     elif (cmd == 'competition-cont'):
         # Load ADC Stuff
-        ADC = ADS7865()
-        ADC.Preset(1)
+        adc = ADS7865()
+        adc.preset(1)
 
         # Locate pinger
-        while(1):
+        while True:
             # Exits on CTRL-C
             try:
-                locPinger.main(ADC, dearm=False)
+                locate_pinger.main(adc, dearm=False)
             except KeyboardInterrupt:
                 print("Quitting program")
                 break
 
-        # Dearm ADC outside of locPinger.py.
-        ADC.Unready()
+        # Dearm ADC outside of locate_pinger.py.
+        adc.unready()
 
-    elif(cmd == 'plt'):
+    elif (cmd == 'plt'):
         # Load plotting stuff
         plt = load_matplotlib()
 
         # Load ADC Stuff
-        ADC = ADS7865()
-        ADC.Preset(0)
-        QikSampNPlt.main(ADC, plt)
+        adc = ADS7865()
+        adc.preset(0)
+        QikSampNPlt.main(adc, plt)
 
 
 def load_matplotlib():
     print("Loading Matplotlib library...")
     import matplotlib
+
     matplotlib.use('GTK')
+
     import matplotlib.pyplot as plt
+
     plt.ioff()
     plt.hold(False)
     plt.close()

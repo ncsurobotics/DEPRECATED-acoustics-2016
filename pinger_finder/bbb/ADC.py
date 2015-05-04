@@ -51,6 +51,11 @@ CODE_READSEQ = 0x106
 
 
 def read_sample(user_mem, sample_length):
+    """
+    Args:
+        user_mem:
+        sample_length:
+    """
 
     with open("/dev/mem", "r+b") as f:  # Open the physical memory device
         ddr_mem = mmap.mmap(f.fileno(), user_mem['filelen'], offset=user_mem['offset'])  # mmap the right area
@@ -74,7 +79,7 @@ def twos_comp(val, bits):
     return val
 
 
-def CR_Warn_Programmer():
+def conv_rate_warning():
     logging.warning("Your code updates the conversion rate instead of the"
                     + " sample rate at the end user level. This goes against the"
                     + " design spec, and you should fix it such that your code"
@@ -102,8 +107,12 @@ class ADS7865():
     samples in realtime
     """
 
-    def __init__(self, CR=0.0, L=0):
+    def __init__(self, cr=0.0, smp_len=0):
         """ Configures several BBB pins as necessary to hold the ADC in an idle state
+
+        Args:
+            cr: Conversion Rate (float)
+            smp_len: Sample Length (integer)
 
         OUT OF DATE
 
@@ -166,8 +175,8 @@ class ADS7865():
         )
 
         self.n_channels = 0
-        self.conversion_rate = CR
-        self.sample_length = int(L)
+        self.conversion_rate = cr
+        self.sample_length = int(smp_len)
         self.arm_status = "unknown"
         self.seq_desc = "unknown"
         self.ch = ['unknown'] * 4
@@ -176,7 +185,7 @@ class ADS7865():
         self.modified = True
         self.sample_rate = None
         self.dac_voltage = DEFAULT_DAC_VOLTAGE
-        self.LSB = self.dac_voltage / (2**(WORD_SIZE - 1))  # Volts
+        self.lsb = self.dac_voltage / (2**(WORD_SIZE - 1))  # Volts
 
         # Loads overlays: For that will be later needed for
         # muxing pins from GPIO to pruout/pruin types and vice versa.
@@ -238,7 +247,6 @@ class ADS7865():
             # Take input
             sel = eval(raw_input("Enter number here: "))
 
-        ## ##
         # Single channel (pair) enable
         if sel == 0:
             # User has chosen to sample the 0a/0b differential channel pair.
@@ -264,7 +272,6 @@ class ADS7865():
             # Update n channels
             self.n_channels = 2
 
-        ## ##
         # Single channel (pair) enable with sequencer reinitialization
         elif sel == 2:
             # User has chosen to sample the 0a/0b differential channel pair
@@ -296,7 +303,6 @@ class ADS7865():
             # Update n channels
             self.n_channels = 2
 
-        ## ##
         # Dual channel (pair) enable
         elif sel == 4:
             # User has chosen to sample the 0a/0b -> 1a/1b in FIFO style
@@ -327,9 +333,9 @@ class ADS7865():
             self.n_channels = 4
 
         if self.sr_specd:       # Last parameter that the user specd was SR
-            self.update_SR(self.sample_rate)
+            self.update_sample_rate(self.sample_rate)
         else:
-            CR_Warn_Programmer()
+            conv_rate_warning()
 
     def preset(self, sel):
         """
@@ -337,13 +343,13 @@ class ADS7865():
 
         if sel == 0:
             self.set_SL(1e3)
-            self.update_SR(400e3)
+            self.update_sample_rate(400e3)
             self.threshold = 0
             self.ez_config(4)
 
         elif sel == 1:
             self.set_SL(1e3)
-            self.update_SR(800e3)
+            self.update_sample_rate(800e3)
             self.threshold = 0
             self.ez_config(0)
 
@@ -386,9 +392,9 @@ class ADS7865():
 
         # Update DAC related atributes
         self.dac_voltage = dac_voltage_readout
-        self.LSB = self.dac_voltage / (2**(WORD_SIZE - 1))  # Volts
+        self.lsb = self.dac_voltage / (2**(WORD_SIZE - 1))  # Volts
 
-    def update_CR(self, cr):
+    def _update_conversion_rate(self, cr):
         """ Update the conversion rate
 
         Args:
@@ -406,9 +412,9 @@ class ADS7865():
             logging.warning("Your spec'd conversion rate"
                             + " exceeds the system's spec (%dKHz)" % CONV_RATE_LIMIT / 1000)
 
-        self.sr_specd = 0
+        self.sr_specd = False
 
-    def update_SR(self, sr):
+    def update_sample_rate(self, sr):
         """ Update the sample rate
 
         Args:
@@ -421,7 +427,7 @@ class ADS7865():
         self.sample_rate = float(sr)
         self.conversion_rate = self.sr_to_cr(sr)
 
-        self.sr_specd = 1
+        self.sr_specd = True
 
         if self.conversion_rate > CONV_RATE_LIMIT:
             logging.warning(
@@ -448,7 +454,7 @@ class ADS7865():
 
         # DAC outputs the default voltage
         self.dac_voltage = DEFAULT_DAC_VOLTAGE
-        self.LSB = self.dac_voltage / (2**(WORD_SIZE - 1))  # Volts
+        self.lsb = self.dac_voltage / (2**(WORD_SIZE - 1))  # Volts
 
         # Update sequencer and channel descriptions
         self.seq_desc = "CHA0" + PLUSMINUS + "/CHB0" + PLUSMINUS
@@ -459,7 +465,7 @@ class ADS7865():
 
         # Update other parameters
         self.n_channels = 2
-        self.update_CR(self.conversion_rate)
+        self._update_conversion_rate(self.conversion_rate)
         self.modified = True
 
         # Let user know work is done
@@ -493,7 +499,7 @@ class ADS7865():
     def V_to_12bit_Hex(self, Vin):
         """
         """
-        return int(round(Vin / self.LSB))
+        return int(round(Vin / self.lsb))
 
     def dac_str_to_voltage(self, dac_s):
         """ Interprets the data 12 bit binary output of an ADC DAC read cmd,
@@ -712,7 +718,7 @@ class ADS7865():
                 # if the user has set raw to True, then this option is
                 # unavailable.
                 if fmt_volts:
-                    y[chan] = y[chan] * self.LSB
+                    y[chan] = y[chan] * self.lsb
 
         self.reload()
 
@@ -726,4 +732,5 @@ class ADS7865():
             self.ready_pruss_for_burst()
 
         y, _ = self.burst()
+
         return y

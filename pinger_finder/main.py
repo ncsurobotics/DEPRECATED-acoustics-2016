@@ -243,7 +243,7 @@ def adc_config(adc, loc):
     # Get user's conversion rate
     response(loc.curr, "Please enter a sample rate")
     SR = query(loc.curr)
-    adc.update_SR(eval(SR))
+    adc.update_sample_rate(eval(SR))
 
     # Get user's threshold value
     response(loc.curr, "Please enter a threshold value (Volts)")

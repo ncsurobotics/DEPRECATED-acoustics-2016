@@ -382,34 +382,39 @@ class Location():
         self.refresh()
 
     def push(self, new_loc):
-        """push: method for updating the loc object with
-        new_loc, a string"""
+        """ Updates the loc object with
+        new_loc, a string
+        """
         (self.list).append(new_loc)
         self.refresh()
 
     def pop(self):
-        """pop: method for stepping back a location."""
+        """ Steps back a location
+        """
         self.list.pop()
         self.refresh()
 
     def refresh(self):
-        """refresh: method for updating several attribute of this
+        """ Updates several attributes of this
         class. primarily designed for internal use."""
         self.curr = self.list[-1]
         self.path = '>'.join(self.list)
 
 
 def response(loc, s):
-    """response: a means of generating a system response.
+    """ A means of generating a system response.
+
     Takes a string s and outputs it with the current location in
-    the program, as designated by the string loc."""
+    the program, as designated by the string loc
+    """
     print('\n' + loc + ": " + s)
 
 
 def query(loc):
-    """query: a means of getting user input.
+    """ A means of getting user input.
     This function Takes a string loc and uses it to inform the user
-    where he is located while the being asked for his input."""
+    where he is located while the being asked for his input.
+    """
 
     request = raw_input("{%s} >>" % loc)
 

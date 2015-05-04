@@ -1,6 +1,6 @@
 from __future__ import print_function
 
-import time  # sleep
+import time
 import mmap
 import struct
 import logging
@@ -156,14 +156,14 @@ class ADS7865():
         self.ddr['end'] = 0x10000000 + self.ddr['size']
 
         msg = ("ADS7865: Allowing one 32bit memory block per sample, it is "
-              "possible to collect {samp:.1f}K Samples in a single burst. These "
-              "sample points are stored in DDRAM, which is found at the "
-              "address range starting at {addr}")
-              
-        print(msg.format(samp=self.ddr['size'] / 1000.0,
-                        addr=str(hex(self.ddr['addr']))
-                        )
-             )
+               "possible to collect {samp:.1f}K Samples in a single burst. These "
+               "sample points are stored in DDRAM, which is found at the "
+               "address range starting at {addr}")
+
+        print(msg.format(
+            samp=self.ddr['size'] / 1000.0,
+            addr=str(hex(self.ddr['addr'])))
+        )
 
         self.n_channels = 0
         self.conversion_rate = CR
@@ -424,10 +424,12 @@ class ADS7865():
         self.sr_specd = 1
 
         if self.conversion_rate > CONV_RATE_LIMIT:
-            logging.warning("Your spec'd conversion rate"
-                            + " (%dKHz)" % (self.conversion_rate/1000)
-                            + " exceeds the system's limit"
-                            + " (%dKHz)" % (CONV_RATE_LIMIT/1000))
+            logging.warning(
+                "Your spec'd conversion rate"
+                + " (%dKHz)" % (self.conversion_rate / 1000)
+                + " exceeds the system's limit"
+                + " (%dKHz)" % (CONV_RATE_LIMIT / 1000)
+            )
 
     def set_SL(self, sl):
         """ Sets the sample length

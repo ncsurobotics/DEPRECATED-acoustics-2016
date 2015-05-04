@@ -10,6 +10,7 @@ DEFAULT_CS = 1
 
 
 class LTC1564():
+
     """
     """
 

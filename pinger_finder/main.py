@@ -316,13 +316,13 @@ def adc_noise_analysis(adc, signal_data, plt=None):
 
     for samp in y:
         Vnrms_sq += (1 / T * samp**2 * Ts)
-    print("You got %f VoltsRMS noise here." % np.sqrt(Vnrms_sq))
+    print("You got %f VoltsRMS noise here (about %f bits)." % (np.sqrt(Vnrms_sq),np.sqrt(Vnrms_sq)/adc.LSB))
 
     # plot if user has imported matplot lib
     if plt:
-        (n, bins, patches) = plt.hist(y, 50, normed=1, histtype='bar')
+        (n, bins, patches) = plt.hist(y/adc.LSB, 50, normed=1, histtype='bar')
         plt.title('Distribuition of error amongst %s samples' % y.size)
-        plt.xlabel("error (volts)")
+        plt.xlabel("error (code)")
         plt.show()
 
 

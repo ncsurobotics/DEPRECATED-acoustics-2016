@@ -342,16 +342,31 @@ class ADS7865():
         """
 
         if sel == 0:
-            self.set_SL(1e3)
-            self.update_sample_rate(400e3)
-            self.threshold = 0
-            self.ez_config(4)
-
-        elif sel == 1:
+            """Primary competition config. This is the goto place for
+            determining the samplesize, sampling rate, # of simultaneous
+            channels, and (initial) threshold value.
+            """
             self.set_SL(1e3)
             self.update_sample_rate(800e3)
             self.threshold = 0
             self.ez_config(0)
+
+        elif sel == 100:
+            """
+            Prototype (Test config #0)
+            Date: Friday, May 8th
+            
+            Purpose: Anything
+            
+            General Considerations: This isn't as much a preset as much as
+            it is a prototyping tool. Unlike other presets embedded in this
+            function, the user is free to change the settings anytime as he
+            sees fit. If something more "stable" is desirable, try another
+            preset or make a new one."""
+            self.set_SL(1e3)
+            self.update_sample_rate(400e3)
+            self.threshold = 0
+            self.ez_config(4)
 
         else:
             logging.warning("Unknown preset!")

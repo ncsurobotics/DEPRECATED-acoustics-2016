@@ -61,9 +61,9 @@
 .entrypoint START
 
 START:
-    LBCO r0, C4, 4, 4       // Load Bytes Constant Offset (?)
-    CLR  r0, r0, 4          // Clear bit 4 in reg 0
-    SBCO r0, C4, 4, 4       // Store Bytes Constant Offset
+    LBCO r0, CONST_PRUCFG, 4, 4   // Load SYSCFG register to r0
+    CLR  r0, r0, 4                // Essentially clears SYSCFG["OCP_ACTIVELOW"]
+    SBCO r0, CONST_PRUCFG, 4, 4   // Writes change to SYSCFG register
 
 
 PREPARE:

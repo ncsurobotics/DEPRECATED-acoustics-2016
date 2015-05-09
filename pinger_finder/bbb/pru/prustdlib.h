@@ -29,6 +29,7 @@
 #define CONST_PRUDRAM   C24
 #define CONST_L3RAM     C30
 #define CONST_DDR       C31
+#define CONST_PRUCFG    C4
 
 
 #define CONTROL_MODULE          0x44e10800

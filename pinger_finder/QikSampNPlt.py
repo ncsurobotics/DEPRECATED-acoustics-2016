@@ -5,13 +5,12 @@ SAMPLES_PER_CONV = 2
 
 
 def main(adc, plt):
-    adc.ready_pruss_for_burst()
 
     #print("ADC is armed and ready.")
     #raw_input("Press enter when ready...")
 
     # grab data
-    (y, _) = adc.burst()
+    y = adc.get_data()
 
     plot_output(adc, y, plt)
 

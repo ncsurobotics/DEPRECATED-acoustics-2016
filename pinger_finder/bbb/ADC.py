@@ -371,7 +371,7 @@ class ADS7865():
             preset or make a new one."""
             self.set_SL(1e3)
             self.update_sample_rate(400e3)
-            self.threshold = 0
+            self.threshold = 0.02
             self.ez_config(4)
 
         else:
@@ -718,9 +718,15 @@ class ADS7865():
 
         # Read the memory
         raw_data = read_sample(self.ddr, length+STATUS_BLOCK)
+        status_code = raw_data[0] & 0xF
         TOF = get_bit(raw_data[0], TIMEOUT_STATUS_BIT)
         raw_data = raw_data[1:]
-        print("Status bit = %d" % TOF)
+        
+        # Print out stuff
+        print("ADC: Returned Status code = %d" % status_code)
+        print("ADC: Returned TOF code = %d" % TOF)
+        if TOF:
+            print("ADC: TIMEOUT occured!")
 
         y = [0] * n_channels
         for chan in range(n_channels):
@@ -756,3 +762,4 @@ class ADS7865():
             self.ready_pruss_for_burst()
 
         y, TOF = self.burst()
+        return y

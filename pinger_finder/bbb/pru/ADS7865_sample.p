@@ -65,8 +65,16 @@
 .endm
 
 .macro Send_Status_Data
-    SBBO DQ.Sample_Ctrl, DAQConf.Data_Dst, DQ.TapeHD_Offset, 4 // submit data to DDR
+    SBBO DQ.Sample_Ctrl, DAQConf.Data_Dst, DQ.TapeHD_Offset, SIZE(DQ.Sample_Ctrl) // submit data to DDR
     INCR DQ.TapeHD_Offset, 4 // increment pointer
+.endm
+    
+.macro Incr_Deadband
+.mparam incr_val
+    ADD DQ.Deadband_CNTR, DQ.Deadband_CNTR, incr_val
+    QBGT  EXIT_INCR_DEADBAND, DQ.Deadband_CNTR, DEFAULT_DEADBAND_TRG_LIMIT
+      SET DQ.Sample_Ctrl, DBOVF
+EXIT_INCR_DEADBAND:
 .endm
     
 
@@ -84,6 +92,9 @@ START:
 
 
 PREPARE:
+    MOV DQ.Sample_Ctrl, 0           // Init Sample Ctrl Register
+    MOV DQ.Deadband_CNTR, 0
+    
     LDI  DQ.PRU0_Ptr, 0x0000        // Init PRU0 ptr
     LDI  DQ.PRU1_Ptr, 0x2000        // Init PRU1 ptr
     
@@ -231,13 +242,32 @@ PROCESS:
       // without writing the sample to memory.
       MOV  DQ.Sample_Abs, DQ.Sample     
       Get_Absolute_Value  DQ.Sample_Abs
-      QBLT TIMEOUT_CTRL, DAQConf.Trg_Threshold, DQ.Sample_Abs
-        // At this point, the threshold has been surpassed, and the program
-        // will set the TRGD bit to true, and program will attempt to submit
-        // the sample.
+      QBLT INCR_DEADBAND, DAQConf.Trg_Threshold, DQ.Sample_Abs
+      // The threshold has been surpassed. Next step will be to check if 
+      // the deadband limit has been surpassed.  
+      
+      // v One can alter the DEFAULT_DEADBAND_TRG_LIMIT by changing
+      // v the define statement in pingerFinderLib.h. It should be safe
+      // v to set that parameter to zero if one wishes to disable the
+      // v deadband trigger
+      Incr_Deadband 0
+      QBBC ZERO_DEADBAND, DQ.Sample_Ctrl, DBOVF
+        // The deadband limit has been exceeded, this alongside the fact that
+        // the triggering threshold was also surpassed means that the program
+        // will set TRGD=1.
         SET  DQ.Sample_Ctrl, TRGD
         Send_Status_Data
         QBA SUBMIT
+
+        
+    ZERO_DEADBAND:
+        MOV DQ.Deadband_CNTR, 0
+        QBA TIMEOUT_CTRL
+        
+    INCR_DEADBAND:
+        Incr_Deadband 1
+        QBA TIMEOUT_CTRL
+        
         
 TIMEOUT_CTRL:
     LBBO DAQConf.t, DQ.PRU0CTRL, pru_CYCLE, 4
@@ -248,7 +278,6 @@ TIMEOUT_CTRL:
       SET  DQ.Sample_Ctrl, TOF
       Send_Status_Data
       QBA  CONTROLLER
-
 
 
 SUBMIT:
@@ -285,5 +314,4 @@ END:
     SET  r30, bCONVST
     MOV r31.b0, PRU0_ARM_INTERRUPT+16 // Send notification to host for program completion
         MOV DQ.TapeHD_Offset, 0 // Clear the offset as preparation for next run
-        MOV DQ.Sample_Ctrl, 0
     HALT

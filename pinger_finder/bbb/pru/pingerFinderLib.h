@@ -82,6 +82,7 @@
 #define TRGD    0 // Trigger'd bit
 #define ARMD    1 // Armed bit
 #define TOF     2 // Time out flag
+#define DBOVF   3 // Deadband overflow
 
 // bits for PRU CTRL
 #define PRUCTRL_BASE_ADDR   0x22000
@@ -97,13 +98,15 @@
     .u32    PRU1_Ptr         // ptr to PRU1's local RAM (r7)
     .u32    PRU0CTRL         // ptr to 0x22000, the PRU ctrl section of memory (r8)
     .u32    TapeHD_Offset    // Offset pointing to next sample location (r9)
-    .u8     PRU0_State       // PRU0's state (see conversion control above) (r10.b0)
-    .u8     PRU1_State       // PRU1's state (see conversion control above) (r10.b1)
-    .u8     Super_Sample     // (r10.b2)
+    .u16    Deadband_CNTR    // Counter for the deadband trigger (r10.w0)
+    .u8     PRU0_State       // PRU0's state (see conversion control above) (r10.b2)
+    .u8     PRU1_State       // PRU1's state (see conversion control above) (r10.b3)
+    .u8     Super_Sample     // (r11.b0)
     .u8     Sub_Sample       // 0 or 1... as ADC always grabs two channels at a time. 
     .u8     Sample_Ctrl
+
 .ends
-.assign DAQ_State, r4, r11.b0, DQ
+.assign DAQ_State, r4, r11.b2, DQ
 
                             // 
 .struct DAQ_Config
@@ -112,7 +115,7 @@
     .u32    Data_Dst        // address (r14)
     .u32    TO              // TimeOut:loops (r15)
     .u32    t               // Timer Value (r16)
-    .u32    Trg_Threshold
+    .u32    Trg_Threshold   // (r17)
 .ends
 .assign DAQ_Config, r12, r17, DAQConf
 
@@ -127,6 +130,7 @@
 /////////////////////////////////////////
 // User level settings/constants
 #define DEFAULT_TO_TIME 0x3B9ACA00  // 1e9 clk cycles, or 5.0 seconds.
+#define DEFAULT_DEADBAND_TRG_LIMIT 32 // samples. 16 bit register
 
 // ADC Data Pins
 #define DB0     16  // P9-26  //ONLY PRU1

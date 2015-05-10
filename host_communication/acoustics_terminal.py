@@ -5,6 +5,7 @@ root_directory = path.dirname(path.dirname(path.realpath(__file__)))
 hc_directory = path.join(root_directory, "host_communication")
 pf_directory = path.join(root_directory, "pinger_finder")
 
+# Add important directories to path
 import sys
 sys.path.insert(0, hc_directory)
 sys.path.insert(0, pf_directory)
@@ -12,48 +13,100 @@ sys.path.insert(0, pf_directory)
 import serial as s
 import uart #enable_uart()
 import oneclk
+from acoustics import Acoustics
+
+# ######################
+### Global Constants ###
+#########################
 
 PORT_NAME = "/dev/ttyO5"
+next_state = "initd"
+pAC = s.Serial(PORT_NAME, 9600, timeout=1)
+acoustics = Acoustics()
 
-def INIT():
+def init_commlink():
     uart.enable_uart()
-
-def main():
-    # Initialize ports
-    INIT()
     print("Opening Port %s." % PORT_NAME)
-    pAC = s.Serial(PORT_NAME, 9600, timeout=0.1)
+    
+def init_acoustics():
+    acoustics.preset(0)
+    
+def send(msg):
+    pAC.write(msg + '\n')
 
-    # Listen for texts and echo them ba
-    print("Acoustics: UART(5) echo-terminal active. "
-    + " Currently listening for any data that comes in from the FT232RL")
+def read():
+    input =  pAC.readline()
+    if input:
+        if (input[-1] != '\n'):
+            print("String is missing \\n terminator!")
+        
+        return input.rstrip('\n')
+    
+    return None
+    
+def usage(port):
+    pass
+    
+def process_input(port):
+    input = port.readline()
+    if input:
+        # Show input as a means of debugging output
+        print("Acoustics: RX'd %r." % input)
+        
+        # Other logic for input
+        if (input == "locate pinger"):
+            # Recieve cmd from seawolf requesting location of pinger
+            val = oneclk.main('competition')
+            print(val)
+            pAC.write(str(val)+'\n')
+            
+        elif (input =="help"):
+            usage(pAC)
+            
+        else:
+            print("Acoustics: RX'd %r, an unrecognized cmd!!!" % input)
+            usage(pAC)
+
+
+def task_manager(input):
+    if input=="locate pinger":
+        angle_to_pinger = acoustics.compute_pinger_direction()
+        send( str(angle_to_pinger) )
+        
+    elif input=="hello":
+        send("Hello to you too, Seawolf.")
+    else:
+        send("Unknown command! Please enter 'locate pinger' or 'hello'.")
+        
+
+def main_loop():
     while 1:
         try:
-            input = pAC.readline()
+            input = read()
             if input:
-                print("Acoustics: RX'd %r." % input)
-                if (input == "locate pinger"):
-                    # Recieve cmd from seawolf requesting location of pinger
-                    val = oneclk.main('competition')
-                    print(val)
-                    pAC.write(str(val)+'\n')
-                elif (input =="help"):
-                    usage(pAC)
-                else:
-                    print("Acoustics: RX'd %r, an unrecognized cmd!!!" % input)
-                    usage(pAC)
-
-                
+                print("RX: {0}".format(input))
+                task_manager(input)
+            else:
+                print("I got nothin.")
+      
         except KeyboardInterrupt:
             print("Closing Port %s." % PORT_NAME)
             pAC.close()
+            acoustics.close()
             break
             
 
-def usage(port):
-    port.write("HELP TEXT~~~"
-    + "The only possible cmd is <locate pinger> at the moment.\n")
+def main():
+    # Initialize Components
+    init_commlink()
+    init_acoustics()
 
+    # Listen for texts and process them
+    print("Acoustics: UART(5) echo-terminal active. "
+    + "Currently listening for any data that comes in from the FT232RL")
+    
+    # Run the main loop
+    main_loop()
 
 if __name__ == '__main__':
     main()

@@ -11,7 +11,7 @@ TARGET_FREQ = 22e3  # hz
 def main(adc, plt=None, dearm=True):
     # Assume adc is already loaded
 
-    # Establish various parameters
+    # Establish parameters from ADC
     fs = adc.sample_rate
 
     # capture a set of samples
@@ -26,3 +26,5 @@ def main(adc, plt=None, dearm=True):
     # dearm if user doesn't assert otherwise
     if dearm:
         adc.unready()
+
+    return angle

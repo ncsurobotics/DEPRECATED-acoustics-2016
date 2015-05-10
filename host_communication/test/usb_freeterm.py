@@ -4,15 +4,34 @@ sys.path.insert(0, '../')
 import serial as s
 import uart #enable_uart()
 
+# ###########################
+##### Global Constants ######
+#############################
+
 PORT_NAME = "/dev/ttyUSB0"
 
-def INIT():
-    pass
+# Designate Port object
+print("Opening Port %s." % PORT_NAME)
+pUSB = s.Serial(PORT_NAME, 9600, timeout=10)
+
+def send(msg):
+    pUSB.write(msg + '\n')
+
+def read():
+    input =  pUSB.readline()
+    if input:
+        if (input[-1] != '\n'):
+            print("String is missing \\n terminator!")
+        
+        return input.rstrip('\n')
+    
+    return None
+    
 
 def main():
     # Initialize ports
-    print("Opening Port %s." % PORT_NAME)
-    pUSB = s.Serial(PORT_NAME, 9600, timeout=10)
+    
+    
 
     # Listen for texts and echo them ba
     print("USB terminal active. Any data you enter will be sent"
@@ -20,10 +39,10 @@ def main():
     while 1:
         try:
             input = raw_input()
-            pUSB.write(input)
+            send(input)
             
             # Read the data back in
-            result = pUSB.readline()
+            result = read()
             if not (result):
                 print("TIMEOUT!!!!")
             else:

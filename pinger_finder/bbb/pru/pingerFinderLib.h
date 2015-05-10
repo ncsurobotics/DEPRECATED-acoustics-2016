@@ -80,7 +80,14 @@
 
 // bits for sample control
 #define TRGD    0 // Trigger'd bit
-#define ARMD    1 //  Armed bit
+#define ARMD    1 // Armed bit
+#define TOF     2 // Time out flag
+
+// bits for PRU CTRL
+#define PRUCTRL_BASE_ADDR   0x22000
+  #define pru_CTRL          0x0
+    #define pru_CTR_EN_bit  3
+  #define pru_CYCLE         0xC
 
 //  Type    Name                Description
 .struct DAQ_State
@@ -88,24 +95,26 @@
     .u32    Sample           // Most recent sample collected from the ADC (r5)
     .u32    PRU0_Ptr         // ptr to PRU0's local RAM (r6)
     .u32    PRU1_Ptr         // ptr to PRU1's local RAM (r7)
-    .u32    TapeHD_Offset    // Offset pointing to next sample location (r8)
-    .u8     PRU0_State       // PRU0's state (see conversion control above) (r9.b0)
-    .u8     PRU1_State       // PRU1's state (see conversion control above) (r9.b0)
-    .u8     Super_Sample     // 
+    .u32    PRU0CTRL         // ptr to 0x22000, the PRU ctrl section of memory (r8)
+    .u32    TapeHD_Offset    // Offset pointing to next sample location (r9)
+    .u8     PRU0_State       // PRU0's state (see conversion control above) (r10.b0)
+    .u8     PRU1_State       // PRU1's state (see conversion control above) (r10.b1)
+    .u8     Super_Sample     // (r10.b2)
     .u8     Sub_Sample       // 0 or 1... as ADC always grabs two channels at a time. 
     .u8     Sample_Ctrl
 .ends
-.assign DAQ_State, r4, r10.b0, DQ
+.assign DAQ_State, r4, r11.b0, DQ
 
                             // 
 .struct DAQ_Config
-    .u32    Samp_Len        // samples
-    .u32    Samp_Rate       // loops
-    .u32    Data_Dst        // address 
-    .u32    TO              // TimeOut:loops
+    .u32    Samp_Len        // samples (r12)
+    .u32    Samp_Rate       // loops (r13)
+    .u32    Data_Dst        // address (r14)
+    .u32    TO              // TimeOut:loops (r15)
+    .u32    t               // Timer Value (r16)
     .u32    Trg_Threshold
 .ends
-.assign DAQ_Config, r11, r15, DAQConf
+.assign DAQ_Config, r12, r17, DAQConf
 
 .macro  NOP32
         NOP
@@ -116,6 +125,9 @@
 /////////////////////////////////////////
 //      CONSTANTS   /////////
 /////////////////////////////////////////
+// User level settings/constants
+#define DEFAULT_TO_TIME 0x3B9ACA00  // 1e9 clk cycles, or 5.0 seconds.
+
 // ADC Data Pins
 #define DB0     16  // P9-26  //ONLY PRU1
 #define DB1     1   // P8-46  //ONLY PRU1

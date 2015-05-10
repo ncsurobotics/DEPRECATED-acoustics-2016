@@ -17,6 +17,7 @@
 
 .macro  Get_SL_From_Host
         LBBO DAQConf.Samp_Len, DQ.PRU0_Ptr, HOST_SLh, 4
+        ADD DAQConf.Samp_Len, DAQConf.Samp_Len, 4 // Add one extra block for status bit
 .endm 
 
 .macro  Set_COLL_High_On_PRU0
@@ -48,10 +49,26 @@
       QBA  SUPSAMP_RET
     SUPSAMP_ADD:
     ADD  DQ.Super_Sample, DQ.Super_Sample, 1
-        
+
     SUPSAMP_RET:
 .endm
 
+.macro Init_PRU0_Timer
+    // enable the counter
+    LBBO GP.Cpr, DQ.PRU0CTRL, pru_CTRL, 4
+    SET  GP.Cpr, pru_CTR_EN_bit
+    SBBO GP.Cpr, DQ.PRU0CTRL, pru_CTRL, 4
+    
+    // Init counter to zero
+    MOV  GP.Cpr, 0
+    SBBO GP.Cpr, DQ.PRU0CTRL, pru_CYCLE, 4
+.endm
+
+.macro Send_Status_Data
+    SBBO DQ.Sample_Ctrl, DAQConf.Data_Dst, DQ.TapeHD_Offset, 4 // submit data to DDR
+    INCR DQ.TapeHD_Offset, 4 // increment pointer
+.endm
+    
 
 //-----------------------------------------------
 //--------------- MAIN PROGRAM ------------------
@@ -62,7 +79,7 @@
 
 START:
     LBCO r0, CONST_PRUCFG, 4, 4   // Load SYSCFG register to r0
-    CLR  r0, r0, 4                // Essentially clears SYSCFG["OCP_ACTIVELOW"]
+    CLR  r0, r0, 4                // Essentially clears SYSCFG["OCP_ACTIVELOW"] 
     SBCO r0, CONST_PRUCFG, 4, 4   // Writes change to SYSCFG register
 
 
@@ -73,9 +90,6 @@ PREPARE:
     MOV  DQ.PRU0_State, 0           // Init status register
     SBBO DQ.PRU0_State, DQ.PRU0_Ptr, PRU_STATEh, SIZE(DQ.PRU0_State)
 
-    MOV  DAQConf.TO, 0xBEBC200      // Init timout counter
-    MOV  r2, 0x2000                 // R2 points to DRAM1[0]
-
     Conf_DataDst_For_DDR_Address    // Data will go to DDRAM.
     Get_SL_From_Host                // Receive SL from HOST.
     MOV  DQ.Sub_Sample, 0           // Known that first sample is sub_sample 0
@@ -84,10 +98,18 @@ PREPARE:
     MOV GP.Extension, 0xFFFFF000        // Negative sign extension register
     MOV DAQConf.Trg_Threshold, 0x0002   // For the Trigger logic
     
-    Init_Threshold_Value      // load
+    Init_Threshold_Value                // load
+    
+    MOV  DQ.PRU0CTRL, PRUCTRL_BASE_ADDR // init ptr to PRUCTRL
+    MOV  DAQConf.TO, DEFAULT_TO_TIME    // init TO value to DEFAULT
+    Init_PRU0_Timer                     // Start and init TO timer to 0 cycles
 
     // SET Default outputs
     SET  r30, bCONVST
+    
+//-----------------------------------------------
+//--------------- SAMPLING BLOCK ------------------
+//-----------------------------------------------
 
 TOP:
     // DQ.TapeHD_Offset: a variable representing the current position/offset of
@@ -192,17 +214,41 @@ MDB1:
     QBBC MDB0, GP.Cpr, DB1
      SET DQ.Sample, 1
 MDB0:
-    QBBC NEXT, GP.Cpr, DB0
+    QBBC PROCESS, GP.Cpr, DB0
      SET DQ.Sample, 0
 
 
-NEXT:
+//-----------------------------------------------
+//------------ PROCESSING BLOCK ----------------
+//-----------------------------------------------
+
+
+PROCESS:
     QBBS  SUBMIT,DQ.Sample_Ctrl, TRGD
-      MOV  DQ.Sample_Abs, DQ.Sample
-      Get_Absolute_Value    DQ.Sample_Abs
-      QBLT CONTROLLER, DAQConf.Trg_Threshold, DQ.Sample_Abs
+      // At this point, the TRGD bit is not set yet. Thus, we'll perform
+      // some analysis to see if the threshold has been surpassed on this 
+      // particular sample. If not, then we'll jump to the next state block
+      // without writing the sample to memory.
+      MOV  DQ.Sample_Abs, DQ.Sample     
+      Get_Absolute_Value  DQ.Sample_Abs
+      QBLT TIMEOUT_CTRL, DAQConf.Trg_Threshold, DQ.Sample_Abs
+        // At this point, the threshold has been surpassed, and the program
+        // will set the TRGD bit to true, and program will attempt to submit
+        // the sample.
         SET  DQ.Sample_Ctrl, TRGD
+        Send_Status_Data
         QBA SUBMIT
+        
+TIMEOUT_CTRL:
+    LBBO DAQConf.t, DQ.PRU0CTRL, pru_CYCLE, 4
+    QBGT CONTROLLER, DAQConf.t, DAQConf.TO // Skip to NEXT_STATE if (TO > t)
+      // The watchdog timer has expired. Time to undo the trigger hold, alert
+      // the user, and collect whatever data is available at the moment.
+      SET  DQ.Sample_Ctrl, TRGD
+      SET  DQ.Sample_Ctrl, TOF
+      Send_Status_Data
+      QBA  CONTROLLER
+
 
 
 SUBMIT:
@@ -215,6 +261,10 @@ ARMING_CTRL:
     QBNE CONTROLLER, DQ.Super_Sample, 0
       SET DQ.Sample_Ctrl, ARMD
       QBA SUBMIT
+      
+//-----------------------------------------------
+//------------ NEXT STATE BLOCK ----------------
+//-----------------------------------------------
 
 CONTROLLER:
     Super_Sample_Counter
@@ -224,6 +274,10 @@ CONTROLLER:
         // on the sub_sample that was just collected.
     
     QBA  TOP// loop back to Top Branch instruction
+    
+//-----------------------------------------------
+//------------ EPILOGUE BLOCK ----------------
+//-----------------------------------------------
     
 END:
     MOV  GP.Cpr, 0

@@ -34,6 +34,8 @@ DEFAULT_DAC_VOLTAGE = 2.49612  # volts
 DEFAULT_THRESHOLD = 0  # volts
 TOTAL_CHANNELS = 4
 SAMPLES_PER_CONV = 2
+STATUS_BLOCK = 1
+TIMEOUT_STATUS_BIT = 2
 
 CONV_RATE_LIMIT = 800e3  # Hertz
 
@@ -78,6 +80,10 @@ def twos_comp(val, bits):
 
     return val
 
+def get_bit(word,bit):
+    """Check if "bit" is set in "word". Word can be of any arbitrary
+    length."""
+    return ((word&(1<<bit))!=0);
 
 def conv_rate_warning():
     logging.warning("Your code updates the conversion rate instead of the"
@@ -711,7 +717,10 @@ class ADS7865():
         # pypruss.exit()         # Exit PRU
 
         # Read the memory
-        raw_data = read_sample(self.ddr, length)
+        raw_data = read_sample(self.ddr, length+STATUS_BLOCK)
+        TOF = get_bit(raw_data[0], TIMEOUT_STATUS_BIT)
+        raw_data = raw_data[1:]
+        print("Status bit = %d" % TOF)
 
         y = [0] * n_channels
         for chan in range(n_channels):
@@ -736,8 +745,8 @@ class ADS7865():
                     y[chan] = y[chan] * self.lsb
 
         self.reload()
-
-        return y, t
+        self.y = y # Storing collected samples internally
+        return y, TOF
 
     def get_data(self):
         """
@@ -746,6 +755,4 @@ class ADS7865():
         if self.arm_status != 'armed' or self.modified is True:
             self.ready_pruss_for_burst()
 
-        y, _ = self.burst()
-
-        return y
+        y, TOF = self.burst()

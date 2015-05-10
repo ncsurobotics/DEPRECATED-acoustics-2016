@@ -14,6 +14,7 @@ import serial as s
 import uart #enable_uart()
 import oneclk
 from acoustics import Acoustics
+from acoustics import Logging
 
 # ######################
 ### Global Constants ###
@@ -23,6 +24,7 @@ PORT_NAME = "/dev/ttyO5"
 next_state = "initd"
 pAC = s.Serial(PORT_NAME, 9600, timeout=1)
 acoustics = Acoustics()
+log = Logging()
 
 def init_commlink():
     uart.enable_uart()
@@ -90,10 +92,26 @@ def main_loop():
                 print("I got nothin.")
       
         except KeyboardInterrupt:
-            print("Closing Port %s." % PORT_NAME)
-            pAC.close()
-            acoustics.close()
-            break
+            print("Acoustics debug mode activated.")
+            print("Please enter one of the following commands:")
+            list_of_cmds = ("q: Quit this app.\n"
+                + "l: log latest recorded data.\n"
+                + "c: continue terminal program.\n")
+            print(list_of_cmds)
+            int_input = raw_input(">> ")
+            if (int_input=='q'):
+                print("Closing Port %s." % PORT_NAME)
+                pAC.close()
+                acoustics.close()
+                break
+            elif (int_input=='l'):
+                log.logit(acoustics)
+            elif (int_input=='c'):
+                pass
+            else:
+                pass
+                
+            
             
 
 def main():

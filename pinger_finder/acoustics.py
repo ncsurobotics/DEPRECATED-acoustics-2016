@@ -4,10 +4,16 @@ from bbb.ADC import ADS7865
 from bbb.LTC1564 import LTC1564
 import locate_pinger
 
+from os import path
+LOG_DIR = path.join(path.dirname(path.realpath(__file__)), "saved_data/")
+
 class Acoustics():
     def __init__(self):
         self.adc = ADS7865()
         self.filt = LTC1564()
+        
+    def close(self):
+        self.adc.unready()
         
     def preset(self,sel):
         if sel==0:
@@ -22,5 +28,24 @@ class Acoustics():
         val = locate_pinger.main(self.adc, dearm=False)
         return val
         
-    def close(self):
-        self.adc.unready()
+class Logging():
+    def __init__(self):
+        pass
+        
+    def logit(self, acoustics):
+        # Create filename for log
+        filename = raw_input("Logging: Give me a name for this data:")
+        txtfn = path.join(LOG_DIR, filename+".txt")
+        csvfn = path.join(LOG_DIR, filename+".csv")
+        
+        # Create file for log to write to
+        with open(txtfn, 'w') as f:
+        
+            # dump data in file
+            f.write(acoustics.adc.status())
+            f.write(acoustics.adc.y)
+        
+        print("Data saved to %s" % txtfn)
+        
+        
+        

@@ -7,7 +7,7 @@ from scipy.fftpack import fft
 def phase_diff_to_x_and_y(phase_diff, fundamental_freq):
     # Parameters
     v = 1473  # Speed of sound in water (m/s)
-    d = (33.7e-3) / 2  # half_distance between hydrophone elements
+    d = (27.7e-3) / 2  # half_distance between hydrophone elements
 
     # Compute wavelength of signal
     wavelength = v / fundamental_freq  # meters
@@ -17,6 +17,13 @@ def phase_diff_to_x_and_y(phase_diff, fundamental_freq):
 
     # Generate vector components
     x = D1minusD2 / 2  # meters
+    if (x > d):
+        # Limit given the spacing of the hydrophone elements has been
+        # exceed. To prevent error in the next step, we'll clip purposely
+        # clip the signal
+        x = d
+        print("get_heading: Warning, Angle is Clipped at max/min value.")
+        
     y = math.sqrt(d**2 - x**2)
 
     return (x, y)
@@ -36,11 +43,19 @@ def relative_wraparound(host_angle, guest_angle):
 
 def calculate_heading(target_freq, fs, a, b):
     """
+    Takes a pair of signal vs. time data "a" and "b", and computes an angle 
+    pointing towards the signal source relative to the "b" direction. 
     Args:
-        target_freq:
-        fs:
-        a:
-        b:
+        target_freq: frequency of signal emitted by source
+        fs: Sampling frequency used to capture signals "a" and  "b"
+        a: numpy array of sinusoidal signal data for channel a
+        b: numpy array of sinusoidal signal data for channel b
+        
+    Notes: "One important parameter is the physical distance between
+    the two elements used to capture the signal data in the first place.
+    Rather than pass it in as an argument, it's more reasonable to 
+    hard code a constant. To change this constant, simple change the
+    "d" constant used in the phase_diff_to_x_and_y function.
     """
 
     # 200 kHz sample rate (Hz)

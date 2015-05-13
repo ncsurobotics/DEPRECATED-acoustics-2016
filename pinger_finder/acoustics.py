@@ -4,7 +4,7 @@ from bbb.ADC import ADS7865
 from bbb.LTC1564 import LTC1564
 import locate_pinger
 import numpy as np
-import QikSampNPlt
+import quickplot
 
 from os import path
 LOG_DIR = path.join(path.dirname(path.realpath(__file__)), "saved_data/")

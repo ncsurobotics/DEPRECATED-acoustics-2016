@@ -2,7 +2,7 @@ from sys import argv
 
 from acoustics import Acoustics
 import locate_pinger
-
+import quickplot
 
 def main(cmd=None):
     if (cmd is None):
@@ -37,14 +37,14 @@ def main(cmd=None):
         # Dearm ADC outside of locate_pinger.py.
         acoustics.adc.unready()
 
-    # elif (cmd == 'plt'):
-    # Load plotting stuff
-    #     plt = load_matplotlib()
-    #
-    # Load ADC Stuff
-    #     acoustics = Acoustics()
-    #     acoustics.preset(100)
-    #     quickplot.main(acoustics.adc, plt)
+    elif (cmd == 'plt'):
+        # Load plotting stuff
+        plt = load_matplotlib()
+    
+        # Load ADC Stuff
+        acoustics = Acoustics()
+        acoustics.preset(100)
+        quickplot.main(acoustics.adc, plt)
 
 
 def load_matplotlib():

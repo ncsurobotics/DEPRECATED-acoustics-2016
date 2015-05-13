@@ -19,7 +19,7 @@ logging.basicConfig(level=logging.DEBUG, format='%(module)s.py: %(asctime)s - %(
 PRU0_CR_Mem_Offset = 3
 PRU0_THR_Mem_Offset = 4
 HC_CR = 0xBEBC200
-fclk = 200e6
+F_CLK = 200e6
 
 INIT0 = path.join(BIN_DIR, "init0.bin")
 INIT1 = path.join(BIN_DIR, "init1.bin")
@@ -113,14 +113,13 @@ class ADS7865():
     samples in realtime
     """
 
-    def __init__(self, cr=0.0, smp_len=0):
+    def __init__(self, sr=0.0, smp_len=0):
         """ Configures several BBB pins as necessary to hold the ADC in an idle state
 
         Args:
             cr: Conversion Rate (float)
             smp_len: Sample Length (integer)
 
-        OUT OF DATE
 
         Parameters (in order of initialization):
             self.DBus
@@ -131,6 +130,7 @@ class ADS7865():
             self."ddr stuff"
             self.n_channels
             self.conversion_rate
+            self.deadband_ms
             self.arm_status
             self.seq_desc
             self.ch
@@ -160,6 +160,8 @@ class ADS7865():
         self._CS = Port(CS_pin)
         self._CS.set_port_dir("out")
         self._CS.write_to_port(0)
+        
+        
 
         # PRUSS Stuff
         self.ddr = {}
@@ -180,12 +182,13 @@ class ADS7865():
             addr=str(hex(self.ddr['addr'])))
         )
 
-        self.n_channels = 0
-        self.conversion_rate = cr
+        self.sampling_rate = sr
+        self.deadband_ms = 0
         self.sample_length = int(smp_len)
         self.arm_status = "unknown"
         self.seq_desc = "unknown"
         self.ch = ['unknown'] * 4
+        
         self.threshold = DEFAULT_THRESHOLD
         self.sr_specd = 0  # parameter for keeping the up with the last spec
         self.modified = True
@@ -444,8 +447,16 @@ class ADS7865():
         # Update modified bit
         self.modified = True
 
-        # Update sampling bits
+        # Update sampling rate
         self.sample_rate = float(sr)
+        
+        # Update sampling period
+        if self.sample_rate != 0:
+            self.sampling_period = 1/self.sample_rate
+        else:
+            self.sampling_period = None
+            
+        # Update Conversion rate
         self.conversion_rate = self.sr_to_cr(sr)
 
         self.sr_specd = True
@@ -458,6 +469,10 @@ class ADS7865():
                 + " (%dKHz)" % (CONV_RATE_LIMIT / 1000)
             )
 
+    def update_deadband_value(self, ms):
+        print("ADS7865: Deadband length set to %dms" % int(ms))
+        self.deadband_ms = ms
+    
     def set_SL(self, sl):
         """ Sets the sample length
 
@@ -472,6 +487,9 @@ class ADS7865():
 
         print("Performing ADC device reset...")
         self.config([CODE_SWRESET])
+        
+        # Immediate parameters that get defined at reset
+        self.n_channels = 2
 
         # DAC outputs the default voltage
         self.dac_voltage = DEFAULT_DAC_VOLTAGE
@@ -484,9 +502,10 @@ class ADS7865():
         self.ch[2] = ''
         self.ch[3] = ''
 
-        # Update other parameters
-        self.n_channels = 2
-        self._update_conversion_rate(self.conversion_rate)
+        # Update other more complex parameters
+        self.update_sample_rate(self.sampling_rate)
+        
+        # Update meta parameters
         self.modified = True
 
         # Let user know work is done
@@ -542,7 +561,7 @@ class ADS7865():
         if self.n_channels != 0:
             return (cr * SAMPLES_PER_CONV) / float(self.n_channels)
         else:
-            logging.warning("self.n_channels == 0. Unable to compute self.sampleRate!")
+            logging.warning("self.n_channels == 0. Unable to compute a sampleRate!")
             return None
 
     def sr_to_cr(self, sr):
@@ -552,7 +571,7 @@ class ADS7865():
         if self.n_channels != 0:
             return sr * (self.n_channels / float(SAMPLES_PER_CONV))
         else:
-            logging.warning("self.n_channels == 0. Unable to compute self.sampleRate!")
+            logging.warning("self.n_channels == 0. Unable to compute a convRate!")
             return None
 
     def adc_status(self):
@@ -626,7 +645,7 @@ class ADS7865():
             print("CR currently set to 0. Please specify a conversion rate.")
             exit(1)
 
-        CR_BITECODE = int(round(1.0 / CR * fclk))  # Converts user CR input to Hex.
+        CR_BITECODE = int(round(1.0 / CR * F_CLK))  # Converts user CR input to Hex.
 
         # Initialize environment
         pypruss.modprobe()
@@ -698,6 +717,10 @@ class ADS7865():
         # memory
         pru_SL_mapping = (length - MIN_SAMPLE_LENGTH) * BYTES_PER_SAMPLE
         pypruss.pru_write_memory(0, 2, [pru_SL_mapping, ])
+        
+        # Share deadband length with PRU0
+        #db_hex = float(self.db) / 2 / self.
+        #pypruss.pru_write_memory(0, PRU0_DB_MEM_OFFSET, [db_hex,])
 
         # Share Threshold with PRU0
         thr_hex = self.V_to_12bit_Hex(self.threshold)

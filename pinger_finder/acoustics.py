@@ -17,7 +17,7 @@ def load_matplotlib():
 
     import matplotlib.pyplot as plt
 
-    plt.ioff()
+    plt.ion()
     plt.hold(False)
     plt.close()
     print("...done.")
@@ -56,7 +56,11 @@ class Acoustics():
         val = locate_pinger.main(self.adc, dearm=False)
         Vpp = np.amax(self.adc.y[0]) - np.amin(self.adc.y[0])
         print("The that last signal was %.2f Vpp" % Vpp)
-        return val
+        
+        if val==None:
+            return None
+        else:
+            return val
     
     def plot_recent(self):
         if self.plt==None:

@@ -807,4 +807,8 @@ class ADS7865():
             self.ready_pruss_for_burst()
 
         y, TOF = self.burst()
-        return y
+        
+        if TOF==False:
+            return y
+        else:
+            return None

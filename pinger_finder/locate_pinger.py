@@ -16,6 +16,10 @@ def main(adc, plt=None, dearm=True):
 
     # capture a set of samples
     y = adc.get_data()
+    
+    if y ==None:
+        print("locate pinger: Unable to compute pinger location")
+        return None
 
     # process simultaneous channels
     angle = get_heading.calculate_heading(TARGET_FREQ, fs, y[0], y[1])

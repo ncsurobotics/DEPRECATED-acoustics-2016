@@ -1,13 +1,11 @@
 import numpy as np
 
-
 SAMPLES_PER_CONV = 2
 
-
-def main(adc, plt, recent=False):
-
-    #print("ADC is armed and ready.")
-    #raw_input("Press enter when ready...")
+def main(adc, plt, recent=False, ask=False):
+    if ask:
+        print("ADC is armed and ready.")
+        raw_input("Press enter when ready...")
 
     # grab data
     if recent:

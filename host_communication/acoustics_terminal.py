@@ -99,10 +99,12 @@ def main_loop():
         except KeyboardInterrupt:
             print("Acoustics debug mode activated.")
             print("Please enter one of the following commands:")
-            list_of_cmds = ("q: Quit this app.\n"
-                + "l: log latest recorded data.\n"
+            list_of_cmds = ("l: log latest recorded data.\n"
                 + "g: Change gain of input filters.\n"
-                + "c: continue terminal program.\n")
+                + "c: continue terminal program.\n"
+                + "p: Plot last sample collection.\n"
+                + "test_config: Load the acoustic test config\n"
+                + "q: Quit this app.\n")
             print(list_of_cmds)
             int_input = raw_input(">> ")
             if (int_input=='q'):
@@ -118,6 +120,8 @@ def main_loop():
                 acoustics.plot_recent()
             elif (int_input=='c'):
                 pass
+            elif (int_input=="test_config"):
+                acoustics.preset(101)
             else:
                 pass
                 

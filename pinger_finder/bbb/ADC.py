@@ -381,6 +381,23 @@ class ADS7865():
             self.update_sample_rate(400e3)
             self.threshold = 2
             self.ez_config(4)
+        elif sel == 101:
+            """
+            Test Config for Acoustics terminal
+            Date: Wednesday, May 13
+
+            Purpose: Faciliting tests on acoustics_terminal.py.
+
+            General Considerations: Changes to this config are okay
+            as long as they're for acoustics_terminal.py.
+            """
+            self.update_deadband_ms(0)
+            self.set_sample_len(1e3)
+            self.update_sample_rate(700e3)
+            self.threshold = 2
+            self.ez_config(2)
+
+
 
         else:
             logging.warning("Unknown preset!")

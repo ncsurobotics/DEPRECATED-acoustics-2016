@@ -358,8 +358,8 @@ class ADS7865():
             determining the samplesize, sampling rate, # of simultaneous
             channels, and (initial) threshold value.
             """
-            self.set_SL(1e3)
             self.update_deadband_ms(1)
+            self.set_sample_len(1e3)
             self.update_sample_rate(800e3)
             self.threshold = .1
             self.ez_config(0)
@@ -376,8 +376,8 @@ class ADS7865():
             function, the user is free to change the settings anytime as he
             sees fit. If something more "stable" is desirable, try another
             preset or make a new one."""
-            self.set_SL(1e3)
             self.update_deadband_ms(0)
+            self.set_sample_len(1e3)
             self.update_sample_rate(400e3)
             self.threshold = 2
             self.ez_config(4)
@@ -478,7 +478,7 @@ class ADS7865():
         print("ADS7865: Deadband length set to %dms" % int(ms))
         self.deadband_ms = ms
     
-    def set_SL(self, sl):
+    def set_sample_len(self, sl):
         """ Sets the sample length
 
         Args:
@@ -780,7 +780,7 @@ class ADS7865():
 
         self.reload()
         self.y = y # Storing collected samples internally
-        return y, TOF
+        return (y, TOF)
 
     def get_data(self):
         """

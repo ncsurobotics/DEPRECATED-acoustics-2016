@@ -9,7 +9,6 @@ import numpy as np
 from bbb import ADC
 from bbb.LTC1564 import LTC1564
 
-import watch_for_dead_bits
 import ADS7865_Sampler
 import track_pinger
 import visualize_fft
@@ -206,8 +205,8 @@ def debug_wizard(adc, filt_obj=None, plt=None):
         if input_matches('q'):
             break
 
-        elif input_matches('1', 'watch_for_dead_bits'):
-            watch_for_dead_bits.main(adc)
+        # elif input_matches('1', 'watch_for_dead_bits'):
+        #     watch_for_dead_bits.main(adc)
 
         elif input_matches('3'):  # check_DBus
             temp = adc.DBus.read_str()
@@ -219,9 +218,9 @@ def debug_wizard(adc, filt_obj=None, plt=None):
         elif input_matches('7'):
             adc.read_dac()
 
-        elif input_matches('8'):
-            from test_filters import test_filters
-            test_filters(adc, filt_obj, plt)
+        # elif input_matches('8'):
+        #     from test_filters import test_filters
+        #     test_filters(adc, filt_obj, plt)
 
 
 def print_debugs(keys):

@@ -1,10 +1,8 @@
 import pypruss
-import mmap
-import struct
 
 
 def main():
-    # Initialize evironment
+    # Initialize environment
     pypruss.modprobe()
 
     pypruss.init()              # Init the PRU

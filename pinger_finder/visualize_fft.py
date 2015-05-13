@@ -24,8 +24,8 @@ def main(adc, plt):
     # low hanging variables
     fs = adc.sample_rate
     M = adc.sample_length / adc.n_channels
-    fdelta = fs / M
-    f = np.arange(0, M * fdelta, fdelta)
+    f_delta = fs / M
+    f = np.arange(0, M * f_delta, f_delta)
 
     # Arm the ADC
     adc.ready_pruss_for_burst()
@@ -37,7 +37,7 @@ def main(adc, plt):
             # Capture a set of samples
             y, _ = adc.burst()
 
-            # Process simultanous channels
+            # Process simultaneous channels
             for ch in ch_list:
                 print("Plotting #1")
                 axes[0].plot(y[ch])

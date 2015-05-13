@@ -11,8 +11,8 @@ from bbb import boot
 def main(adc, plt):
     # Initialize plotting environment
     fig,axes = plt.subplots(2,1)
-    axes[0].hold(False)
-    axes[1].hold(False)
+    axes[0].hold(True)
+    axes[1].hold(True)
 
     # Query user to select a channel
     adc.adc_status()
@@ -47,9 +47,9 @@ def main(adc, plt):
                 plt.pause(0.01)
     
             #import pdb; pdb.set_trace()
-            print("Drawing")
-            plt.draw()
-            print("Done Drawing.")
+            print("Done Plotting")
+            axes[0].cla()
+            axes[1].cla()
 
         except KeyboardInterrupt:
             print("Quitting program")

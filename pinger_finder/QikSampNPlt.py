@@ -4,17 +4,21 @@ import numpy as np
 SAMPLES_PER_CONV = 2
 
 
-def main(adc, plt):
+def main(adc, plt, recent=False):
 
     #print("ADC is armed and ready.")
     #raw_input("Press enter when ready...")
 
     # grab data
-    y = adc.get_data()
+    if recent:
+        y = adc.y
+    else:
+        y = adc.get_data()
 
     plot_output(adc, y, plt)
-
-    adc.unready()
+    
+    if recent==False:
+        adc.unready()
     return y
 
 

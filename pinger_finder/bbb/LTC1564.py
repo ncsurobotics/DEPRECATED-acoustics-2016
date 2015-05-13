@@ -35,13 +35,17 @@ class LTC1564():
             self.Fval = DEFAULT_F
             self.Gval = DEFAULT_G
 
-    def gain_mode(self, mode):
+    def gain_mode(self, mode=None):
         """ Configures gain of the input stage.
 
             Args:
                 mode: int
         """
+
         n = self.get_n_gain_states()
+        if (mode==None):
+            print("LTC1564: Give me a value from 0 to %d for gain mode" % n)
+            mode = int(str(raw_input(">> ")))
 
         if 0 <= mode <= n - 1:  # n-1 is the max bit value that can be used
             print("LTC1564: Writing %d to gain stage." % mode)

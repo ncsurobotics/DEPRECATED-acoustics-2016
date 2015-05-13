@@ -20,15 +20,20 @@ from acoustics import Logging
 ### Global Constants ###
 #########################
 
-PORT_NAME = "/dev/ttyO5"
-next_state = "initd"
-pAC = s.Serial(PORT_NAME, 9600, timeout=1)
-acoustics = Acoustics()
-log = Logging()
-
-def init_commlink():
+def define_commlink():
     uart.enable_uart()
     print("Opening Port %s." % PORT_NAME)
+    return s.Serial(PORT_NAME, 9600, timeout=1)
+
+
+PORT_NAME = "/dev/ttyO5"
+acoustics = Acoustics() # Acoustics Control Object
+pAC = define_commlink() # Acoustics communication port
+log = Logging()
+
+# ######################
+### Other definitions ##
+#######################
     
 def init_acoustics():
     acoustics.preset(0)
@@ -96,6 +101,7 @@ def main_loop():
             print("Please enter one of the following commands:")
             list_of_cmds = ("q: Quit this app.\n"
                 + "l: log latest recorded data.\n"
+                + "g: Change gain of input filters.\n"
                 + "c: continue terminal program.\n")
             print(list_of_cmds)
             int_input = raw_input(">> ")
@@ -106,6 +112,10 @@ def main_loop():
                 break
             elif (int_input=='l'):
                 log.logit(acoustics)
+            elif (int_input=='g'):
+                acoustics.filt.gain_mode()
+            elif (int_input=='p'):
+                acoustics.plot_recent()
             elif (int_input=='c'):
                 pass
             else:
@@ -116,7 +126,6 @@ def main_loop():
 
 def main():
     # Initialize Components
-    init_commlink()
     init_acoustics()
 
     # Listen for texts and process them

@@ -354,7 +354,7 @@ class ADS7865():
             """
             self.set_SL(1e3)
             self.update_sample_rate(800e3)
-            self.threshold = 0
+            self.threshold = .1
             self.ez_config(0)
 
         elif sel == 100:

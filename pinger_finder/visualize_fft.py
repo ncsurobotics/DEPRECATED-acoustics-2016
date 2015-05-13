@@ -10,10 +10,9 @@ from bbb import boot
 
 def main(adc, plt):
     # Initialize plotting environment
-    plt.figure()
-    plt.subplot(212)
-    plt.subplot(211)
-    plt.hold(True)
+    fig,axes = plt.subplots(2,1)
+    axes[0].hold(False)
+    axes[1].hold(False)
 
     # Query user to select a channel
     adc.adc_status()
@@ -40,18 +39,17 @@ def main(adc, plt):
 
             # Process simultanous channels
             for ch in ch_list:
-                plt.subplot(211)
-                plt.plot(y[ch])
-
-                plt.subplot(212)
-                plt.plot(f, abs(fft(y[ch])))
-
+                print("Plotting #1")
+                axes[0].plot(y[ch])
+                
+                print("Done. Plotting #2")
+                axes[1].plot(f, abs(fft(y[ch])))
+                plt.pause(0.01)
+    
+            #import pdb; pdb.set_trace()
+            print("Drawing")
             plt.draw()
-            time.sleep(0.05)
-            plt.subplot(211)
-            plt.cla()
-            plt.subplot(212)
-            plt.cla()
+            print("Done Drawing.")
 
         except KeyboardInterrupt:
             print("Quitting program")

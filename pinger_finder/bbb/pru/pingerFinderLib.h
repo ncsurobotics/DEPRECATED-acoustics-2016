@@ -116,8 +116,9 @@
     .u32    TO              // TimeOut:loops (r15)
     .u32    t               // Timer Value (r16)
     .u32    Trg_Threshold   // (r17)
+    .u16    DB_LIMIT        // Deadband limit
 .ends
-.assign DAQ_Config, r12, r17, DAQConf
+.assign DAQ_Config, r12, r18.w0, DAQConf
 
 .macro  NOP32
         NOP
@@ -165,9 +166,10 @@
 #define HOST_DDR_ADDRh  0x0004
 #define HOST_SLh        0x0008  // sample length
 #define HOST_SRh        0x000C
-#define HOST_THRh       0x0010
+#define HOST_DBh        0x0010
+#define HOST_THRh       0x0014
 //PRU Personal Space = (0x0000)_PRUx
-#define PRU_STATEh      0x0014
+#define PRU_STATEh      0x0018
 
 
 /////////////////////////////////////////

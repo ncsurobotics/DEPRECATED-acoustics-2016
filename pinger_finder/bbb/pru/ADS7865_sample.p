@@ -68,11 +68,15 @@
     SBBO DQ.Sample_Ctrl, DAQConf.Data_Dst, DQ.TapeHD_Offset, SIZE(DQ.Sample_Ctrl) // submit data to DDR
     INCR DQ.TapeHD_Offset, 4 // increment pointer
 .endm
+
+.macro Init_Db_Register
+    LBBO DAQConf.DB_LIMIT, DQ.PRU0_Ptr, HOST_DBh, SIZE(DAQConf.DB_LIMIT)
+.endm
     
 .macro Incr_Deadband
 .mparam incr_val
     ADD DQ.Deadband_CNTR, DQ.Deadband_CNTR, incr_val
-    QBGT  EXIT_INCR_DEADBAND, DQ.Deadband_CNTR, DEFAULT_DEADBAND_TRG_LIMIT
+    QBGT  EXIT_INCR_DEADBAND, DQ.Deadband_CNTR, DAQConf.DB_LIMIT
       SET DQ.Sample_Ctrl, DBOVF
 EXIT_INCR_DEADBAND:
 .endm
@@ -93,7 +97,8 @@ START:
 
 PREPARE:
     MOV DQ.Sample_Ctrl, 0           // Init Sample Ctrl Register
-    MOV DQ.Deadband_CNTR, 0
+    MOV DQ.Deadband_CNTR, 0         // Init Deadband Counter
+    Init_Db_Register
     
     LDI  DQ.PRU0_Ptr, 0x0000        // Init PRU0 ptr
     LDI  DQ.PRU1_Ptr, 0x2000        // Init PRU1 ptr

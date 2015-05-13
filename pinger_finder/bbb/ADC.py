@@ -16,8 +16,11 @@ from .port import Port
 logging.basicConfig(level=logging.DEBUG, format='%(module)s.py: %(asctime)s - %(levelname)s - %(message)s')
 
 # Global ADC program Constants
+PRU0_DDR_MEM_OFFSET = 1
+PRU0_SL_MEM_OFFSET = 2
 PRU0_CR_Mem_Offset = 3
-PRU0_THR_Mem_Offset = 4
+PRU0_DB_MEM_OFFSET = 4
+PRU0_THR_Mem_Offset = 5
 HC_CR = 0xBEBC200
 F_CLK = 200e6
 
@@ -356,6 +359,7 @@ class ADS7865():
             channels, and (initial) threshold value.
             """
             self.set_SL(1e3)
+            self.update_deadband_ms(1)
             self.update_sample_rate(800e3)
             self.threshold = .1
             self.ez_config(0)
@@ -373,8 +377,9 @@ class ADS7865():
             sees fit. If something more "stable" is desirable, try another
             preset or make a new one."""
             self.set_SL(1e3)
+            self.update_deadband_ms(0)
             self.update_sample_rate(400e3)
-            self.threshold = 0.02
+            self.threshold = 2
             self.ez_config(4)
 
         else:
@@ -469,7 +474,7 @@ class ADS7865():
                 + " (%dKHz)" % (CONV_RATE_LIMIT / 1000)
             )
 
-    def update_deadband_value(self, ms):
+    def update_deadband_ms(self, ms):
         print("ADS7865: Deadband length set to %dms" % int(ms))
         self.deadband_ms = ms
     
@@ -708,7 +713,7 @@ class ADS7865():
             self.n_channels = n_channels
 
         # Share DDR RAM Addr with PRU0
-        pypruss.pru_write_memory(0, 1, [self.ddr['addr'], ])
+        pypruss.pru_write_memory(0, PRU0_DDR_MEM_OFFSET, [self.ddr['addr'], ])
 
         # Share SL with PRU0: pru_SL_mapping just incorporates
         # some math that translates the user specified SL parameter
@@ -716,11 +721,11 @@ class ADS7865():
         # check whether it has finished writing it's data to the
         # memory
         pru_SL_mapping = (length - MIN_SAMPLE_LENGTH) * BYTES_PER_SAMPLE
-        pypruss.pru_write_memory(0, 2, [pru_SL_mapping, ])
+        pypruss.pru_write_memory(0, PRU0_SL_MEM_OFFSET, [pru_SL_mapping, ])
         
         # Share deadband length with PRU0
-        #db_hex = float(self.db) / 2 / self.
-        #pypruss.pru_write_memory(0, PRU0_DB_MEM_OFFSET, [db_hex,])
+        db_hex = int(round(self.deadband_ms / 1000.0 * F_CLK * 2.0)) # counts
+        pypruss.pru_write_memory(0, PRU0_DB_MEM_OFFSET, [db_hex,])
 
         # Share Threshold with PRU0
         thr_hex = self.V_to_12bit_Hex(self.threshold)

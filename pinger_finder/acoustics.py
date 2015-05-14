@@ -89,3 +89,39 @@ class Logging():
         
     def close(self):
         self.adc.unready()
+
+class Environment():
+    def __init__(self):
+        self.c = 1473 # m/s. The speed of sound in water. 
+        
+class Phys_Obj(object):
+    all_objects = []
+    
+    def __init__(self):
+        self.position = np.array([[0,0,0]])
+        self.orientation = None
+        Phys_Obj.all_objects.append(self)
+        
+    def move(self, coordinates):
+        if coordinates.size != 3:
+            print("acoustics: 3 dimensional coordinates please!")
+            return None
+            
+        self.position = coordinates
+    
+    def rotate(self, new_normal_vector):
+        self.orientation = new_normal_vector
+        self.position = coordinates
+        
+def generate_arrival_times(env,array,pinger):
+    n = array.n_elements
+    dist = []
+    for el in range(n):
+        element_position = array.position+array.element_pos[el]
+        dist.append( np.linalg.norm(pinger.position - element_position) )
+    
+    times = np.array(dist)/env.c
+    
+    return times - np.amin(times)
+        
+    

@@ -11,7 +11,8 @@ sys.path.insert(0, hc_directory)
 sys.path.insert(0, pf_directory)
 
 import serial as s
-import signal
+import sys
+import select
 import uart #enable_uart()
 import oneclk
 from acoustics import Acoustics
@@ -31,7 +32,6 @@ PORT_NAME = "/dev/ttyO5"
 acoustics = Acoustics() # Acoustics Control Object
 pAC = define_commlink() # Acoustics communication port
 log = Logging()
-INTERRUPT_WINDOW = 1 # seconds
 
 # ######################
 ### Other definitions ##
@@ -39,15 +39,6 @@ INTERRUPT_WINDOW = 1 # seconds
     
 def init_acoustics():
     acoustics.preset(0)
-
-def init_interrupt_timer():
-    def raw_input_timeout_hdl(signum, frame):
-        # This error is meant to be caught and suppressed in a try statement
-        raise IOError("This isn't really an error.")
-        
-    # The backend activation of SIGALRM will invoke the 
-    # raw_input_timeout_hdl function
-    signal.signal(signal.SIGALRM, raw_input_timeout_hdl)
     
 def send(msg):
     pAC.write(msg + '\n')
@@ -104,7 +95,7 @@ def task_manager(input):
 def main_loop():
 
     while 1:
-        dummy = ''
+        int_signal = ''
         try:
             # Try reading and acting upon seawolf's input first
             input = read()
@@ -115,12 +106,12 @@ def main_loop():
                 print("I got nothin.")
                 
             # Now see if someone is trying to do something on the backend
-            signal.setitimer(signal.ITIMER_REAL, INTERRUPT_WINDOW)
-            dummy = raw_input()
-            signal.setitimer(signal.ITIMER_REAL, 0)
+            while sys.stdin in select.select([sys.stdin], [], [], 0)[0]:
+                int_signal = sys.stdin.readline().rstrip('\n')
             
             # Enter debug mode if backend user asks to
-            if dummy == 'g':
+            if int_signal == 'g':
+                print('')
                 print("Acoustics debug mode activated.")
                 print("Please enter one of the following commands:")
                 list_of_cmds = ("l: log latest recorded data.\n"
@@ -131,21 +122,34 @@ def main_loop():
                     + "q: Quit this app.\n")
                 print(list_of_cmds)
                 int_input = raw_input(">> ")
-                if (int_input=='q'):
+                    
+                # Log stuff
+                if (int_input=='l'):
+                    log.logit(acoustics)
+                
+                # Increase gain
+                elif (int_input=='g'):
+                    acoustics.filt.gain_mode()
+                
+                # plot what just happend
+                elif (int_input=='p'):
+                    acoustics.plot_recent()
+                    
+                # Continue
+                elif (int_input=='c'):
+                    pass
+                    
+                # Load the te
+                elif (int_input=="test_config"):
+                    acoustics.preset(101)
+                    
+                 # Quit prog
+                elif (int_input=='q'):
                     print("Closing Port %s." % PORT_NAME)
                     pAC.close()
                     acoustics.close()
                     break
-                elif (int_input=='l'):
-                    log.logit(acoustics)
-                elif (int_input=='g'):
-                    acoustics.filt.gain_mode()
-                elif (int_input=='p'):
-                    acoustics.plot_recent()
-                elif (int_input=='c'):
-                    pass
-                elif (int_input=="test_config"):
-                    acoustics.preset(101)
+                    
                 else:
                     pass
       
@@ -165,7 +169,6 @@ def main_loop():
 def main():
     # Initialize Components
     init_acoustics()
-    init_interrupt_timer()
 
     # Listen for texts and process them
     print("Acoustics: UART(5) echo-terminal active. "

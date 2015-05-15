@@ -6,7 +6,7 @@ import struct
 import logging
 from os import path
 
-import pypruss  # Python PRUSS wrapper
+#import pypruss  # Python PRUSS wrapper
 import numpy as np
 
 from . import boot

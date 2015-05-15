@@ -113,9 +113,19 @@ class Phys_Obj(object):
             
         self.position = coordinates
 
-        self.X = coordinates[0,0] + self.X
-        self.Y = coordinates[0,1] + self.Y
-        self.Z = coordinates[0,2] + self.Z
+        self.X = coordinates[0,0]
+        self.Y = coordinates[0,1]
+        self.Z = coordinates[0,2]
+        
+    def xform_translate(self, shift_vals):
+        if shift_vals.size != 3:
+            print("acoustics: 3 dimensional coordinates please!")
+            return None
+            
+        new_position = shift_vals + self.position
+        self.move(new_position)
+
+
 
     def rotate(self, new_normal_vector):
         self.orientation = new_normal_vector
@@ -184,11 +194,14 @@ class Pinger_Contour(Phys_Obj):
         self.Y = None
         self.Z = None
         
-        self.max_distance = 20 # meters
-        self.pts = 3 # data point
+        self.max_distance = 50 # meters
+        self.pts = 20 # data point
         
         
-    def coe_generate_contour(self,a,b):
+    def coe_generate_contour(self,ab, array_pair_idx, array):
+        a = ab[0]
+        b = ab[1]
+        
         # Generate Y and Z meshgrid
         lim = self.max_distance
         Y = np.linspace(-lim, lim, self.pts)
@@ -210,6 +223,27 @@ class Pinger_Contour(Phys_Obj):
             self.X = X
         self.Y = Y
         self.Z = Z
+        
+        self.match_contour_to_pair(array_pair_idx, array)
+        
+    def match_contour_to_pair(self, array_pair_idx, array):
+        # vector param
+        import pdb; pdb.set_trace()
+        j = 1;
+        idx = array_pair_idx
+        
+        # Determine amount of rotation (y component rotation)
+        p = -(array.COM[idx] - array.position)
+        if P < 1e-6:
+            y_rot
+        P = np.linalg.norm(p)
+        y_rot = np.arccos(p[j]/P)
+        
+        # Rotate accordingly
+        self.xform_rotate(0,y_rot,0)
+        
+        # Move accordingly
+        self.move(array.COM[idx])
         
 
 def generate_arrival_times(env,array,pinger):

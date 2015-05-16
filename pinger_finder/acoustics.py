@@ -89,3 +89,34 @@ class Logging():
         
     def close(self):
         self.adc.unready()
+
+
+def generate_arrival_times(env,array,pinger):
+    n = array.n_elements
+    dist = []
+    for el in range(n):
+        element_position = array.position+array.element_pos[el]
+        dist.append( np.linalg.norm(pinger.position - element_position) )
+    
+    times = np.array(dist)/env.c
+    
+    return times - np.amin(times)
+
+
+        
+def process_times_for_pinger_loc(time_vals, array, env):
+    xyz = None
+    
+    # Make distance
+    dists = time_vals*env.c
+    
+    # Generate a and b coefficients
+    # amongst every pair of hydrophones
+    array.bulk_compute_ab_from_distances(dists)
+    
+    # solve either with linear lines or hyperbolas
+    
+    
+    return xyz
+    
+    

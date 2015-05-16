@@ -1,27 +1,10 @@
 import numpy as np
 import itertools
-from acoustics import Phys_Obj
+
+from tools3d import Phys_Obj
 
 K_HAT = np.array([[0,0,1]])
 DIM1 = 0
-
-def dd_to_hyperboloid_coe(D1minusD2, element_spacing):
-    d = element_spacing/2
-    
-    # Get "a" coefficient
-    a = D1minusD2/2
-    
-    #
-    if (a > d):
-        # Limit given the spacing of the hydrophone elements has been
-        # exceed. To prevent error in the next step, we'll clip purposely
-        # clip the signal
-        a = d
-        print("get_heading: Warning, Angle is Clipped at max/min value.")
-        
-    # get "b" coefficient
-    b = np.sqrt(d**2 - a**2)
-    return a,b
     
 
 class Array(Phys_Obj):
@@ -63,14 +46,18 @@ class Array(Phys_Obj):
             self.COM.append(l0+(l1-l0)/2)
             
             # Get nNormal for each pair
-            import pdb;pdb.set_trace()
             norm_vect = np.array( [[-d_vect[0,2],0,d_vect[0,0]]] )
             norm_uvect = norm_vect / np.linalg.norm(norm_vect)
             self.norm_uvect.append(norm_uvect)
             
             # Get y_based rotation
             print(norm_uvect)
-            y_rot = np.arccos( np.dot(norm_vect[DIM1],K_HAT[DIM1])/np.linalg.norm(norm_vect) )
+            abs_y_rot = np.arccos( np.dot(norm_vect[DIM1],K_HAT[DIM1])/np.linalg.norm(norm_vect) )
+            if (norm_uvect[DIM1,0] < 0):
+                y_rot = -abs_y_rot
+            else:
+                y_rot = abs_y_rot
+                
             print y_rot
             self.pair_y_rot.append(y_rot)
             
@@ -102,3 +89,25 @@ class Array(Phys_Obj):
         
     def print_drawing(self):
         pass
+        
+# ##################################
+############# Functions ##########
+##################################
+        
+def dd_to_hyperboloid_coe(D1minusD2, element_spacing):
+    d = element_spacing/2
+    
+    # Get "a" coefficient
+    a = D1minusD2/2
+    
+    #
+    if (a > d):
+        # Limit given the spacing of the hydrophone elements has been
+        # exceed. To prevent error in the next step, we'll clip purposely
+        # clip the signal
+        a = d
+        print("get_heading: Warning, Angle is Clipped at max/min value.")
+        
+    # get "b" coefficient
+    b = np.sqrt(d**2 - a**2)
+    return a,b

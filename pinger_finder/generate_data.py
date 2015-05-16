@@ -1,6 +1,6 @@
 import numpy as np
 import acoustics
-import hydrophones
+from environment import hydrophones, tools3d, source 
 
 def load_matplotlib():
     # Load modules
@@ -17,29 +17,36 @@ def load_matplotlib():
 
 def plot_contour(contour_obj, ax):
     o = contour_obj
-    ax.plot_wireframe(o.X, o.Y, o.Z, rstride=2, cstride=2)
+    ax.plot_wireframe(o.X, o.Y, o.Z, rstride=1, cstride=1, color=np.random.rand(3,1))
     
 def plot_object(obj, ax):
     o = obj
     ax.scatter(o.X,o.Y,o.Z,c='y')
-
+    
+# ###########################
+########## Main Program ####
+###########################
 
 def generate_pinger_location():
     # Init environment
-    env = acoustics.Environment()
+    env = tools3d.Environment()
     
     # Init objects
-    hlocs = np.mat([[-15e-3,0,(-15e-3)/2],[15e-3,0,(-15e-3)/2], [0,15e-3,(15e-3)/2]])
+    hlocs = np.mat([[-15e-3,0,(-15e-3)/2],[15e-3,0,(-15e-3)/2], [0,0,(15e-3)/2]])
     array = hydrophones.Array(hlocs)
-    pinger = acoustics.Phys_Obj()
+    pinger = tools3d.Phys_Obj()
+    
     
 
     # Plug pinger location in the evironment
-    pinger_contour = acoustics.Pinger_Contour()
-    pinger_contour2 = acoustics.Pinger_Contour()
-    plt = load_matplotlib()
+    pinger_contour = []
+    hydrophone = []
+    for i in range(array.n_elements):
+        pinger_contour.append(source.Pinger_Contour())
+        hydrophone.append(tools3d.Phys_Obj())
     
     # Init Plotting Environment
+    plt = load_matplotlib()
     fig = plt.figure()
     ax = fig.add_subplot(111, projection='3d')
     ax.hold(True)
@@ -52,7 +59,7 @@ def generate_pinger_location():
     ax.set_zlim(-lim, lim)
     
     # Move object to appropiate locations
-    pinger.move(np.array([[5,40,-10]]))
+    pinger.move(np.array([[20,40,-50]]))
     
     # show available objects on plot
     plot_object(pinger, ax)
@@ -64,12 +71,16 @@ def generate_pinger_location():
     
     # plot something
     array.bulk_compute_ab_from_distances(time_vals*env.c)
-    idx = 0
-    ab = (array.ab[idx][0], array.ab[idx][1])
-    pinger_contour.coe_generate_contour(ab, idx, array)
     
-    #pinger_contour.xform_rotate(np.array([[0,np.pi/3,0]]))
-    plot_contour(pinger_contour, ax)
+    for idx in range(array.n_elements):
+        ab = (array.ab[idx][0], array.ab[idx][1])
+        pinger_contour[idx].coe_generate_contour(ab, idx, array)
+    
+        #pinger_contour.xform_rotate(np.array([[0,np.pi/3,0]]))
+        plot_contour(pinger_contour[idx], ax)
+        
+        hydrophone[idx].move(hlocs[idx])
+        plot_object(hydrophone[idx], ax)
     
     #pinger_counter2.move(array.COM[1])
     #pinger_contour2.coe_generate_contour(array.ab[1][0], array.ab[1][1])

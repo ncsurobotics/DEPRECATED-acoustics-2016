@@ -27,7 +27,21 @@ def plot_object(obj, ax):
 ##### World Class ###########
 ############################
 class World(object):
-    def __init__():
+    def __init__(self, ax=None):
+        # Initialize axes and plotting object
+        self.ax = ax
+        
+        # Initialize single objects
+        self.env = tools3d.Environment()
+        self.array =
+        self.pinger =
+        
+        # Initialize grouped objects
+        self.pinger_contour = 
+        self.hydrophone = 
+        
+    
+class Worldmember(object):
     
 # ###########################
 ########## Main Program ####

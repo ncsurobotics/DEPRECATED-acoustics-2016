@@ -49,3 +49,4 @@ def plot_output(adc, y, plt):
 
     ax.legend(legend_list)
     plt.show()
+    plt.pause(0.1)

@@ -30,10 +30,14 @@ class LTC1564():
             self._CS.set_port_dir('out')
             self._CS.write_to_port(DEFAULT_CS)
 
-            # Init parameter
+        # Init metadata
         if F_PINS:
             self.Fval = DEFAULT_F
-            self.Gval = DEFAULT_G
+            
+        self.Gval = DEFAULT_G
+
+        # Metadata attributes
+        
 
     def gain_mode(self, mode=None):
         """ Configures gain of the input stage.
@@ -44,26 +48,32 @@ class LTC1564():
 
         n = self.get_n_gain_states()
         if (mode==None):
-            print("LTC1564: Give me a value from 0 to %d for gain mode" % n)
+            print("LTC1564: Give me a value from 0 to %d for gain mode" % n-1)
             mode = int(str(raw_input(">> ")))
 
         if 0 <= mode <= n - 1:  # n-1 is the max bit value that can be used
             print("LTC1564: Writing %d to gain stage." % mode)
 
+            # Assert _CS if applicable
             if CS_PIN:
                 self._CS.write_to_port(0)
 
+            # Bitbang Gain value
             self.G.write_to_port(mode)
 
+            # Deassert _CS if applicable
             if CS_PIN:
                 self._CS.write_to_port(1)
 
+            # Save change to user accessible attribute
             self.Gval = mode
         else:
             print("LTC1564: mode %s is outside the range of possible gain states" % mode)
 
     def get_n_gain_states(self):
-        """
+        """gets the maximum number of value possible "Gain" given the
+        number of pins that are allocated for it. For instance, allocating
+        4 pins to control Gain gives us 16 possible gain states (from 0 to 15)
         """
         return 2 ** self.G.length
 

@@ -104,6 +104,7 @@ def main_loop():
                 task_manager(input)
             else:
                 print("I got nothin.")
+                acoustics.condition()
                 
             # Now see if someone is trying to do something on the backend
             while sys.stdin in select.select([sys.stdin], [], [], 0)[0]:

@@ -800,7 +800,9 @@ class ADS7865():
         return (y, TOF)
 
     def get_data(self):
-        """
+        """Simplifies the process of getting data when it's requested. This
+        method will typically replace any use of "self.burst()" and deciding
+        whether or not you have to arm the ADC or not.
         """
 
         if self.arm_status != 'armed' or self.modified is True:

@@ -16,6 +16,9 @@ class Phys_Obj(object):
         self.Y = 0
         self.Z = 0
         
+        # matplotlib data
+        self.pdata = None
+        
     def move(self, coordinates):
         if coordinates.size != 3:
             print("acoustics: 3 dimensional coordinates please!")
@@ -33,6 +36,24 @@ class Phys_Obj(object):
         self.X = self.X + translation_vect[0,0]
         self.Y = self.Y + translation_vect[0,1]
         self.Z = self.Z + translation_vect[0,2]
+        
+    def set_XYZ(self, X=None, Y=None, Z=None, XYZ=None):
+        """defines all X, Y, and Z values. User can pass in single 1xN numpy
+        array for X, Y, Z, or user can just pass an Nx3 array for XYZ, where each
+        row is an X, Y, Z coordinate.
+        """
+        if (X != None) and (Y != None) and (Z != None):
+            self.X = X
+            self.Y = Y
+            self.Z = Z
+        
+        elif (XYZ != None):
+            self.X = XYZ[:,0].T
+            self.Y = XYZ[:,1].T
+            self.Z = XYZ[:,2].T
+        
+        else:
+            raise SyntaxError("XYZ matrix or X, Y, Z values.")
         
     def xform_translate(self, shift_vals):
         if shift_vals.size != 3:

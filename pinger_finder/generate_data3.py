@@ -1,6 +1,7 @@
 import numpy as np
 import acoustics
 from environment import hydrophones, tools3d, source 
+from matplotlib import animation
 
 # ############################
 ##### Init Functions ########
@@ -9,8 +10,8 @@ from environment import hydrophones, tools3d, source
 def load_matplotlib():
     # Load modules
     print("Loading Matplotlib library...")
-    import matplotlib
-#    matplotlib.use('GTK')
+    #import matplotlib
+    #matplotlib.use('TKAgg')
     import matplotlib.pyplot as plt
     from mpl_toolkits.mplot3d import Axes3D
     
@@ -36,11 +37,13 @@ def init_3D_plotting_view(ax):
 
 def plot_contour(contour_obj, ax):
     o = contour_obj
-    ax.plot_wireframe(o.X, o.Y, o.Z, rstride=1, cstride=1, color=np.random.rand(3,1))
+    contour, = ax.plot_wireframe(o.X, o.Y, o.Z, rstride=1, cstride=1, color=np.random.rand(3,1))
+    return contour
     
 def plot_object(obj, ax):
     o = obj
-    ax.scatter(o.X,o.Y,o.Z,c='y')
+    particle, = ax.scatter(o.X,o.Y,o.Z,c='y')
+    return particle
     
 # ############################
 ##### World Class ###########
@@ -49,8 +52,7 @@ class World(object):
     # Initialize single objects
     env = tools3d.Environment()
     pinger = tools3d.Phys_Obj()
-    array = hydrophones.Array()
-    array.define(np.array([
+    array = hydrophones.Array(np.mat([
         [-15e-3,0,(-15e-3)/2],
         [ 15e-3,0,(-15e-3)/2], 
         [     0,0,(15e-3)/2]
@@ -58,10 +60,8 @@ class World(object):
     
     # Initialize grouped objects
     pinger_contour = []
-    hydrophone = []
     for i in range(array.n_elements):
         pinger_contour.append(source.Pinger_Contour())
-        hydrophone.append(tools3d.Phys_Obj())
         
     
     
@@ -73,7 +73,7 @@ class World(object):
         
     def reset_objects(self):
         # Move pinger to some place in the world
-        self.pinger.move(np.array([[20,30,-5]]))
+        self.pinger.move(np.array([[20,40,-50]]))
         
 
     def update_pinger_measurement(self):
@@ -82,7 +82,11 @@ class World(object):
 
         # plot something
         self.array.bulk_compute_ab_from_distances(time_vals*self.env.c)
-    
+        
+        # Plot singles
+        self.plot_obj = plot_object(self.array.hydrophones)
+        
+        # Plot iterables
         for idx in range(self.array.n_elements):
             ab = (self.array.ab[idx][0], self.array.ab[idx][1])
             self.pinger_contour[idx].coe_generate_contour(ab, idx, self.array)
@@ -92,6 +96,17 @@ class World(object):
         
             self.hydrophone[idx].move(self.array.element_pos[idx])
             plot_object(self.hydrophone[idx], self.ax)     
+            
+    def init_animation(self):
+        pass
+            
+    def update_animation(self):
+        # Generate new location
+        print("hello")
+        
+        return self.plot_obj
+        
+        
     
 class Worldmember(object):
     pass
@@ -116,6 +131,7 @@ def simulate_pinger_location():
     # Update pinger measurement
     world.update_pinger_measurement()
     
+    animation.FuncAnimation(fig, world.update_animation, frame=300, fargs=2)
     plt.show()
     
 simulate_pinger_location()

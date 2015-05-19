@@ -8,8 +8,18 @@ DIM1 = 0
     
 
 class Array(Phys_Obj):
-    def __init__(self, locations):
+    def __init__(self):
         super(Array, self).__init__()
+        
+        # Define hydrophones
+        self.hydrophones = Phys_Obj()
+        
+    def define(self, locations):
+        """Specify the hydrophone configuration by passing an Nx3 numpy
+        array, where each row is an XYZ coordinate representing a coordinate
+        location of a hydrophone with respect to the array origin.
+        """
+        self.hydrophones.set_XYZ(XYZ=locations)
 
         # Generate immediate parameters
         self.n_elements = locations.shape[0]
@@ -20,8 +30,6 @@ class Array(Phys_Obj):
         # Enumerate all pair combinations
         self.pairs = [ID for ID in 
             itertools.combinations(range(self.n_elements), 2)]
-
-        print(self.pairs)
         
 
         # compute pair properties
@@ -46,19 +54,17 @@ class Array(Phys_Obj):
             self.COM.append(l0+(l1-l0)/2)
             
             # Get nNormal for each pair
-            norm_vect = np.array( [[-d_vect[0,2],0,d_vect[0,0]]] )
+            norm_vect = np.array( [[-d_vect[2],0,d_vect[0]]] )
             norm_uvect = norm_vect / np.linalg.norm(norm_vect)
             self.norm_uvect.append(norm_uvect)
             
             # Get y_based rotation
-            print(norm_uvect)
             abs_y_rot = np.arccos( np.dot(norm_vect[DIM1],K_HAT[DIM1])/np.linalg.norm(norm_vect) )
             if (norm_uvect[DIM1,0] < 0):
                 y_rot = -abs_y_rot
             else:
                 y_rot = abs_y_rot
-                
-            print y_rot
+
             self.pair_y_rot.append(y_rot)
             
     
@@ -70,7 +76,7 @@ class Array(Phys_Obj):
     
     def compute_ab_coefficients(self):
         n_pairs = len(self.pairs)
-        
+
         i = 0
         self.ab = []
         for i in range(n_pairs):
@@ -90,6 +96,10 @@ class Array(Phys_Obj):
     def print_drawing(self):
         pass
         
+class Hydrophones(Phys_Obj):
+    def __init__(self):
+        super(Hydrophones, self).__init__()
+ 
 # ##################################
 ############# Functions ##########
 ##################################

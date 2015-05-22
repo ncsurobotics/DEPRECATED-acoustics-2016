@@ -6,7 +6,12 @@ import struct
 import logging
 from os import path
 
-import pypruss  # Python PRUSS wrapper
+import platform
+if platform.platform() == 'Linux-3.8.13-bone47-armv7l-with-debian-7.4':
+    import pypruss  # Python PRUSS wrapper
+else:
+    print("ADC: Not on BBB. Pypruss is unavailable")
+    
 import numpy as np
 
 from . import boot

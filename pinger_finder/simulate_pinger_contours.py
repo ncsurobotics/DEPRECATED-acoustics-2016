@@ -16,7 +16,7 @@ HYDROPHONE_DEFAULT_LOCATIONS = np.array([
     [ 15e-3,0,(-15e-3)/2], 
     [     0,0,(15e-3)/2]
 ])
-PINGER_DEFAULT_LOCATION = np.array([[20,40,-50]])
+PINGER_DEFAULT_LOCATION = np.array([[0,60,-50]])
 
 # ############################
 ##### Init Functions ########
@@ -51,7 +51,8 @@ def init_3D_plotting_view(ax):
 
 def plot_contour(contour_obj, ax):
     o = contour_obj
-    contour = ax.plot_wireframe(o.X, o.Y, o.Z, rstride=1, cstride=1, color=np.random.rand(3,1))
+    #contour = ax.plot_wireframe(o.X, o.Y, o.Z, rstride=1, cstride=1, color=np.random.rand(3,1))
+    contour = ax.plot_wireframe(o.X, o.Y, o.Z, rstride=1, cstride=1)
     return contour
     
 def plot_object(phys_obj, ax=None):
@@ -101,7 +102,19 @@ def plot_object2(phys_obj, ax=None):
         # initialize matplotlib figure entity, and update <obj>.pdata with
         # the returned particle data object.
         o.pdata = ax.scatter(o.X,o.Y,o.Z,c='y')
-
+        
+def generate_contours(env, array, pinger, pinger_contour, ax):
+    # Measure channel length for each hydrophone
+    time_vals = acoustics.generate_arrival_times(env, array, pinger)
+    
+    # plot something
+    array.bulk_compute_ab_from_distances(time_vals*env.c)
+    
+    for idx in range(array.n_elements):
+            ab = (array.ab[idx][0], array.ab[idx][1])
+            pinger_contour[idx].coe_generate_contour(ab, idx, array)
+            
+            plot_contour(pinger_contour[idx], ax)
     
 # #############################
 ##### Time Functions #########
@@ -116,14 +129,16 @@ def pinger_path_function(t):
         """computes values of a time domain sinusoid starting at offset/t0 and
         ending at t1
         """
-        val = (ampl*(sin(w*(t-t0) - phase) - sin(-phase)) + offset) * (heaviside(t-t0)-heaviside(t-t1))
+        val = (ampl*(np.sin(w*(t-t0) - phase) - np.sin(-phase)) + offset) * (heaviside(t-t0)-heaviside(t-t1))
         return val
         
     base_array = PINGER_DEFAULT_LOCATION
         
-    XYZ = (base_array + 
-        2*(heaviside(t-1)-heaviside(t-6))
-    )
+    XYZ = base_array + np.array([[
+        arc(t,1,8,25,2,0,0),
+        0,
+        arc(t,1,8,25,1,np.pi/2,0)
+    ]])
     
     return XYZ
 
@@ -173,13 +188,25 @@ class World(object):
         #return self.pinger.pdata
     
     def update_animation(self, i):
-        # Generate new location
-        plot_object(self.array.hydrophones)
+        self.ax.cla()
         
+        # Plot Hydrophones
+        plot_object(self.array.hydrophones, self.ax)
+        
+        # Plot (moving) pinger
         self.pinger.move(pinger_path_function(i*dt))
         plot_object(self.pinger, self.ax)
         
-        return self.array.hydrophones.pdata
+        # Compute times
+        generate_contours(self.env, self.array, self.pinger, self.pinger_contour, self.ax)
+            
+        # Set Plotting limits
+        lim = 50
+        self.ax.set_xlim(-lim, lim)
+        self.ax.set_ylim(-lim, lim)
+        self.ax.set_zlim(-lim, lim)
+        
+        return (self.array.hydrophones.pdata, self.pinger.pdata)
         #return self.pinger.pdata
         
         
@@ -203,7 +230,7 @@ def simulate_pinger_location():
     
     ani = animation.FuncAnimation(fig, world.update_animation,
         init_func=world.init_animation,
-        interval=5, frames=100)
+        interval=100, frames=100)
     plt.show()
     
 simulate_pinger_location()

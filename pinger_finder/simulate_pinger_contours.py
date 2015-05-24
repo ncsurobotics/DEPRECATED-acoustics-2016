@@ -105,7 +105,7 @@ def plot_object2(phys_obj, ax=None):
         
 def generate_contours(env, array, pinger, pinger_contour, ax):
     # Measure channel length for each hydrophone
-    time_vals = acoustics.generate_arrival_times(env, array, pinger)
+    time_vals = generate_arrival_times(env, array, pinger)
     
     # plot something
     array.bulk_compute_ab_from_distances(time_vals*env.c)
@@ -142,6 +142,32 @@ def pinger_path_function(t):
     
     return XYZ
 
+def generate_arrival_times(env,array,pinger):
+    n = array.n_elements
+    dist = []
+    for el in range(n):
+        element_position = array.position+array.element_pos[el]
+        dist.append( np.linalg.norm(pinger.position - element_position) )
+    
+    times = np.array(dist)/env.c
+    
+    return times - np.amin(times)
+
+
+        
+def process_times_for_pinger_loc(time_vals, array, env):
+    xyz = None
+    
+    # Make distance
+    dists = time_vals*env.c
+    
+    # Generate a and b coefficients
+    # amongst every pair of hydrophones
+    array.bulk_compute_ab_from_distances(dists)
+    
+    # solve either with linear lines or hyperbolas
+
+    return xyz
     
 # ############################
 ##### World Class ###########
@@ -206,11 +232,59 @@ class World(object):
         self.ax.set_ylim(-lim, lim)
         self.ax.set_zlim(-lim, lim)
         
+        # Print for analytical purposes
+        if i == 50:
+            print("Printing data")
+            with open("./saved_data/ArrayData.txt", 'w') as f:
+                f.write("For contour #1\n")
+                print_like_nparray(f,self.pinger_contour[0].X)
+                f.write("\n\n")
+                print_like_nparray(f,self.pinger_contour[0].Y)
+                f.write("\n\n")
+                print_like_nparray(f,self.pinger_contour[0].Z)
+                
+                f.write("\n\n")
+                f.write("For contour #2\n")
+                print_like_nparray(f,self.pinger_contour[1].X)
+                f.write("\n\n")
+                print_like_nparray(f,self.pinger_contour[1].Y)
+                f.write("\n\n")
+                print_like_nparray(f,self.pinger_contour[1].Z)
+                
+                f.write("\n\n")
+                f.write("For contour #3\n")
+                print_like_nparray(f,self.pinger_contour[2].X)
+                f.write("\n\n")
+                print_like_nparray(f,self.pinger_contour[2].Y)
+                f.write("\n\n")
+                print_like_nparray(f,self.pinger_contour[2].Z)
+                
+                
+                
+     
         return (self.array.hydrophones.pdata, self.pinger.pdata)
         #return self.pinger.pdata
         
         
-    
+def print_like_nparray(f, data):
+    shape = data.shape
+    f.write('[')
+    for r in range(shape[0]):
+        f.write('[') 
+        
+        for c in range(shape[1]):
+            f.write('%.3f' % data[r,c])
+            if c < (shape[1]-1):
+                f.write(', ')
+            else:
+                f.write(']')
+            
+        if r < (shape[0]-1):
+            f.write(',\n')
+        else:
+            f.write(']')
+                
+
 class Worldmember(object):
     pass
     

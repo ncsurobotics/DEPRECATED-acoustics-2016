@@ -3,6 +3,13 @@ from cmath import phase
 
 from scipy.fftpack import fft
 
+"""
+Phase_diff = phase_a - phase_b.
+  ^^^ Thus, a positive phase_diff means that signal "a" leads signal
+  "b". In most familiar terms, this means that a signal struck reciever
+  "a" before it struck receiver "b".
+"""
+
 
 def phase_diff_to_x_and_y(phase_diff, fundamental_freq):
     # Parameters
@@ -58,7 +65,7 @@ def calculate_heading(target_freq, fs, a, b):
     "d" constant used in the phase_diff_to_x_and_y function.
     """
 
-    # 200 kHz sample rate (Hz)
+    # sample rate (Hz)
     sample_rate = fs
 
     # Highest frequency captured - limited by sample rate (Hz)
@@ -93,3 +100,88 @@ def calculate_heading(target_freq, fs, a, b):
 
     # Calculate and return heading using tan-1(y/x)
     return math.atan2(y, x) * 180 / math.pi
+    
+def get_phase_diff(target_freq, fs, a, b):
+    # sample rate (Hz)
+    sample_rate = fs
+
+    # Highest frequency captured - limited by sample rate (Hz)
+    high_freq_bound = sample_rate / 2
+
+    # Number samples (bins)
+    sample_number = len(a)
+
+    # Signal freq held in each index of arrays (Hz/bin)
+    scale = sample_rate / sample_number
+
+    # Index of arrays for complex number we want (bin)
+    index = target_freq / scale
+
+    # Update target frequency to one that matches scale of fft
+    target_freq = scale * index
+
+    # Getting our phases (radians)
+    a_phase = phase(fft(a)[index])
+    b_phase = phase(fft(b)[index])
+    b_phase = relative_wraparound(a_phase, b_phase)
+    print("a_phase = %f pi radians" % (a_phase / math.pi))
+    print("b_phase = %f pi radians" % (b_phase / math.pi))
+
+    # Compute phase difference
+    phase_diff = a_phase - b_phase
+    print("a leads b by %fpi radians" % (phase_diff / math.pi))
+    
+def phasediff_2_timediff(phase_diff, period):
+    return target_period * phase_diff / (2 * np.pi)
+    
+def compute_time_diff(target_freq, fs, a, b):
+    """
+    Takes a pair of signal vs. time data "a" and "b", and computes time 
+    difference relative to b signal.
+    
+        target_freq: frequency of signal emitted by source
+        fs: Sampling frequency used to capture signals "a" and  "b"
+        a: numpy array of sinusoidal signal data for channel a
+        b: numpy array of sinusoidal signal data for channel b
+        
+    """
+    # get phase
+    phase_diff = get_phase_diff(target_freq, fs, a, b)
+    
+    # phase_diff to distance
+    target_period = 1/target_freq
+    ta_minus_tb = phasediff_2_timediff(phase_diff, target_period)
+    
+    return ta_minus_tb
+    
+# ############################
+### System level function ####
+##############################
+
+def compute_relative_delay_times(adc, target_freq):
+    """
+    Computes the relative delay times for each hydrophone pair
+    """
+    # Initialize parameters
+    n = adc.n_channels
+    y = adc.y
+    delay = np.array([0]*n)
+    
+    # get relative delays for each comb
+    for el in range(1,n):
+        delay[el] = compute_time_diff(
+            target_freq, 
+            adc.sample_rate, 
+            adc.y[el], 
+            adc.y[0])
+        
+    # print delay for debugging purposes
+    print(delay)
+    
+    # Adjust for sampling delays
+    delay = delay - np.array(adc.delay)
+    delay = delay - np.amin(delay)
+    
+    # Return values
+    return delay
+    

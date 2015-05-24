@@ -9,7 +9,31 @@ import quickplot
 from os import path
 LOG_DIR = path.join(path.dirname(path.realpath(__file__)), "saved_data/")
 
+# ##############################################
+#### Settings ##################################
+################################################
+
+WORLD_ORIGIN = np.array([[0,0,0]])
+
+ARRAY_DEFAULT_LOCATION = WORLD_ORIGIN
+
+# Specify hydrophone locations relative to array origin
+HYDROPHONE_3_DEFAULT_LOCATIONS = np.array([
+    [-15e-3,0,(-15e-3)/2],
+    [ 15e-3,0,(-15e-3)/2], 
+    [     0,0,(15e-3)/2]
+])
+
+TARGET_FREQ = 22e3 # Frequency of the pinger in hertz
+
+# ##############################################
+#### General Purpose Functions #################
+################################################
+
 def load_matplotlib():
+    """Loads the matplotlib module
+    so that we can plot stuff.
+    """
     print("Loading Matplotlib library...")
     import matplotlib
 
@@ -25,36 +49,25 @@ def load_matplotlib():
     return plt
 
 
+# ##################################
+#### Acoustics Class ###############
+####################################
+
 class Acoustics():
 
     def __init__(self):
+        # Initialize aquisition/behavior part of acoustics system
         self.adc = ADS7865()
         self.filt = LTC1564()
         self.plt = None
         self.auto_update = None
         
-    def close(self):
-        self.adc.unready()
+        # Initialize abstract hydrophone object
+        self.array = hydrophones.Array() 
         
-    def preset(self, sel):
-        """configures electronics quickly based on the
-        sel (int) that the uses supplies. See ADC.py's 
-        very own preset function for a more detailed
-        description of each preset."""
-        if sel == 0:
-            self.adc.preset(0)
-            self.filt.gain_mode(0)
-            self.auto_update = True
-
-        elif sel == 100:
-            self.adc.preset(100)
-            self.filt.gain_mode(15)
-            self.auto_update = False
-
-        elif sel == 101:
-            self.adc.preset(101)
-            self.filt.gain_mode(0)
-            self.auto_update = True
+        # Define hydrophone locations
+        self.array.move(ARRAY_DEFAULT_LOCATION)
+        self.array.define(HYDROPHONE_3_DEFAULT_LOCATIONS)
 
     def compute_pinger_direction(self):
         val = locate_pinger.main(self.adc, dearm=False)
@@ -65,13 +78,15 @@ class Acoustics():
             return None
         else:
             return val
-    
-    def plot_recent(self):
-        if self.plt==None:
-            self.plt = load_matplotlib()
+
+    def compute_pinger_direction2(self):
+        # Grab a sample of pinger data
+        self.adc.get_data()
         
-        quickplot.main(self.adc, self.plt, recent=True)
-        
+        # Estimate pinger location
+        delays = compute_relative_delay_times(self.adc, TARGET_FREQ)
+        info_string = self.array.get_direction(times[0:3])
+                                
     def condition(self):
         """Automatically determines the correct amount of gain to
         apply to the signal, and configures the LTC1564s accordingly. Also,
@@ -125,11 +140,45 @@ class Acoustics():
             return
             
         self.filt.gain_mode(new_gain)
+
+    def plot_recent(self):
+        """Shows the user a plot of the most recent data that
+        was collected.
+        """
+        if self.plt==None:
+            self.plt = load_matplotlib()
+        
+        quickplot.main(self.adc, self.plt, recent=True)
                 
-        # if vpp of data is greater than max, decrease signal gain
+    def preset(self, sel):
+        """configures electronics quickly based on the
+        sel (int) that the uses supplies. See ADC.py's 
+        very own preset function for a more detailed
+        description of each preset."""
+        if sel == 0:
+            self.adc.preset(0)
+            self.filt.gain_mode(0)
+            self.auto_update = True
+
+        elif sel == 100:
+            self.adc.preset(100)
+            self.filt.gain_mode(15)
+            self.auto_update = False
+
+        elif sel == 101:
+            self.adc.preset(101)
+            self.filt.gain_mode(0)
+            self.auto_update = True
     
     def set_auto_update(self, bool):
         self.auto_update = bool
+        
+    def close(self):
+        self.adc.unready()
+        
+# ##################################
+#### Logging Tool ##################
+####################################
         
 class Logging():
     def __init__(self):
@@ -152,34 +201,5 @@ class Logging():
         
     def close(self):
         self.adc.unready()
-
-
-def generate_arrival_times(env,array,pinger):
-    n = array.n_elements
-    dist = []
-    for el in range(n):
-        element_position = array.position+array.element_pos[el]
-        dist.append( np.linalg.norm(pinger.position - element_position) )
-    
-    times = np.array(dist)/env.c
-    
-    return times - np.amin(times)
-
-
-        
-def process_times_for_pinger_loc(time_vals, array, env):
-    xyz = None
-    
-    # Make distance
-    dists = time_vals*env.c
-    
-    # Generate a and b coefficients
-    # amongst every pair of hydrophones
-    array.bulk_compute_ab_from_distances(dists)
-    
-    # solve either with linear lines or hyperbolas
-    
-    
-    return xyz
     
     

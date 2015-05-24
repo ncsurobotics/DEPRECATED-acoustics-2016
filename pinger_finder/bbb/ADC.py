@@ -142,6 +142,7 @@ class ADS7865():
             self.arm_status
             self.seq_desc
             self.ch
+            self.delay
             self.threshold
             self.cr_specd
             self.modified
@@ -196,6 +197,7 @@ class ADS7865():
         self.arm_status = "unknown"
         self.seq_desc = "unknown"
         self.ch = ['unknown'] * 4
+        self.delay = [-99]*4
         
         self.threshold = DEFAULT_THRESHOLD
         self.sr_specd = 0  # parameter for keeping the up with the last spec
@@ -348,11 +350,21 @@ class ADS7865():
 
             # Update n channels
             self.n_channels = 4
+          
 
         if self.sr_specd:       # Last parameter that the user specd was SR
             self.update_sample_rate(self.sample_rate)
         else:
             conv_rate_warning()
+        
+    def update_delays():
+        if self.n_channels == 2:
+            self.delay = [0,0]
+        elif self.n_channels == 4:
+            delay = 1/self.conversion_rate
+            self.delay = [0,0,delay,delay] 
+        else:
+            raise IOError("%r is not a valid channel size." % self.n_channels)
 
     def preset(self, sel):
         """
@@ -495,6 +507,9 @@ class ADS7865():
                 + " exceeds the system's limit"
                 + " (%dKHz)" % (CONV_RATE_LIMIT / 1000)
             )
+            
+        # Update delay config (dependent on conversion rate)
+        self.update_delays()
 
     def update_deadband_ms(self, ms):
         print("ADS7865: Deadband length set to %dms" % int(ms))

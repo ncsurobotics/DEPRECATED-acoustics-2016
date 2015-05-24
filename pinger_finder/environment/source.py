@@ -5,10 +5,12 @@ class Pinger(Phys_Obj):
     def __init__(self):
         super(Pinger, self).__init__()
 
+
 class Pinger_Contour(Phys_Obj):
     def __init__(self):
         super(Pinger_Contour, self).__init__()
         
+        # Initialize locations
         self.X = None
         self.Y = None
         self.Z = None
@@ -18,6 +20,12 @@ class Pinger_Contour(Phys_Obj):
         
         
     def coe_generate_contour(self,ab, array_pair_idx, array):
+        """takes the hydrophone_location data from "array" at idx "array_pair_idx",
+        and the ab coefficient data corresponding to that pair, and generates matrix
+        of data points drawing the hyperbolic contour of possible hydrophone locations.
+        This function also takes care of aligning/orienting the contour data to the 
+        orientation of the hydrophone pair (using data contained in the array object).
+        """ 
         a = ab[0]
         b = ab[1]
         
@@ -43,6 +51,7 @@ class Pinger_Contour(Phys_Obj):
         self.Y = Y
         self.Z = Z
         
+        # Final step is to orient the contour to the hydrophone pair
         self.match_contour_to_pair(array_pair_idx, array)
         
     def match_contour_to_pair(self, array_pair_idx, array):

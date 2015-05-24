@@ -1,5 +1,6 @@
 import numpy as np
 import itertools
+import source
 
 from tools3d import Phys_Obj
 
@@ -13,6 +14,9 @@ class Array(Phys_Obj):
         
         # Define hydrophones
         self.hydrophones = Phys_Obj()
+        
+        # Define Pinger_Contours
+        self.pinger_contours = []
         
     def define(self, locations):
         """Specify the hydrophone configuration by passing an Nx3 numpy
@@ -28,8 +32,9 @@ class Array(Phys_Obj):
         self.element_pos = locations
         
         # Enumerate all pair combinations
-        self.pairs = [ID for ID in 
-            itertools.combinations(range(self.n_elements), 2)]
+        self.pairs = [
+            ID for ID in itertools.combinations(range(self.n_elements), 2)
+        ]
         
 
         # compute pair properties

@@ -233,32 +233,38 @@ class World(object):
         self.ax.set_zlim(-lim, lim)
         
         # Print for analytical purposes
-        if i == 50:
+        if i == 20:
             print("Printing data")
             with open("./saved_data/ArrayData.txt", 'w') as f:
-                f.write("For contour #1\n")
+                f.write("AX = np.array(")
                 print_like_nparray(f,self.pinger_contour[0].X)
-                f.write("\n\n")
+                f.write(")\n\n")
+                f.write("AY = np.array(")
                 print_like_nparray(f,self.pinger_contour[0].Y)
-                f.write("\n\n")
+                f.write(")\n\n")
+                f.write("AZ = np.array(")
                 print_like_nparray(f,self.pinger_contour[0].Z)
+                f.write(")\n\n")
                 
-                f.write("\n\n")
-                f.write("For contour #2\n")
+                f.write("BX = np.array(")
                 print_like_nparray(f,self.pinger_contour[1].X)
-                f.write("\n\n")
+                f.write(")\n\n")
+                f.write("BY = np.array(")
                 print_like_nparray(f,self.pinger_contour[1].Y)
-                f.write("\n\n")
+                f.write(")\n\n")
+                f.write("BZ = np.array(")
                 print_like_nparray(f,self.pinger_contour[1].Z)
+                f.write(")\n\n")
                 
-                f.write("\n\n")
-                f.write("For contour #3\n")
+                f.write("CX = np.array(")
                 print_like_nparray(f,self.pinger_contour[2].X)
-                f.write("\n\n")
+                f.write(")\n\n")
+                f.write("CY = np.array(")
                 print_like_nparray(f,self.pinger_contour[2].Y)
-                f.write("\n\n")
+                f.write(")\n\n")
+                f.write("CZ = np.array(")
                 print_like_nparray(f,self.pinger_contour[2].Z)
-                
+                f.write(")")
                 
                 
      

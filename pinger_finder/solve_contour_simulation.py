@@ -1,10 +1,10 @@
 import numpy as np
 import numpy.ma as ma
-import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
-fig = plt.figure()
-ax = fig.add_subplot(111, projection='3d')
-ax.hold(True)
+# import matplotlib.pyplot as plt
+# from mpl_toolkits.mplot3d import Axes3D
+# fig = plt.figure()
+# ax = fig.add_subplot(111, projection='3d')
+# ax.hold(True)
 
 
 TOL = 2
@@ -206,13 +206,6 @@ C = np.array([CX,CY,CZ])
 #mx_temp = ma.masked_values(A[0]-B[0], 0, atol=1)
 #mx_X1 = ma.masked_array(mx_temp.data, ~mx_temp.mask)
 
-# perform a search that finds indices amongsT A B C matrices that represent 
-# nearly identical locations in 3D space (say a tolerance of 1 meter in any 
-# direction).
-
-# Perhaps to make search expandable to 4 hydrophones, search should work with
-# only two matrices of arbitrary size at a time.
-
 def correlate(A, B, tol):
     """
     Generate a mask of available indices that represent identical
@@ -239,9 +232,11 @@ def correlate(A, B, tol):
                     dist = np.sqrt( (y2 - y1)**2 + (z2 - z1)**2)
                     if dist < tol:
                         tmp.append((r1,c1,r2,c2))
+                        
+                    # Keep count of how many comparisons get performed
                     i += 1
                     
-    #print("%d iterations! within X and Y matrices" % i)
+    print("Perform %d comparisons among X and Y matrices!" % i)
                 
     # save mask value
     mask = tmp
@@ -257,8 +252,11 @@ def correlate(A, B, tol):
         if dist < tol:
             tmp.append((r1,c1,r2,c2))
             #print("(%d, %d, %d, %d) -> %.2f" % (r1,c1,r2,c2,dist))
+            
+        # Keep count of how many comparisons get performed
         i += 1
-    print("%d iterations!" % i)
+        
+    print("Performed %d comparisons among Z matrices!" % i)
     # save mask
     mask = tmp
     
@@ -277,7 +275,7 @@ def masked_correlate(A, B, tol, mask):
     
     # Check every Y and Z indice, and see if they represent points that are close
     # together.
-    for (r1,c1, _, _) in mask:
+    for (r1,c1) in mask:
         for r2 in range(B[0].shape[0]):
             for c2 in range(B[0].shape[1]):
                 y1 = A[1,r1,c1]
@@ -289,9 +287,11 @@ def masked_correlate(A, B, tol, mask):
                 dist = np.sqrt( (y2 - y1)**2 + (z2 - z1)**2)
                 if dist < tol:
                     tmp.append((r1,c1,r2,c2))
+                    
+                # Keep count of how many comparisons get performed
                 i += 1
                     
-    #print("%d iterations! within X and Y matrices" % i)
+    print("Perform %d comparisons among X and Y matrices!" % i)
                 
     # save mask value
     mask = tmp
@@ -307,25 +307,55 @@ def masked_correlate(A, B, tol, mask):
         if dist < tol:
             tmp.append((r1,c1,r2,c2))
             #print("(%d, %d, %d, %d) -> %.2f" % (r1,c1,r2,c2,dist))
+            
+        # Keep count of how many comparisons get performed
         i += 1
-    print("%d iterations!" % i)
+        
+    print("Performed %d comparisons among Z matrices!" % i)
     # save mask
     mask = tmp
     
     return mask
     
-mask = correlate(A, B, 2)
-print("Found Reduced posibilities to %d in first search!" % len(mask))
-mask = masked_correlate(A, C, 2, mask)
-print("Found Reduced posibilities to %d in second search!" % len(mask))
-
-for (r1, c1, _, _) in mask:
-    ax.scatter(A[0,r1,c1], A[1,r1,c1], A[2,r1,c1])
+def get_unit_vector(XYZ, idx):
+    X = XYZ[0,idx[0],idx[1]]
+    Y = XYZ[1,idx[0],idx[1]]
+    Z = XYZ[2,idx[0],idx[1]]
     
-# Set Plotting limits
-lim = 50
-ax.set_xlim(-lim, lim)
-ax.set_ylim(-lim, lim)
-ax.set_zlim(-lim, lim)
-plt.show()
+    XYZ = np.array([X,Y,Z])
+    xyz = XYZ/np.linalg.norm(XYZ)
+    
+    return xyz
+# #########################
+####### Main Program ######
+###########################
+    
+# perform a search that finds indices amongst A B C matrices that represent 
+# nearly identical locations in 3D space (say a tolerance of 1 meter in any 
+# direction). The search is expandable to 4 hydrophones when the need arises.
+
+# Compare matrices A and B
+mask = correlate(A, B, 2)
+print("Reduced total posibilities to %d in first search!" % len(mask))
+
+# Compare matrices A and C, omitting and previously rejected values
+mask = masked_correlate(A, C, 2, [i[0:2] for i in mask])
+print("Reduced total posibilities to %d in second search!" % len(mask))
+
+# Sort the mask to such that it yields ascending y values.
+mask = sorted(mask, key=lambda mask: A[1,mask[0],mask[1]])
+
+# Get unit vector pointing to pinger
+max_idx = (mask[0][-1], mask[1][-1])
+pinger_unit_vector = get_unit_vector(A, max_idx)
+
+# for (r1, c1, _, _) in mask:
+#     ax.scatter(A[0,r1,c1], A[1,r1,c1], A[2,r1,c1])
+#     
+# # Set Plotting limits
+# lim = 50
+# ax.set_xlim(-lim, lim)
+# ax.set_ylim(-lim, lim)
+# ax.set_zlim(-lim, lim)
+# plt.show()
                 

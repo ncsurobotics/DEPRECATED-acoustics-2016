@@ -1,4 +1,5 @@
 from sys import argv
+import ConfigParser
 
 from bbb.ADC import ADS7865
 from bbb.LTC1564 import LTC1564
@@ -56,6 +57,10 @@ def load_matplotlib():
 class Acoustics():
 
     def __init__(self):
+        # load config file
+        config = ConfigParser.ConfigParser()
+        config_file = open("config.ini", "a")
+        
         # Initialize aquisition/behavior part of acoustics system
         self.adc = ADS7865()
         self.filt = LTC1564()
@@ -68,6 +73,9 @@ class Acoustics():
         # Define hydrophone locations
         self.array.move(ARRAY_DEFAULT_LOCATION)
         self.array.define(HYDROPHONE_3_DEFAULT_LOCATIONS)
+        
+        # Various parameter used later in this class
+        self.valid_signal_flg = ''
 
     def compute_pinger_direction(self):
         val = locate_pinger.main(self.adc, dearm=False)
@@ -86,7 +94,19 @@ class Acoustics():
         # Estimate pinger location
         delays = compute_relative_delay_times(self.adc, TARGET_FREQ)
         info_string = self.array.get_direction(times[0:3])
-                                
+        
+    def calibrate(self):
+        cal_data = config.get(acoustics, 'cal_data')
+        
+        # Print cal data for diagnostic purposes
+        print("acoustics.py: Currently, the following delays are "
+            + "applied to the system:")
+        for ch_cal in cal_data:
+            print(" ch {0} is offset by {1} ".format(self.adc.ch[i], ch_cal)
+                + "seconds.")
+                
+        # Loop in getting samples until the us
+    
     def condition(self):
         """Automatically determines the correct amount of gain to
         apply to the signal, and configures the LTC1564s accordingly. Also,
@@ -96,7 +116,7 @@ class Acoustics():
         if it just started incrementally going up in the first place.
         """
         max = 4.5
-        min = 4
+        min = self.adc.threshold
         max_gain = self.filt.get_n_gain_states()
         
         # check if autoupdate is on
@@ -108,8 +128,8 @@ class Acoustics():
         
         # grab some metasample data
         vpp = np.amax(self.adc.y[0]) - np.amin(self.adc.y[0])
-        old_gain = self.filt.Gval+1
-        raw_vpp = vpp/old_gain
+        old_gain = self.filt.Gval + 1
+        raw_vpp = vpp / old_gain
         
         
         i = 0
@@ -122,7 +142,14 @@ class Acoustics():
             while (i+old_gain < max_gain):
                 i += 1
                 if raw_vpp * (old_gain+i) >= min:
+                
+                    # This will be the new analog gain value
                     new_gain = old_gain+i
+                    
+                    # Raise flag saying signal is valid
+                    self.valid_signal_flg = True
+                    
+                    # exit section
                     break
                     
         elif vpp > max:
@@ -133,10 +160,27 @@ class Acoustics():
             while (old_gain-i > 1):
                 i += 1
                 if raw_vpp * (old_gain-i) <= max:
+                
+                    # This will be the new analog gain value
                     new_gain = old_gain-i
+                    
+                    # Raise flag saying signal is valid
+                    self.valid_signal_flg = True
+                    
+                    # exit section
                     break
                 
         else:
+            # Analog system gain is incapable of achieving desired system gain
+            self.valid_signal_flg = False
+            
+            # Space reserved for digital gain code if necessary
+            # # <<>>> # #
+            # "May need to write function to artificially reduce
+            # threshold value for the PRU assembly code, as a sort of means
+            # to maintain consistent behavior while allowing the trigger to
+            # work properly.
+            
             return
             
         self.filt.gain_mode(new_gain)

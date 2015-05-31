@@ -378,7 +378,7 @@ class ADS7865():
             self.update_deadband_ms(1)
             self.set_sample_len(1e3)
             self.update_sample_rate(800e3)
-            self.threshold = .1
+            self.threshold = 1
             self.ez_config(0)
 
         elif sel == 100:
@@ -570,13 +570,38 @@ class ADS7865():
     ############################
     def update_config_text(self, seq, channels):
         """
+        Takes the formatted strings seq and channels uses them to
+        update internal parameters useful for printing out the 
+        config of the ADC. 
+        
+        args:
+            seq: string acting as a oneliner describing the ADC config.
+            examples includes "CHA0±/CHB0± -> CHA0±/CHB0±" or just
+            "CHA0±/CHB0±"
+            
+            channels: list of string containing the same information
+            embedded in seq, sans the "/" and "->" visual formatting
+            stuff.
         """
         # Update human readable description
         self.seq_desc = seq
 
         # Update channel descriptions
+        self.ch_idx = []
         for i in range(TOTAL_CHANNELS):
             self.ch[i] = channels[i]
+            
+            if ch[i] == DIFF_PAIR_1:
+                self.ch_idx.append(1)
+            elif ch[i] == DIFF_PAIR_2:
+                self.ch_idx.append(2)
+            elif ch[i] == DIFF_PAIR_3:
+                self.ch_idx.append(3)
+            elif ch[i] == DIFF_PAIR_4:
+                self.ch_idx.append(4)
+            else:
+                raise ValueError('ch "{0}" is an invalid '.format(channels[i])
+                    + "channel.")
 
     def V_to_12bit_Hex(self, Vin):
         """

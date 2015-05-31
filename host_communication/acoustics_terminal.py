@@ -120,6 +120,7 @@ def main_loop():
                     + "c: continue terminal program.\n"
                     + "p: Plot last sample collection.\n"
                     + "test_config: Load the acoustic test config\n"
+                    + "tog_aut: Toggle autonomous condition mode\n"
                     + "q: Quit this app.\n")
                 print(list_of_cmds)
                 int_input = raw_input(">> ")
@@ -144,6 +145,9 @@ def main_loop():
                 elif (int_input=="test_config"):
                     acoustics.preset(101)
                     
+                elif (int_input=="tog_aut"):
+                    acoustics.auto_update = not acoustics.auto_update
+                
                  # Quit prog
                 elif (int_input=='q'):
                     print("Closing Port %s." % PORT_NAME)

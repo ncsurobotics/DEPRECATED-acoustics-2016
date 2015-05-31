@@ -357,7 +357,7 @@ class ADS7865():
         else:
             conv_rate_warning()
         
-    def update_delays():
+    def update_delays(self):
         if self.n_channels == 2:
             self.delay = [0,0]
         elif self.n_channels == 4:
@@ -576,8 +576,8 @@ class ADS7865():
         
         args:
             seq: string acting as a oneliner describing the ADC config.
-            examples includes "CHA0±/CHB0± -> CHA0±/CHB0±" or just
-            "CHA0±/CHB0±"
+            examples includes "CHA0+/CHB0+ -> CHA1+"/CH1+" or just
+            "CHA0+/CHB0+"
             
             channels: list of string containing the same information
             embedded in seq, sans the "/" and "->" visual formatting
@@ -591,14 +591,16 @@ class ADS7865():
         for i in range(TOTAL_CHANNELS):
             self.ch[i] = channels[i]
             
-            if ch[i] == DIFF_PAIR_1:
+            if self.ch[i] == DIFF_PAIR_1:
                 self.ch_idx.append(1)
-            elif ch[i] == DIFF_PAIR_2:
+            elif self.ch[i] == DIFF_PAIR_2:
                 self.ch_idx.append(2)
-            elif ch[i] == DIFF_PAIR_3:
+            elif self.ch[i] == DIFF_PAIR_3:
                 self.ch_idx.append(3)
-            elif ch[i] == DIFF_PAIR_4:
+            elif self.ch[i] == DIFF_PAIR_4:
                 self.ch_idx.append(4)
+            elif self.ch[i] == '':
+                pass # Blank channel
             else:
                 raise ValueError('ch "{0}" is an invalid '.format(channels[i])
                     + "channel.")
@@ -709,8 +711,10 @@ class ADS7865():
             self.conversion_rate = CR
 
         if CR == 0:
-            print("CR currently set to 0. Please specify a conversion rate.")
-            exit(1)
+            raise ValueError("CR currently set to 0 (DEFAULT), indicating that"
+                + "user forgot to preset the sample/conversion rate."
+                + "prior to calling this function.")
+
 
         CR_BITECODE = int(round(1.0 / CR * F_CLK))  # Converts user CR input to Hex.
 

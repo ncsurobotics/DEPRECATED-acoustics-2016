@@ -7,6 +7,8 @@ import locate_pinger
 import numpy as np
 import quickplot
 
+from environment import hydrophones
+
 from os import path
 LOG_DIR = path.join(path.dirname(path.realpath(__file__)), "saved_data/")
 

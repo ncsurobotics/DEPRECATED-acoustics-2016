@@ -93,6 +93,7 @@ def task_manager(input):
         
 
 def main_loop():
+    viewer_active = True
 
     while 1:
         int_signal = ''
@@ -105,6 +106,10 @@ def main_loop():
             else:
                 print("I got nothin.")
                 acoustics.condition()
+                
+            
+            if viewer_active:
+                acoustics.plot_recent(fourier=True)
                 
             # Now see if someone is trying to do something on the backend
             while sys.stdin in select.select([sys.stdin], [], [], 0)[0]:
@@ -121,6 +126,7 @@ def main_loop():
                     + "p: Plot last sample collection.\n"
                     + "test_config: Load the acoustic test config\n"
                     + "tog_aut: Toggle autonomous condition mode\n"
+                    + "tog_viewer: Toggle feature that plots captured signal to debugger on every cycle"
                     + "q: Quit this app.\n")
                 print(list_of_cmds)
                 int_input = raw_input(">> ")
@@ -147,8 +153,11 @@ def main_loop():
                     
                 elif (int_input=="tog_aut"):
                     acoustics.auto_update = not acoustics.auto_update
+                    
+                elif (int_input=="tog_viewer"):
+                    viewer_active = not viewer_active
                 
-                 # Quit prog
+                # Quit prog
                 elif (int_input=='q'):
                     print("Closing Port %s." % PORT_NAME)
                     pAC.close()

@@ -5,7 +5,7 @@ from bbb.ADC import ADS7865
 from bbb.LTC1564 import LTC1564
 import locate_pinger
 import numpy as np
-import quickplot
+import quickplot2
 
 from environment import hydrophones
 
@@ -50,6 +50,46 @@ def load_matplotlib():
     print("...done.")
 
     return plt
+    
+def init_figure(plt, fignum):
+    fig = plt.figure(fignum)
+    return fig
+    
+def get_dual_axes(fig):
+    ax_list = fig.get_axes()
+    
+    if len(ax_list) != 2:
+        # Clear the subplots
+        for ax in ax_list:
+            fig.delaxes(ax)
+        
+        # Make t and f subplots
+        t_ax = fig.add_subplot(2,1,1, label='time')
+        f_ax = fig.add_subplot(2,1,2, label='freq')
+        
+    else:
+        t_ax = ax_list[0]
+        f_ax = ax_list[1]
+        
+    return (t_ax, f_ax)
+    
+        
+
+def get_t_axis(fig):
+    ax_list = fig.get_axes()
+    
+    if len(ax_list) != 1:
+        # Clear the subplots
+        for ax in ax_list:
+            fig.delaxes(ax)
+        
+        # Make t and f subplots
+        t_ax = fig.add_subplot(1,1,1, label='time')
+        
+    else:
+        t_ax = ax_list[0]
+        
+    return t_ax 
 
 
 # ##################################
@@ -78,6 +118,7 @@ class Acoustics():
         
         # Various parameter used later in this class
         self.valid_signal_flg = ''
+        self.fig = None
 
     def compute_pinger_direction(self):
         val = locate_pinger.main(self.adc, dearm=False)
@@ -187,14 +228,26 @@ class Acoustics():
             
         self.filt.gain_mode(new_gain)
 
-    def plot_recent(self):
+    def plot_recent(self, fourier=False):
         """Shows the user a plot of the most recent data that
         was collected.
         """
         if self.plt==None:
             self.plt = load_matplotlib()
+            
+        if not self.plt.fignum_exists(1):
+            self.primary_fig = init_figure(self.plt, 1)
+            
+        if fourier:
+            (t_ax, f_ax) = get_dual_axes(self.primary_fig)
+            quickplot2.main(self.adc, [t_ax, f_ax], recent=True)
+        else:
+            t_ax = get_t_axis(self.primary_fig)
+            quickplot2.main(self.adc, [t_ax], recent=True)
+            
+        self.plt.pause(0.1)
         
-        quickplot.main(self.adc, self.plt, recent=True)
+        
                 
     def preset(self, sel):
         """configures electronics quickly based on the

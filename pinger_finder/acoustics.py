@@ -1,5 +1,6 @@
 from sys import argv
 import ConfigParser
+import datetime
 
 from bbb.ADC import ADS7865
 from bbb.LTC1564 import LTC1564
@@ -119,11 +120,16 @@ class Acoustics():
         # Various parameter used later in this class
         self.valid_signal_flg = ''
         self.fig = None
+        
+        # Init logging class
 
     def compute_pinger_direction(self):
         val = locate_pinger.main(self.adc, dearm=False)
         Vpp = np.amax(self.adc.y[0]) - np.amin(self.adc.y[0])
         print("The that last signal was %.2f Vpp" % Vpp)
+        
+        # (detour) log data if applicable
+        self.log.process(self, self.adc)
         
         if val==None:
             return None
@@ -133,6 +139,9 @@ class Acoustics():
     def compute_pinger_direction2(self):
         # Grab a sample of pinger data
         self.adc.get_data()
+        
+        # (detour) log data if applicable
+        self.log.process(self, self.adc)
         
         # Estimate pinger location
         delays = compute_relative_delay_times(self.adc, TARGET_FREQ)
@@ -168,6 +177,9 @@ class Acoustics():
         
         # grab a sample of data
         self.adc.get_data()
+        
+        # (detour) log data if applicable
+        self.log.process(self, self.adc)
         
         # grab some metasample data
         vpp = np.amax(self.adc.y[0]) - np.amin(self.adc.y[0])
@@ -278,10 +290,74 @@ class Acoustics():
 # ##################################
 #### Logging Tool ##################
 ####################################
+
+def get_date_str():
+    return str(datetime.datetime.now()).split('.')[0]
         
 class Logging():
+    self.base_path = LOG_DIR
+    self.base_name = None
+    
     def __init__(self):
         pass
+        
+    def process(self, adc):
+        exit = False
+        while exit==False:
+            
+            # If fp is none, user has not started the logging tool yet
+            if self.base_name is None:
+                return
+                
+            elif self.base_name:
+                # Determine whether to 
+                
+    def start_logging(self):
+        # Get base path name
+        self.base_name = get_date_str()
+        
+        # Create filenames
+        self.sig_fn = path.join(base_name.fp, " - sig.csv")
+        self.rsig_fn = path.join(base_name.fp, " - rsig.csv")
+        self.ping_fn = path.join(base_name.fp, " - ping.csv")
+        
+        # Create file for signals (w/ record markers), recorded signals,
+        # and direction data.
+        self.sig_f = open(path.join(self.base_path, self.sig_fn), 'w')
+        self.rsig_f = open(path.join(self.base_path, self.rsig_fn), 'w')
+        self.ping_f = open(path.join(self.base_path, self.ping_fn), 'w')
+        
+        # set flag
+        self.log_active = True
+        
+        # print confirmation
+        print("acoustics.py: Logging is now disabled")
+
+        
+    def stop_logging(self):
+        # Release base name
+        self.base_name = None
+        
+        # Close files
+        self.sig_f.close()
+        self.rsig_f.close()
+        self.ping_f.close()
+        
+        # set flag
+        self.log_active = False
+        
+        # print confirmation
+        print("acoustics.py: Logging is now enabled")
+        
+        
+    def tog_logging(self):
+    
+        if self.log_active:
+            self.stop_logging()
+            
+        else:
+            self.start_logging()
+        
         
     def logit(self, acoustics):
         # Create filename for log

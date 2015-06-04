@@ -30,6 +30,7 @@ def define_commlink():
 
 PORT_NAME = "/dev/ttyO5"
 acoustics = Acoustics() # Acoustics Control Object
+
 pAC = define_commlink() # Acoustics communication port
 log = Logging()
 
@@ -83,17 +84,25 @@ def process_input(port):
 
 def task_manager(input):
     if input=="locate pinger":
+        # Set alert to logging system for ping recording
+        acoustics.logging.alert_ping()
+        
+        # Get data
         angle_to_pinger = acoustics.compute_pinger_direction()
+        
+        # Send data back to seawolf
         send( str(angle_to_pinger) )
         
     elif input=="hello":
         send("Hello to you too, Seawolf.")
+        
     else:
         send("Unknown command! Please enter 'locate pinger' or 'hello'.")
         
 
 def main_loop():
     viewer_active = True
+    log.tog_logging()
 
     while 1:
         int_signal = ''
@@ -105,6 +114,8 @@ def main_loop():
                 task_manager(input)
             else:
                 print("I got nothin.")
+                
+                # Run acoustics anyway to see if it should condition the signal
                 acoustics.condition()
                 
             
@@ -126,7 +137,8 @@ def main_loop():
                     + "p: Plot last sample collection.\n"
                     + "test_config: Load the acoustic test config\n"
                     + "tog_aut: Toggle autonomous condition mode\n"
-                    + "tog_viewer: Toggle feature that plots captured signal to debugger on every cycle"
+                    + "tog_viewer: Toggle feature that plots captured signal to debugger on every cycle\n"
+                    + "tog_log: Toggle logger activity\n"
                     + "q: Quit this app.\n")
                 print(list_of_cmds)
                 int_input = raw_input(">> ")
@@ -156,6 +168,9 @@ def main_loop():
                     
                 elif (int_input=="tog_viewer"):
                     viewer_active = not viewer_active
+                    
+                elif (int_input=="tog_log"):
+                    log.tog_logging()
                 
                 # Quit prog
                 elif (int_input=='q'):

@@ -13,6 +13,7 @@ from environment import hydrophones
 from os import path
 LOG_DIR = path.join(path.dirname(path.realpath(__file__)), "saved_data/")
 
+
 # ##############################################
 #### Settings ##################################
 ################################################
@@ -122,6 +123,7 @@ class Acoustics():
         self.fig = None
         
         # Init logging class
+        self.logger = Logging()
 
     def compute_pinger_direction(self):
         val = locate_pinger.main(self.adc, dearm=False)
@@ -129,7 +131,7 @@ class Acoustics():
         print("The that last signal was %.2f Vpp" % Vpp)
         
         # (detour) log data if applicable
-        self.log.process(self, self.adc)
+        self.logger.process(self.adc)
         
         if val==None:
             return None
@@ -141,7 +143,7 @@ class Acoustics():
         self.adc.get_data()
         
         # (detour) log data if applicable
-        self.log.process(self, self.adc)
+        self.logger.process(self.adc)
         
         # Estimate pinger location
         delays = compute_relative_delay_times(self.adc, TARGET_FREQ)
@@ -179,7 +181,7 @@ class Acoustics():
         self.adc.get_data()
         
         # (detour) log data if applicable
-        self.log.process(self, self.adc)
+        self.logger.process(self.adc)
         
         # grab some metasample data
         vpp = np.amax(self.adc.y[0]) - np.amin(self.adc.y[0])
@@ -284,6 +286,9 @@ class Acoustics():
     def set_auto_update(self, bool):
         self.auto_update = bool
         
+    def log_ready(self, cmds):
+        self.logger.cmd_buffer += cmds
+        
     def close(self):
         self.adc.unready()
         
@@ -295,11 +300,36 @@ def get_date_str():
     return str(datetime.datetime.now()).split('.')[0]
         
 class Logging():
-    self.base_path = LOG_DIR
-    self.base_name = None
     
     def __init__(self):
-        pass
+        # Init path names
+        self.base_path = LOG_DIR
+        self.base_name = None
+        
+        # logging logic
+        self.log_active = False
+        self.log_sig = False
+        self.log_rec = False
+        self.log_ping = False
+        
+        # cmd buffer
+        self.cmd_buffer = ''
+        
+    def _parse_cmd_buffer(self):
+        for i in range(len(self.cmd_buffer)):
+            cmd = self.cmd_buffer[i]
+            
+            if cmd=='s':
+                self.log_sig = True
+                
+            elif cmd=='r':
+                self.log_rec = True
+                
+            elif cmd=='p':
+                self.log_ping = True
+                
+        # Clear command buffer
+        self.cmd_buffer = ''
         
     def process(self, adc):
         exit = False
@@ -307,19 +337,35 @@ class Logging():
             
             # If fp is none, user has not started the logging tool yet
             if self.base_name is None:
-                return
+                exit = True
                 
             elif self.base_name:
-                # Determine whether to 
+                # Determine whether to capture signal data or pinger data
+                self._parse_cmd_buffer()
+                
+                # vvv To file with logging algorithm
+                if self.log_sig:
+                    print("log sig")
+                    self.log_sig = False
+                elif self.log_rec:
+                    print("log rec")
+                    self.log_rec = False
+                elif self.log_ping:
+                    print("log ping")
+                    self.log_ping = False
+                else:
+                    exit = True
+        return
                 
     def start_logging(self):
         # Get base path name
-        self.base_name = get_date_str()
+        #self.base_name = get_date_str()
+        self.base_name = "test"
         
         # Create filenames
-        self.sig_fn = path.join(base_name.fp, " - sig.csv")
-        self.rsig_fn = path.join(base_name.fp, " - rsig.csv")
-        self.ping_fn = path.join(base_name.fp, " - ping.csv")
+        self.sig_fn = self.base_name + " - sig.csv"
+        self.rsig_fn = self.base_name + " - rsig.csv"
+        self.ping_fn = self.base_name + " - ping.csv"
         
         # Create file for signals (w/ record markers), recorded signals,
         # and direction data.
@@ -331,7 +377,7 @@ class Logging():
         self.log_active = True
         
         # print confirmation
-        print("acoustics.py: Logging is now disabled")
+        print("acoustics.py: Logging is now enabled")
 
         
     def stop_logging(self):
@@ -347,7 +393,7 @@ class Logging():
         self.log_active = False
         
         # print confirmation
-        print("acoustics.py: Logging is now enabled")
+        print("acoustics.py: Logging is now disables")
         
         
     def tog_logging(self):

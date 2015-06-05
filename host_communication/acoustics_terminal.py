@@ -16,7 +16,6 @@ import select
 import uart #enable_uart()
 import oneclk
 from acoustics import Acoustics
-from acoustics import Logging
 
 # ######################
 ### Global Constants ###
@@ -32,7 +31,7 @@ PORT_NAME = "/dev/ttyO5"
 acoustics = Acoustics() # Acoustics Control Object
 
 pAC = define_commlink() # Acoustics communication port
-log = Logging()
+log = acoustics.logger
 
 # ######################
 ### Other definitions ##
@@ -101,7 +100,7 @@ def task_manager(input):
         
 
 def main_loop():
-    viewer_active = True
+    viewer_active = False
     log.tog_logging()
 
     while 1:
@@ -116,6 +115,7 @@ def main_loop():
                 print("I got nothin.")
                 
                 # Run acoustics anyway to see if it should condition the signal
+                acoustics.log_ready('s')
                 acoustics.condition()
                 
             

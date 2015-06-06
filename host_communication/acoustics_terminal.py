@@ -83,10 +83,9 @@ def process_input(port):
 
 def task_manager(input):
     if input=="locate pinger":
-        # Set alert to logging system for ping recording
-        acoustics.logging.alert_ping()
         
         # Get data
+        acoustics.log_ready('srp')
         angle_to_pinger = acoustics.compute_pinger_direction()
         
         # Send data back to seawolf
@@ -100,8 +99,8 @@ def task_manager(input):
         
 
 def main_loop():
+    # Settings
     viewer_active = False
-    log.tog_logging()
 
     while 1:
         int_signal = ''

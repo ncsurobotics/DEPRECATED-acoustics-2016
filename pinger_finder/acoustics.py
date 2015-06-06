@@ -1,6 +1,7 @@
 from sys import argv
 import ConfigParser
 import datetime
+import csv
 
 from bbb.ADC import ADS7865
 from bbb.LTC1564 import LTC1564
@@ -131,7 +132,7 @@ class Acoustics():
         print("The that last signal was %.2f Vpp" % Vpp)
         
         # (detour) log data if applicable
-        self.logger.process(self.adc)
+        self.logger.process(self.adc, self.filt, pinger_data=val)
         
         if val==None:
             return None
@@ -143,7 +144,7 @@ class Acoustics():
         self.adc.get_data()
         
         # (detour) log data if applicable
-        self.logger.process(self.adc)
+        self.logger.process(self.adc, self.filt)
         
         # Estimate pinger location
         delays = compute_relative_delay_times(self.adc, TARGET_FREQ)
@@ -181,7 +182,7 @@ class Acoustics():
         self.adc.get_data()
         
         # (detour) log data if applicable
-        self.logger.process(self.adc)
+        self.logger.process(self.adc, self.filt)
         
         # grab some metasample data
         vpp = np.amax(self.adc.y[0]) - np.amin(self.adc.y[0])
@@ -331,7 +332,58 @@ class Logging():
         # Clear command buffer
         self.cmd_buffer = ''
         
-    def process(self, adc):
+    def _log_signal(self, file, adc, filt, pinger_data=None):
+        # init csv writer
+        writer = csv.writer(file)
+        
+        # init variables
+        n = adc.n_channels
+        timestamp = get_date_str()
+        
+        # File is empty. Write headers at top.
+        if file.tell() == 0:
+            header = adc.ch[0:n] + ["timestamp", 'Gain', 'sample rate', 'ping_loc']
+            writer.writerow(header)
+        
+        for sample in range(len(adc.y[0])):
+            
+            # Create a row of sample data
+            row = []
+            for ch in range(n):
+                row.append(adc.y[ch][sample])
+        
+            # Grab time stamp
+            if sample == 0:
+                row.append(timestamp)
+                row.append(filt.Gval)
+                row.append(adc.sample_rate)
+                row.append(pinger_data)
+            
+            # Write data to csv file    
+            writer.writerow(row)
+            
+    def _log_ping(self, file, adc, filt, pinger_data):
+        # init csv writer
+        writer = csv.writer(file)
+        
+        # init variables
+        timestamp = get_date_str()
+        
+        # File is empty. Write headers at top.
+        if file.tell() == 0:
+            header = ["timestamp", 'Gain', 'sample rate', 'ping_loc']
+            writer.writerow(header)
+        
+        row = []
+        row.append(timestamp)
+        row.append(filt.Gval)
+        row.append(adc.sample_rate)
+        row.append(pinger_data)
+        
+        # Write data to csv file    
+        writer.writerow(row)
+        
+    def process(self, adc, filt, pinger_data=None):
         exit = False
         while exit==False:
             
@@ -343,24 +395,29 @@ class Logging():
                 # Determine whether to capture signal data or pinger data
                 self._parse_cmd_buffer()
                 
-                # vvv To file with logging algorithm
+                # Log the signal if desirable
                 if self.log_sig:
-                    print("log sig")
+                    self._log_signal(self.sig_f, adc, filt, pinger_data)
                     self.log_sig = False
+                    
+                # Log the recorded signal if desirable
                 elif self.log_rec:
-                    print("log rec")
+                    self._log_signal(self.rsig_f, adc, filt, pinger_data)
                     self.log_rec = False
+                    
+                # Log the ping data if desirable
                 elif self.log_ping:
-                    print("log ping")
+                    self._log_ping(self.ping_f, adc, filt, pinger_data)
                     self.log_ping = False
                 else:
                     exit = True
         return
+        
                 
     def start_logging(self):
         # Get base path name
-        #self.base_name = get_date_str()
-        self.base_name = "test"
+        self.base_name = get_date_str()
+        #self.base_name = "test"
         
         # Create filenames
         self.sig_fn = self.base_name + " - sig.csv"

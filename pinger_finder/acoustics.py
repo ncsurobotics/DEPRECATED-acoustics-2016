@@ -125,6 +125,9 @@ class Acoustics():
         
         # Init logging class
         self.logger = Logging()
+        
+    def _digital_boost(self):
+        pass
 
     def compute_pinger_direction(self):
         val = locate_pinger.main(self.adc, dearm=False)
@@ -170,8 +173,13 @@ class Acoustics():
         to the correct level over time... which may make for faster initialization than
         if it just started incrementally going up in the first place.
         """
-        max = 4.5
-        min = self.adc.threshold
+        # Class level flag reset
+        self.valid_signal_flg = False
+        
+        # Basic variables
+        ovr_head = 0.1
+        max_vpp = 4.5
+        min_vpp = 2 * self.adc.threshold * (1 + ovr_head)
         max_gain = self.filt.get_n_gain_states()
         
         # check if autoupdate is on
@@ -186,23 +194,21 @@ class Acoustics():
         
         # grab some metasample data
         vpp = np.amax(self.adc.y[0]) - np.amin(self.adc.y[0])
-        old_gain = self.filt.Gval + 1
-        raw_vpp = vpp / old_gain
+        print("acoustics.py: pp is %.2f, min_vpp is %.2f" % (vpp, min_vpp))
+        old_gain = self.filt.Gval + 1   # V/V
+        raw_vpp = vpp / old_gain        # Volts
         
         
         i = 0
         found_gain = False
-        if vpp < min:
+        if vpp < min_vpp:
             # Signal is too weak. Determine a new gain value to boost
             # the signal in order to put it inside the window we'd like.
             # If the signal never falls in the window, we'll just use maximum
             # gain.
             while (i+old_gain < max_gain):
                 i += 1
-                if raw_vpp * (old_gain+i) >= min:
-                
-                    # This will be the new analog gain value
-                    new_gain = old_gain+i
+                if raw_vpp * (old_gain+i) >= min_vpp:
                     
                     # Raise flag saying signal is valid
                     self.valid_signal_flg = True
@@ -210,27 +216,36 @@ class Acoustics():
                     # exit section
                     break
                     
-        elif vpp > max:
+            # This will be the new analog gain value. If the break
+            # Gain will be set to the maximum V/V value, but the
+            # valid_signal_flg will remain set to false.
+            new_gain = old_gain + i
+                    
+        elif vpp > max_vpp:
             # Signal is too strong. Determine a new gain value to attenuate
             # the signal in orer to put it inside the window we'd like.
             # If the signal never fall in the window, we'll just use minimum
             # gain.
             while (old_gain-i > 1):
                 i += 1
-                if raw_vpp * (old_gain-i) <= max:
-                
-                    # This will be the new analog gain value
-                    new_gain = old_gain-i
+                if raw_vpp * (old_gain-i) <= max_vpp:
                     
                     # Raise flag saying signal is valid
                     self.valid_signal_flg = True
                     
                     # exit section
                     break
+                    
+            # This will be the new analog gain value. If the break
+            # statement is not passed, then gain will be set to
+            # the minimum V/V value, but the valid_signal_flg will
+            # remain set to false.
+            new_gain = old_gain-i
                 
         else:
             # Analog system gain is incapable of achieving desired system gain
-            self.valid_signal_flg = False
+            self.valid_signal_flg = True
+            new_gain = old_gain
             
             # Space reserved for digital gain code if necessary
             # # <<>>> # #
@@ -241,7 +256,7 @@ class Acoustics():
             
             return
             
-        self.filt.gain_mode(new_gain)
+        self.filt.gain_mode(new_gain-1)
 
     def plot_recent(self, fourier=False):
         """Shows the user a plot of the most recent data that

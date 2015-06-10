@@ -48,7 +48,7 @@ class LTC1564():
 
         n = self.get_n_gain_states()
         if (mode==None):
-            print("LTC1564: Give me a value from 0 to %d for gain mode" % n-1)
+            print("LTC1564: Give me a value from 0 to %d for gain mode" % (n-1))
             mode = int(str(raw_input(">> ")))
 
         if 0 <= mode <= n - 1:  # n-1 is the max bit value that can be used

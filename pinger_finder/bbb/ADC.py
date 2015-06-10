@@ -378,7 +378,7 @@ class ADS7865():
             self.update_deadband_ms(1)
             self.set_sample_len(1e3)
             self.update_sample_rate(800e3)
-            self.threshold = 1
+            self.threshold = .1 
             self.ez_config(0)
 
         elif sel == 100:

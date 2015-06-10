@@ -100,7 +100,8 @@ def task_manager(input):
 
 def main_loop():
     # Settings
-    viewer_active = False
+    viewer_active = True
+    # log.tog_logging()
 
     while 1:
         int_signal = ''

@@ -1,5 +1,6 @@
 import math
 from cmath import phase
+import numpy as np
 
 from scipy.fftpack import fft
 
@@ -131,8 +132,10 @@ def get_phase_diff(target_freq, fs, a, b):
     phase_diff = a_phase - b_phase
     print("a leads b by %fpi radians" % (phase_diff / math.pi))
     
+    return phase_diff
+    
 def phasediff_2_timediff(phase_diff, period):
-    return target_period * phase_diff / (2 * np.pi)
+    return period * phase_diff / (2 * np.pi)
     
 def compute_time_diff(target_freq, fs, a, b):
     """
@@ -158,30 +161,66 @@ def compute_time_diff(target_freq, fs, a, b):
 ### System level function ####
 ##############################
 
-def compute_relative_delay_times(adc, target_freq):
+def compute_relative_delay_times(adc, target_freq, array, c):
     """
     Computes the relative delay times for each hydrophone pair
     """
     # Initialize parameters
-    n = adc.n_channels
+    n_ch = adc.n_channels
+    n_times = array.n_elements
     y = adc.y
-    delay = np.array([0]*n)
-    
-    # get relative delays for each comb
-    for el in range(1,n):
-        delay[el] = compute_time_diff(
-            target_freq, 
-            adc.sample_rate, 
-            adc.y[el], 
-            adc.y[0])
+
+    # Check if user has ADC Configured correctly
+    if n_ch < n_times:
+        msg = ("You have requested to use an hydrophone array model with %d" % (n_times)
+            + " hydrophone elements, but the ADC is configured to use only"
+            + " %d channels. Please increase the number of active ADC" % (n_ch)
+            + " channels or decrease the number of hydrophones involved"
+            + " in the array model")
+        raise IOError(msg)
         
+    # Check if user has hydrophone array spaced correctly
+    
+    if n_times == 2:
+        pattern = [(0,1)]
+    elif n_times == 3:
+        pattern = [(0,1), (1,2)]
+    elif n_times == 4:
+        pattern = [(0,1), (1,2), (2,3)]
+    
+    # get relative delays for each combination, but ladder step along the way
+    toa = [0] * n_times
+    for (el_a, el_b) in pattern:
+    
+            # check if user has h-phone array spaced correctly
+            max_dist = c/target_freq
+            el_dist = np.linalg.norm(array.element_pos[el_a] - array.element_pos[el_b])
+            if max_dist < el_dist:
+                print("get_heading.py: Warning! Array elements "
+                    + " %d and %d" % (el_a, el_b)
+                    + " are %.2f cm apart, which is more than" % el_dist*100
+                    + " 1 wavelength apart (%.2f cm) for the" % max_dist*100
+                    + " given target signal of %.2fKHz." %  target_freq/1000
+                    + " Please fix this.")
+                    
+            # Compute toa for each element.
+            tdoa = compute_time_diff(
+                target_freq, 
+                adc.sample_rate, 
+                adc.y[el_a], 
+                adc.y[el_b])
+        
+            toa[el_b] = tdoa - toa[el_a]
+
     # print delay for debugging purposes
-    print(delay)
+    print("toa's for each hydrophone = %s" % toa)
     
     # Adjust for sampling delays
-    delay = delay - np.array(adc.delay)
-    delay = delay - np.amin(delay)
+    toa = np.array(toa) - np.array(adc.delay)[0:n_times]
+    
+    
+    toa_relative = toa - np.amin(toa)
     
     # Return values
-    return delay
+    return toa_relative
     

@@ -8,8 +8,11 @@ from bbb.LTC1564 import LTC1564
 import locate_pinger
 import numpy as np
 import quickplot2
+import get_heading
 
 from environment import hydrophones
+from environment.tools3d import Environment
+from environment import source
 
 from os import path
 LOG_DIR = path.join(path.dirname(path.realpath(__file__)), "saved_data/")
@@ -31,6 +34,8 @@ HYDROPHONE_3_DEFAULT_LOCATIONS = np.array([
 ])
 
 TARGET_FREQ = 22e3 # Frequency of the pinger in hertz
+
+env = Environment()
 
 # ##############################################
 #### General Purpose Functions #################
@@ -127,9 +132,15 @@ class Acoustics():
         self.logger = Logging()
         
     def _digital_boost(self):
+        """Applied digital gain to signal in a manner that reflects more sensitive
+        trigger action and plotted data points.
+        """
         pass
 
     def compute_pinger_direction(self):
+        """
+        output value represents direction to pinger in degrees.
+        """
         val = locate_pinger.main(self.adc, dearm=False)
         Vpp = np.amax(self.adc.y[0]) - np.amin(self.adc.y[0])
         print("The that last signal was %.2f Vpp" % Vpp)
@@ -149,9 +160,16 @@ class Acoustics():
         # (detour) log data if applicable
         self.logger.process(self.adc, self.filt)
         
-        # Estimate pinger location
-        delays = compute_relative_delay_times(self.adc, TARGET_FREQ)
-        info_string = self.array.get_direction(times[0:3])
+        # Estimate pinger location: Get a value that represents the
+        # time delay of arrival for each individual hydrophone
+        tdoa_times = get_heading.compute_relative_delay_times(self.adc, 
+            TARGET_FREQ, 
+            self.array,
+            env.c)
+        
+        # Get direction
+        toa_dists = tdoa_times*env.c
+        info_string = self.array.get_direction(toa_dists)
         
     def calibrate(self):
         cal_data = config.get(acoustics, 'cal_data')
@@ -286,6 +304,11 @@ class Acoustics():
         description of each preset."""
         if sel == 0:
             self.adc.preset(0)
+            self.filt.gain_mode(0)
+            self.auto_update = True
+            
+        if sel == 1:
+            self.adc.preset(1)
             self.filt.gain_mode(0)
             self.auto_update = True
 

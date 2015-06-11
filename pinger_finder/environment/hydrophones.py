@@ -18,6 +18,10 @@ class Array(Phys_Obj):
         # Define Pinger_Contours
         self.pinger_contours = []
         
+        # Define unknown variables
+        self.last_known_pinger_location = None
+        self.last_known_pinger_direction = None
+        
     def define(self, locations):
         """Specify the hydrophone configuration by passing an Nx3 numpy
         array, where each row is an XYZ coordinate representing a coordinate
@@ -91,6 +95,20 @@ class Array(Phys_Obj):
     def bulk_compute_ab_from_distances(self, Dx):
         self.compute_D1minusD2(Dx)
         self.compute_ab_coefficients()
+        
+    def get_direction(self, doa):
+        """
+        Takes a list of distances of arrival (doa) values corresponding to each 
+        hydrophone element and uses
+        such information to generate a pinger location
+        """
+        import pdb; pdb.set_trace()
+        self.bulk_compute_ab_from_distances(doa)
+        # ^^ Updates self.ddoa and self.ab
+        
+        
+        
+        self.last_known_pinger_direction = 0
         
     def re_build(self, locations):
         self.__init__(locations)

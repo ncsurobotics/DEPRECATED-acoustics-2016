@@ -91,6 +91,15 @@ def task_manager(input):
         # Send data back to seawolf
         send( str(angle_to_pinger) )
         
+    elif input=="locate pinger2":
+        
+        # Get data
+        acoustics.log_ready('srp')
+        angle_to_pinger = acoustics.compute_pinger_direction2()
+        
+        # Send data back to seawolf
+        send( str(angle_to_pinger) )
+        
     elif input=="hello":
         send("Hello to you too, Seawolf.")
         
@@ -100,7 +109,7 @@ def task_manager(input):
 
 def main_loop():
     # Settings
-    viewer_active = True
+    viewer_active = False
     # log.tog_logging()
 
     while 1:
@@ -108,6 +117,7 @@ def main_loop():
         try:
             # Try reading and acting upon seawolf's input first
             input = read()
+            input = "locate pinger2"
             if input:
                 print("RX: {0}".format(input))
                 task_manager(input)
@@ -182,8 +192,8 @@ def main_loop():
                 else:
                     pass
       
-        except IOError:
-            pass
+        #except IOError:
+        #    pass
             
         except KeyboardInterrupt:
             print("Closing Port %s." % PORT_NAME)

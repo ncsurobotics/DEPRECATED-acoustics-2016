@@ -377,6 +377,17 @@ class ADS7865():
             """
             self.update_deadband_ms(1)
             self.set_sample_len(1e3)
+            self.update_sample_rate(400e3)
+            self.threshold = .1 
+            self.ez_config(4)
+            
+        elif sel == 1:
+            """Secondary competition config. This is the goto place for
+            determining the samplesize, sampling rate, # of simultaneous
+            channels, and (initial) threshold value.
+            """
+            self.update_deadband_ms(1)
+            self.set_sample_len(1e3)
             self.update_sample_rate(800e3)
             self.threshold = .1 
             self.ez_config(0)

@@ -149,7 +149,12 @@ class ADS7865():
             self.dac_voltage
             self.LSB
         """
-
+        # Loads the BBB cape overlays that allow control of the PRUSS
+        # and it's IO via pypruss. Note: pypruss will not work correctly
+        # until this system level command is ran. Do not try to use the
+        # pypruss library before running this command.
+        boot.load()
+        
         # GPIO Stuff
         self.DBus = Port(DB_pin_table)
         self.DBus.set_port_dir("in")
@@ -208,7 +213,6 @@ class ADS7865():
 
         # Loads overlays: For that will be later needed for
         # muxing pins from GPIO to pruout/pruin types and vice versa.
-        boot.load()
         self.sw_reset()
 
     ############################

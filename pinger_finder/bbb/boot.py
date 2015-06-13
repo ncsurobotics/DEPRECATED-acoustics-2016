@@ -16,7 +16,7 @@ PIN_LOOKUPTABLE = os.path.join(MUX_PATH, PINS_FILE)
 
 def load():
     # enable all pins to be used as io
-    os.system("config-pin overlay cape-universal")
+    os.system("config-pin overlay cape-universal") # Also enables pypruss
     os.system("config-pin overlay cape-univ-hdmi")
 
 

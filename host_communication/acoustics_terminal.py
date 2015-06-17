@@ -109,15 +109,14 @@ def task_manager(input):
 
 def main_loop():
     # Settings
-    viewer_active = False
-    # log.tog_logging()
+    viewer_active = True
+    log.tog_logging()
 
     while 1:
         int_signal = ''
         try:
             # Try reading and acting upon seawolf's input first
             input = read()
-            input = "locate pinger2"
             if input:
                 print("RX: {0}".format(input))
                 task_manager(input)

@@ -382,7 +382,7 @@ class ADS7865():
             self.update_deadband_ms(1)
             self.set_sample_len(1e3)
             self.update_sample_rate(400e3)
-            self.threshold = .1 
+            self.threshold = .5 
             self.ez_config(4)
             
         elif sel == 1:
@@ -429,6 +429,19 @@ class ADS7865():
             self.threshold = 2
             self.ez_config(2)
 
+        elif sel == 102:
+            """
+            Test Config for echo measurements
+            Date: June 16, 2015
+
+            Purpose: Long recording for watching all signals over a
+            long span of time in the acoustics_terminal app.
+            """
+            self.update_deadband_ms(1)
+            self.set_sample_len(10e3)
+            self.update_sample_rate(400e3)
+            self.threshold = .5 
+            self.ez_config(4)
 
 
         else:

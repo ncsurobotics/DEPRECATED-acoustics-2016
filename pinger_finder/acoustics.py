@@ -302,23 +302,24 @@ class Acoustics():
         sel (int) that the uses supplies. See ADC.py's 
         very own preset function for a more detailed
         description of each preset."""
+        
+        # Configure the ADC
+        self.adc.preset(sel)
+        
+        # Configure other parameters
         if sel == 0:
-            self.adc.preset(0)
             self.filt.gain_mode(0)
             self.auto_update = True
             
         if sel == 1:
-            self.adc.preset(1)
             self.filt.gain_mode(0)
             self.auto_update = True
 
         elif sel == 100:
-            self.adc.preset(100)
             self.filt.gain_mode(15)
             self.auto_update = False
 
         elif sel == 101:
-            self.adc.preset(101)
             self.filt.gain_mode(0)
             self.auto_update = True
     

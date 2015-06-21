@@ -1,10 +1,10 @@
 import numpy as np
 import numpy.ma as ma
-# import matplotlib.pyplot as plt
-# from mpl_toolkits.mplot3d import Axes3D
-# fig = plt.figure()
-# ax = fig.add_subplot(111, projection='3d')
-# ax.hold(True)
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
+fig = plt.figure()
+ax = fig.add_subplot(111, projection='3d')
+ax.hold(True)
 
 
 TOL = 2
@@ -349,13 +349,13 @@ mask = sorted(mask, key=lambda mask: A[1,mask[0],mask[1]])
 max_idx = (mask[0][-1], mask[1][-1])
 pinger_unit_vector = get_unit_vector(A, max_idx)
 
-# for (r1, c1, _, _) in mask:
-#     ax.scatter(A[0,r1,c1], A[1,r1,c1], A[2,r1,c1])
-#     
-# # Set Plotting limits
-# lim = 50
-# ax.set_xlim(-lim, lim)
-# ax.set_ylim(-lim, lim)
-# ax.set_zlim(-lim, lim)
-# plt.show()
+for (r1, c1, _, _) in mask:
+    ax.scatter(A[0,r1,c1], A[1,r1,c1], A[2,r1,c1])
+    
+# Set Plotting limits
+lim = 50
+ax.set_xlim(-lim, lim)
+ax.set_ylim(-lim, lim)
+ax.set_zlim(-lim, lim)
+plt.show()
                 

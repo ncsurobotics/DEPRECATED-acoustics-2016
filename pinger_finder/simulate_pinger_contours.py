@@ -51,8 +51,7 @@ def init_3D_plotting_view(ax):
 
 def plot_contour(contour_obj, ax):
     o = contour_obj
-    #contour = ax.plot_wireframe(o.X, o.Y, o.Z, rstride=1, cstride=1, color=np.random.rand(3,1))
-    contour = ax.plot_wireframe(o.X, o.Y, o.Z, rstride=1, cstride=1)
+    contour = ax.plot_wireframe(o.X, o.Y, o.Z, rstride=1, cstride=1, color=np.random.rand(3,1))
     return contour
     
 def plot_object(phys_obj, ax=None):

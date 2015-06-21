@@ -52,6 +52,7 @@ def init_3D_plotting_view(ax):
 def plot_contour(contour_obj, ax):
     o = contour_obj
     contour = ax.plot_wireframe(o.X, o.Y, o.Z, rstride=1, cstride=1, color=np.random.rand(3,1))
+    #contour = ax.plot_wireframe(o.X, o.Y, o.Z, rstride=1, cstride=1)
     return contour
     
 def plot_object(phys_obj, ax=None):
@@ -112,6 +113,7 @@ def generate_contours(env, array, pinger, pinger_contour, ax):
     for idx in range(array.n_elements):
             ab = (array.ab[idx][0], array.ab[idx][1])
             pinger_contour[idx].coe_generate_contour(ab, idx, array)
+            
             
             plot_contour(pinger_contour[idx], ax)
     
@@ -213,6 +215,8 @@ class World(object):
         #return self.pinger.pdata
     
     def update_animation(self, i):
+        if i > 20:
+            return (self.array.hydrophones.pdata, self.pinger.pdata)
         self.ax.cla()
         
         # Plot Hydrophones

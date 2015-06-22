@@ -79,8 +79,8 @@ class Array(Phys_Obj):
     
     def compute_D1minusD2(self, Dx):
         self.ddoa = []
-        for (ID0,ID1) in self.pairs:
-            ddoa = Dx[ID0] - Dx[ID1]
+        for (ID_a,ID_b) in self.pairs:
+            ddoa = Dx[ID_a] - Dx[ID_b]
             (self.ddoa).append(ddoa)
     
     def compute_ab_coefficients(self):
@@ -139,7 +139,9 @@ def dd_to_hyperboloid_coe(D1minusD2, element_spacing):
         # exceed. To prevent error in the next step, we'll clip purposely
         # clip the signal
         a = d
-        print("get_heading: Warning, Angle is Clipped at max/min value.")
+        print("get_heading: Warning, Angle is Clipped at max/min value. "
+            + "Pay attention to this a make sure you're not running into "
+            + "spatial aliasing territory.")
         
     # get "b" coefficient
     b = np.sqrt(d**2 - a**2)

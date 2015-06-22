@@ -33,6 +33,8 @@ acoustics = Acoustics() # Acoustics Control Object
 pAC = define_commlink() # Acoustics communication port
 log = acoustics.logger
 
+data_dict = ('')
+
 # ######################
 ### Other definitions ##
 #######################
@@ -61,8 +63,7 @@ def process_input(port):
     if input:
         # Show input as a means of debugging output
         print("Acoustics: RX'd %r." % input)
-        
-        # Other logic for input
+       
         if (input == "locate pinger"):
             # Recieve cmd from seawolf requesting location of pinger
             val = oneclk.main('competition')
@@ -82,7 +83,21 @@ def process_input(port):
 
 
 def task_manager(input):
-    if input=="locate pinger":
+    # Other logic for input
+    if (input == "get_data")
+        # Initialize 
+        data_dictionary = create_data_dictionary()
+        
+        # Get data
+        acoustics.log_ready('srp')
+        data_dictionary['data']['heading'] = acoustics.compute_pinger_direction2(ang_ret=True)
+        
+        # Convert response into string
+        str_response = str(data_dictionary)
+        pAC.write(str_response+'\n')
+            
+    
+    elif input=="locate pinger":
         
         # Get data
         acoustics.log_ready('srp')
@@ -200,7 +215,24 @@ def main_loop():
             acoustics.close()
             break
             
-                
+# ######################
+#### Data Dictionary ###
+########################
+def create_data_dictionary():
+    data = {
+        'heading': {'ra': None, 'rb': None, 'ab':None}, # Hydrophone pair measurements
+        'epoch': None, # time since last measurement
+    }
+    
+    base = {
+        'data': data,
+        'txt': '',
+        'error': 0
+    }
+
+    return base
+    
+     
             
             
 

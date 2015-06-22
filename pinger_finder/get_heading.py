@@ -129,8 +129,8 @@ def get_phase_diff(target_freq, fs, a, b):
     print("b_phase = %f pi radians" % (b_phase / math.pi))
 
     # Compute phase difference
-    phase_diff = a_phase - b_phase
-    print("a leads b by %fpi radians" % (phase_diff / math.pi))
+    phase_diff = b_phase - a_phase
+    print("b leads a by %fpi radians" % (phase_diff / math.pi))
     
     return phase_diff
     
@@ -153,9 +153,9 @@ def compute_time_diff(target_freq, fs, a, b):
     
     # phase_diff to distance
     target_period = 1/target_freq
-    ta_minus_tb = phasediff_2_timediff(phase_diff, target_period)
+    tb_minus_ta = phasediff_2_timediff(phase_diff, target_period)
     
-    return ta_minus_tb
+    return tb_minus_ta
     
 # ############################
 ### System level function ####
@@ -181,17 +181,25 @@ def compute_relative_delay_times(adc, target_freq, array, c):
         
     # Check if user has hydrophone array spaced correctly
     
-    if n_times == 2:
+    # User can set the pattern or tdoa assignment here. Basically, each tuple takes on
+    # the format (ref_element, target_element), but the ref_element
+    # in this case should not be confused whatever is the reference element
+    # of the array. Rather, this 'pattern' can be any arbitrary combination
+    # that yield's a leap in distance less than half a wavelength per pair.
+    # whether the reference element is used first, last, or etc. does not
+    # matter.
+    
+    if n_times == 2:    # for a 2 element array
         pattern = [(0,1)]
-    elif n_times == 3:
-        pattern = [(0,1), (1,2)]
-    elif n_times == 4:
+    elif n_times == 3:  # for a 3 element array
+        pattern = [(1,0), (0,2)]
+    elif n_times == 4:  # for a 4 element array
         pattern = [(0,1), (1,2), (2,3)]
     
     # get relative delays for each combination, but ladder step along the way
     toa = [0] * n_times
     for (el_a, el_b) in pattern:
-    
+
             # check if user has h-phone array spaced correctly
             max_dist = c/target_freq
             el_dist = np.linalg.norm(array.element_pos[el_a] - array.element_pos[el_b])

@@ -13,9 +13,7 @@ def fake_acoustics(read_msg):
     if read_msg == "get_data":
         sleep(10)
         data = {
-            'heading': (-31.30020304, # Hydrophone pair 1 output (degrees)
-                80.993202002), # Hydrophone pair 2 output (degrees)
-            'diversity': 2, # indicates whether array 1 or 2 has stronger signal
+            'heading': {'ra': 20.000232, 'rb': 2.0444, 'ab':-20.022204}, # Hydrophone pair measurements
             'epoch': 2.3, # time since last measurement
         }
         
@@ -27,10 +25,8 @@ def fake_acoustics(read_msg):
 
     else:
         data = {
-            'heading': (None, # Hydrophone pair 1 output (degrees)
-                None), # Hydrophone pair 2 output (degrees)
-            'diversity': None, # indicates whether array 1 or 2 has stronger signal
-            'epoch': None, # time since last measurement, in seconds
+            'heading': {'ra': None, 'rb': None, 'ab':None}, # Hydrophone pair measurements
+            'epoch': None, # time since last measurement
         }
         
         send_msg = {

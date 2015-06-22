@@ -153,7 +153,7 @@ class Acoustics():
         else:
             return val
 
-    def compute_pinger_direction2(self):
+    def compute_pinger_direction2(self,ang_ret=False):
         # Grab a sample of pinger data
         self.adc.get_data()
         
@@ -171,6 +171,19 @@ class Acoustics():
         toa_dists = tdoa_times*env.c
         info_string = self.array.get_direction(toa_dists)
         
+        # Report angles if applicable
+        if ang_ret:
+            angles = [math.atan2(b,a) for (a,b) in self.array.ab]
+            
+            n = self.array.n_elements
+            if n == 3:
+                return {'ra': angles[0],
+                    'rb': angles[1],
+                    'ab': angles[2]
+                }
+            else:
+                raise IOError('%d hydrophone elements was not expected' % n)
+            
     def calibrate(self):
         cal_data = config.get(acoustics, 'cal_data')
         

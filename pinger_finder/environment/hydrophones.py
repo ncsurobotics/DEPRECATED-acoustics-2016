@@ -102,7 +102,6 @@ class Array(Phys_Obj):
         hydrophone element and uses
         such information to generate a pinger location
         """
-        import pdb; pdb.set_trace()
         self.bulk_compute_ab_from_distances(doa)
         # ^^ Updates self.ddoa and self.ab
         

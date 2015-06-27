@@ -84,7 +84,7 @@ def process_input(port):
 
 def task_manager(input):
     # Other logic for input
-    if (input == "get_data")
+    if (input == "get_data"):
         # Initialize 
         data_dictionary = create_data_dictionary()
         
@@ -94,6 +94,7 @@ def task_manager(input):
         
         # Convert response into string
         str_response = str(data_dictionary)
+        print(str_response)
         pAC.write(str_response+'\n')
             
     
@@ -124,7 +125,7 @@ def task_manager(input):
 
 def main_loop():
     # Settings
-    viewer_active = True
+    viewer_active = False
     log.tog_logging()
 
     while 1:
@@ -132,6 +133,7 @@ def main_loop():
         try:
             # Try reading and acting upon seawolf's input first
             input = read()
+            input = 'get_data'
             if input:
                 print("RX: {0}".format(input))
                 task_manager(input)

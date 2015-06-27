@@ -2,6 +2,7 @@ from sys import argv
 import ConfigParser
 import datetime
 import csv
+import math
 
 from bbb.ADC import ADS7865
 from bbb.LTC1564 import LTC1564

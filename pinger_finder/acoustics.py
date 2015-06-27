@@ -30,7 +30,7 @@ ARRAY_DEFAULT_LOCATION = WORLD_ORIGIN
 HYDROPHONE_3_DEFAULT_LOCATIONS = np.array([
     [-15e-3,0,(-15e-3)/2],
     [ 15e-3,0,(-15e-3)/2], 
-    [     0,0,(15e-3)/2]
+    #[     0,0,(15e-3)/2]
 ])
 
 TARGET_FREQ = 22e3 # Frequency of the pinger in hertz

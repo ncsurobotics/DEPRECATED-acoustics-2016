@@ -222,7 +222,7 @@ def main_loop():
 ########################
 def create_data_dictionary():
     data = {
-        'heading': {'ra': None, 'rb': None, 'ab':None}, # Hydrophone pair measurements
+        'heading': None, # Hydrophone pair measurements
         'epoch': None, # time since last measurement
     }
     

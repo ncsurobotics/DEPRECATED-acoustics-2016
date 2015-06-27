@@ -3,6 +3,9 @@ from time import sleep
 
 PORT_NAME = "/dev/ttyUSB0"
 
+N_ELEMENTS = 2
+N_ARRAYS = 1
+
 # ######################################
 ##### Simulated Serial Comm ############
 ########################################
@@ -12,11 +15,39 @@ def fake_acoustics(read_msg):
     
     if read_msg == "get_data":
         sleep(10)
+        
+        # Fill in the common data format
         data = {
-            'heading': {'ra': 20.000232, 'rb': 2.0444, 'ab':-20.022204}, # Hydrophone pair measurements
-            'epoch': 2.3, # time since last measurement
+            'heading': None, # Hydrophone pair measurements
+            'epoch': None, # time since last measurement
         }
         
+        # Determine heading format based on element count
+        if N_ELEMENTS == 2:
+            data['heading'] = {'ab':-85.004555101}
+            # ^^ Hydrophone pair measurements
+          
+        elif N_ELEMENTS == 3:
+            data['heading'] = {'ra': 20.000232, 'rb': 2.0444, 'ab':-20.022204}
+            # ^^ Hydrophone pair measurements
+            
+        elif N_ELEMENTS == 4:
+            if N_ARRAYS == 1:
+                data['heading'] = {'ab':74.53490170540681, 'ac'-35.489026400235716:, 'ad':79.24839863340534, 
+                    'bc':4.161718729022823, 'bd':83.14890670723108,
+                    'cd':17.885814599402877,
+                }
+                # ^^ Hydrophone pair measurements
+                
+            elif N_ARRAYS == 2:
+                data['heading'] = [{'ab':-20.022204}, {'ab': 80.0043}]
+                # ^^ Hydrophone pair measurements
+                
+                
+        # Fill in common parts of the data dictionary
+        data['epoch'] = 2.3, # time since last measurement
+        
+        # Complete the overall dictionary
         send_msg = {
             'data': data,
             'txt': '',
@@ -24,10 +55,7 @@ def fake_acoustics(read_msg):
         }
 
     else:
-        data = {
-            'heading': {'ra': None, 'rb': None, 'ab':None}, # Hydrophone pair measurements
-            'epoch': None, # time since last measurement
-        }
+        pass
         
         send_msg = {
             'data': data,

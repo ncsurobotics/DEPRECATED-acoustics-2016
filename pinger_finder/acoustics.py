@@ -174,10 +174,13 @@ class Acoustics():
         
         # Report angles if applicable
         if ang_ret:
-            angles = [math.atan2(b,a) for (a,b) in self.array.ab]
+            angles = [(-math.atan2(b,a)*180/math.pi+90) for (a,b) in self.array.ab]
             
             n = self.array.n_elements
-            if n == 3:
+            if n == 2:
+                return {'ab': angles[0]}
+                
+            elif n == 3:
                 return {'ra': angles[0],
                     'rb': angles[1],
                     'ab': angles[2]

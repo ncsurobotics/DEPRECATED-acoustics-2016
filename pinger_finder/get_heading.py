@@ -221,13 +221,14 @@ def compute_relative_delay_times(adc, target_freq, array, c):
             toa[el_b] = tdoa - toa[el_a]
 
     # print delay for debugging purposes
-    print("toa's for each hydrophone = %s" % toa)
+    #import pdb; pdb.set_trace()
     
     # Adjust for sampling delays
     toa = np.array(toa) - np.array(adc.delay)[0:n_times]
     
     
     toa_relative = toa - np.amin(toa)
+    print("relative toa's for each hydrophone = %s" % toa_relative)
     
     # Return values
     return toa_relative

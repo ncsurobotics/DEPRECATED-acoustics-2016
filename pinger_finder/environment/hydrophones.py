@@ -133,11 +133,11 @@ def dd_to_hyperboloid_coe(D1minusD2, element_spacing):
     a = D1minusD2/2
     
     #
-    if (a > d):
+    if (abs(a) > d):
         # Limit given the spacing of the hydrophone elements has been
         # exceed. To prevent error in the next step, we'll clip purposely
         # clip the signal
-        a = d
+        a = d * (-1 * (a < 0) + 1 * (a >= 0)) 
         print("get_heading: Warning, Angle is Clipped at max/min value. "
             + "Pay attention to this a make sure you're not running into "
             + "spatial aliasing territory.")

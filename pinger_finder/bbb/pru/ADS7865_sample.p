@@ -80,6 +80,15 @@
       SET DQ.Sample_Ctrl, DBOVF
 EXIT_INCR_DEADBAND:
 .endm
+
+.macro Flag_Trigger_Channel
+    QBBC EXIT_Flag_Trigger_Channel0, DQ.Sub_Sample, 0
+    SET  DQ.Sample_Ctrl, TFLG0
+EXIT_Flag_Trigger_Channel0:
+    QBBC EXIT_Flag_Trigger_Channel1, DQ.Super_Sample, 0
+    SET  DQ.Sample_Ctrl, TFLG1
+EXIT_Flag_Trigger_Channel1:
+.endm
     
 
 //-----------------------------------------------
@@ -261,6 +270,12 @@ PROCESS:
         // the triggering threshold was also surpassed means that the program
         // will set TRGD=1.
         SET  DQ.Sample_Ctrl, TRGD
+        
+        // While trigger is being set, some bits indicating which channel the
+        // trigger occurred on will also be set
+        Flag_Trigger_Channel
+        
+        // Commence sending data to the user
         Send_Status_Data
         QBA SUBMIT
 

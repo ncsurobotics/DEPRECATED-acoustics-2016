@@ -44,6 +44,8 @@ TOTAL_CHANNELS = 4
 SAMPLES_PER_CONV = 2
 STATUS_BLOCK = 1
 TIMEOUT_STATUS_BIT = 2
+TFLG0_BIT = 4
+TFLG1_BIT = 5
 
 CONV_RATE_LIMIT = 800e3  # Hertz
 
@@ -838,10 +840,20 @@ class ADS7865():
         # pypruss.clear_event(0) # Clear the event
         # pypruss.exit()         # Exit PRU
 
-        # Read the memory
+        # Read the memory: Extract raw status code
         raw_data = read_sample(self.ddr, length+STATUS_BLOCK)
-        status_code = raw_data[0] & 0xF
+        status_code = raw_data[0] & 0x3F
+        
+        # Read the memory: Extract TOF Flag
         TOF = get_bit(raw_data[0], TIMEOUT_STATUS_BIT)
+        
+        # Read the memory: Extract TRG_CH Data
+        TRG_CH = (get_bit(raw_data[0], TFLG0_BIT) 
+            + 2*get_bit(raw_data[0], TFLG1_BIT)
+        )
+        print("Trig'd on chan %d" % TRG_CH)
+        
+        # Read the memory: Move on. Treat actual data as raw data now.
         raw_data = raw_data[1:]
         
         # Print out stuff

@@ -83,6 +83,8 @@
 #define ARMD    1 // Armed bit
 #define TOF     2 // Time out flag
 #define DBOVF   3 // Deadband overflow
+#define TFLG0   4 // Trigger flag bit 0
+#define TFLG1   5 // Trigger flag bit 1
 
 // bits for PRU CTRL
 #define PRUCTRL_BASE_ADDR   0x22000

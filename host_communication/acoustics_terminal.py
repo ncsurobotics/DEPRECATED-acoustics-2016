@@ -133,7 +133,7 @@ def main_loop():
         try:
             # Try reading and acting upon seawolf's input first
             input = read()
-            input = 'get_data'
+            #input = 'get_data'
             if input:
                 print("RX: {0}".format(input))
                 task_manager(input)

@@ -20,7 +20,10 @@ def main(adc, plt, recent=False, ask=False):
     else:
         y = adc.get_data()
 
-    plot_output(adc, y, plt)
+    if y == None:
+        print("quickplot: Trigger failed. Aborting plot")
+    else:
+        plot_output(adc, y, plt)
     
     # snippet reflects that if user sets recent to false (and thus is grabbing
     # fresh data), he is unable to control the ready state of the ADC, so this

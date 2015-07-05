@@ -145,11 +145,16 @@ class ADS7865():
             self.seq_desc
             self.ch
             self.delay
+            self.digital_gain
             self.threshold
+            self.corrected_threshold
             self.cr_specd
             self.modified
             self.dac_voltage
             self.LSB
+            self.TOF
+            self.TFLG_CH
+            self.digital_gain
         """
         # Loads the BBB cape overlays that allow control of the PRUSS
         # and it's IO via pypruss. Note: pypruss will not work correctly
@@ -206,7 +211,8 @@ class ADS7865():
         self.ch = ['unknown'] * 4
         self.delay = [-99]*4
         
-        self.threshold = DEFAULT_THRESHOLD
+        self.digital_gain = 1
+        self.update_threshold(DEFAULT_THRESHOLD)
         self.sr_specd = 0  # parameter for keeping the up with the last spec
         self.modified = True
         self.sample_rate = None
@@ -216,6 +222,11 @@ class ADS7865():
         # Loads overlays: For that will be later needed for
         # muxing pins from GPIO to pruout/pruin types and vice versa.
         self.sw_reset()
+        
+        # Any other variables that will later be relevent
+        self.TOF = None
+        self.TFLG_CH = None
+        
 
     ############################
     #### GPIO Commands  #######
@@ -413,7 +424,7 @@ class ADS7865():
             self.update_deadband_ms(0)
             self.set_sample_len(1e3)
             self.update_sample_rate(400e3)
-            self.threshold = 2
+            self.threshold = 0
             self.ez_config(4)
         elif sel == 101:
             """
@@ -540,10 +551,45 @@ class ADS7865():
             
         # Update delay config (dependent on conversion rate)
         self.update_delays()
+        
+    def update_sample_length(self, SL):
+        # Establish parameters
+        MAX_SAMPS = 18000
+        
+        # Set up variables
+        SL = int(eval(SL))
+        
+        # Give user opportunity for a sanity check
+        if SL >= MAX_SAMPS:
+            logging.warning(
+                "Your spec'd sample length"
+                + " (%d samples) is greater and value tested before" % SL
+                + " (%d samples). The BBB has been known to crash" % MAX_SAMPS
+                + " when asking for 20000+ samples")
+                
+            raw_input("Hit enter to continue, or kill the program now: ")
+            
+        # Write argument to the ADC's settings
+        self.sample_length = SL
 
     def update_deadband_ms(self, ms):
         print("ADS7865: Deadband length set to %dms" % int(ms))
         self.deadband_ms = ms
+        
+    def update_threshold(self, desired_threshold):
+        # Save desired_threshold value
+        self.threshold = desired_threshold
+        
+        # Compute & save corrected threshold
+        self.corrected_threshold = desired_threshold / self.digital_gain
+    
+    def update_digital_gain(self, desired_gain):
+        # save argument
+        self.digital_gain = desired_gain
+        
+        # Update threshold attribute to adjust self.corrected_threshold
+        # to a value respresenting the new digital gain value
+        update_threshold(self.threshold)
     
     def set_sample_len(self, sl):
         """ Sets the sample length
@@ -793,10 +839,18 @@ class ADS7865():
     def burst(self, length=None, n_channels=None, raw=None, fmt_volts=1):
         """
         Args:
-            length:
-            n_channels:
-            raw:
-            fmt_volts:
+            length: Number of samples to record. Overides natural behavior to
+          use the value stored in self.length
+          
+            n_channels: Number of channel that will collect samples. overrides
+          natural behavior to use the value storing in self.n_channels
+          
+            raw: Bit that lets the user specify that he wants the data in the
+          raw binary non-2's compliment format instead of 2's compliment.
+          
+            fmt_volts: Specify's whether to convert the raw binary data into
+          human readable volts form.
+
         """
         if length is None:  # Optional argument for sample length
             length = self.sample_length
@@ -846,12 +900,13 @@ class ADS7865():
         
         # Read the memory: Extract TOF Flag
         TOF = get_bit(raw_data[0], TIMEOUT_STATUS_BIT)
+        self.TOF = TOF
         
         # Read the memory: Extract TRG_CH Data
         TRG_CH = (get_bit(raw_data[0], TFLG0_BIT) 
             + 2*get_bit(raw_data[0], TFLG1_BIT)
         )
-        print("Trig'd on chan %d" % TRG_CH)
+        self.TFLG_CH = TRG_CH
         
         # Read the memory: Move on. Treat actual data as raw data now.
         raw_data = raw_data[1:]
@@ -862,7 +917,7 @@ class ADS7865():
         if TOF:
             print("ADC: TIMEOUT occured!")
 
-        y = [0] * n_channels
+        y_orig = y = [0] * n_channels
         for chan in range(n_channels):
 
             # user may specify whether he wants a numpy array
@@ -883,9 +938,19 @@ class ADS7865():
                 # unavailable.
                 if fmt_volts:
                     y[chan] = y[chan] * self.lsb
+                    
+                    # Apply digital gain
+                    y_orig[chan] = y[chan]
+                    y[chan] = y[chan] * self.digital_gain
 
+        # Perform some commands that ready the ADC for another burst.
         self.reload()
-        self.y = y # Storing collected samples internally
+        
+        # Storing collected samples internally
+        self.y = y 
+        self.y_orig = y_orig
+        
+        # Return values
         return (y, TOF)
 
     def get_data(self):
@@ -903,3 +968,17 @@ class ADS7865():
             return y
         else:
             return None
+
+class ADC_Tools():
+    def meas_vpp(self, ADC):
+        """Computes the vpp for each channel that the ADC is using.
+        """
+        # initialize variables
+        vpp = []
+        
+        # Compute the vpp for each channel
+        for ch in range(ADC.n_channels):
+            vpp.append(np.amax(self.adc.y[ch]) - np.amin(self.adc.y[ch]))
+        
+        # Return tuple containing the data
+        return tuple(vpp)

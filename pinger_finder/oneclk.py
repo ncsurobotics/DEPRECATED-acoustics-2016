@@ -44,6 +44,7 @@ def main(cmd=None):
         # Load ADC Stuff
         acoustics = Acoustics()
         acoustics.preset(100)
+        acoustics.adc.adc_status()
         quickplot.main(acoustics.adc, plt)
 
 

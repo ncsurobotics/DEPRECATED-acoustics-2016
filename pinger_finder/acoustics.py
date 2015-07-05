@@ -1,8 +1,11 @@
 from sys import argv
 import ConfigParser
 import datetime
+import time
 import csv
 import math
+from scipy.fftpack import fft
+from scipy.signal import argrelextrema
 
 from bbb.ADC import ADS7865
 from bbb.LTC1564 import LTC1564
@@ -24,6 +27,7 @@ LOG_DIR = path.join(path.dirname(path.realpath(__file__)), "saved_data/")
 ################################################
 
 WORLD_ORIGIN = np.array([[0,0,0]])
+PINGER_CYCLE_TIME = 5 # seconds
 
 ARRAY_DEFAULT_LOCATION = WORLD_ORIGIN
 
@@ -109,7 +113,7 @@ class Acoustics():
 
     def __init__(self):
         # load config file
-        config = ConfigParser.ConfigParser()
+        self.config = ConfigParser.SafeConfigParser()
         config_file = open("config.ini", "a")
         
         # Initialize aquisition/behavior part of acoustics system
@@ -139,13 +143,11 @@ class Acoustics():
         pass
         
     def get_data(self):
-        # Start the timer
-        timer_start = time.time() # can be embedded deeper if need be.
-        
         # begins process by initiating a sample capture and initializing
         # loop counter
         next_state = 'sample_capture'
         loop_counter = 0
+        watchdog_timer = 0 # seconds
         
         # BEGIN LOOP
         """
@@ -163,25 +165,74 @@ class Acoustics():
         """
         
         while (next_state != 'exit'):
-            # Evaluate state
+
             if next_state == 'sample_capture':
                 y = self.adc.get_data()
                 
                 if adc.TOF == 1:
                     # Signal was not strong enough to pass trigger. increase
                     # gain of system and exit
-                    condition(passive=True)
                     next_state = 'exit'
+                    
                 elif adc.TOF == 0:
-                    next_state = 'fft_analysis'
+                    # Signal passed trigger. Check timer if for timeout.
+                    if (loop_counter == 0): timer_start = time.time()
+                    else: watchdog_timer += timer_start - time.time()
+                    
+                    # Print watchdog timer for diagnostic purposes
+                    print('acoustics: watchdog_timer = %.2s' % watchdog_timer)
+                    
+                    # Timer passed. Move on to FFT analysis
+                    if watchdog_timer < PINGER_CYCLE_TIME*0.1:
+                        next_state = 'fft_analysis'
+                    else:
+                        # Watchdog timer expired. data is void.
+                        # erase data and exit loop 
+                        y = None
+                        next_state = 'exit'
                     
             elif next_state == 'fft_analysis':
-                pass
-            
-                    
+                # Identify trigger channel
+                trg_ch_idx = self.adc.TFLG_CH
+                
+                # generate fft string on trigger ch
+                Y_abs = abs( fft(y[trg_ch_idx]) )
+                
+                # generate typical fft-based parameters
+                fs  = self.adc.sample_rate  # hz
+                M   = Y_abs.size            # bins
+                df  = fs / M                # hz/bin
+                
+                # generate peak search parameters
+                noise_floor = self.config.getfloat('ADC', 'noise_floor') # units???
+                peak_tol = 3*df
+                pinger_frequency = self.config.getfloat('Acoustics', 'pinger_frequency') # units???
+                
+                # search for peaks above noise floor
+                Y_abs = np.clip(Y_abs, noise_floor, 10e3)
+                peaks = argrelextrema(Y_abs, np.greater)
+                
+                # print list of peaks for diagnosticd purposes
+                print('acoustics: Found peaks at.. ')
+                i = 0
+                for pk in peaks:
+                    print('acoustics: %.2f KHz' % pk*df/1000 )
+                    if i==0: print('\b << fundamental')
+                    i += 1
+ 
+                # see if first maxima within rang
+                if pinger_frequency-peak_tol <= peaks[0]*df <= pinger_frequency+peak_tol:
+                    next_state = 'exit'
+                else: 
+                    # correct pinger was not detected. Recapturing sample.
+                    next_state = 'sample_capture'
+ 
             else:
                 print('acoustics: state "%s" is unknown. ' % next_state
                     + 'quiting pinger sense loop/machine.')
+                    
+            # Try to adjust for any problems before leaving this loop
+            if next_state == 'exit': condition(passive=True)
                 
             # Increment loop counter
             loop_counter += 1

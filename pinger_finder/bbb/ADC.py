@@ -150,10 +150,11 @@ class ADS7865():
             self.corrected_threshold
             self.cr_specd
             self.modified
+            self.sample_rate
             self.dac_voltage
             self.LSB
             self.TOF
-            self.TFLG_CH
+            self.TRG_CH
             self.digital_gain
         """
         # Loads the BBB cape overlays that allow control of the PRUSS
@@ -225,7 +226,7 @@ class ADS7865():
         
         # Any other variables that will later be relevent
         self.TOF = None
-        self.TFLG_CH = None
+        self.TRG_CH = None
         
 
     ############################
@@ -906,7 +907,7 @@ class ADS7865():
         TRG_CH = (get_bit(raw_data[0], TFLG0_BIT) 
             + 2*get_bit(raw_data[0], TFLG1_BIT)
         )
-        self.TFLG_CH = TRG_CH
+        self.TRG_CH 
         
         # Read the memory: Move on. Treat actual data as raw data now.
         raw_data = raw_data[1:]

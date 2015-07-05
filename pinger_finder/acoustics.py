@@ -137,7 +137,58 @@ class Acoustics():
         trigger action and plotted data points.
         """
         pass
-
+        
+    def get_data(self):
+        # Start the timer
+        timer_start = time.time() # can be embedded deeper if need be.
+        
+        # begins process by initiating a sample capture and initializing
+        # loop counter
+        next_state = 'sample_capture'
+        loop_counter = 0
+        
+        # BEGIN LOOP
+        """
+        GENERAL PSUEDO CODE
+        # Perform Sample Capture
+            # Measure elapsed time if applicable
+            # if TOF: Adjust gain; next_state = exit
+            # if !TOF: next_state = FFT Analysis
+            
+        # Perform FFT Analysis
+            # if pinger_detected: next_state = compute_heading
+            # if !pinger_detected:
+                # if timer_expired: next_state = exit
+                # if !timer_expired: next_state = sample_capture
+        """
+        
+        while (next_state != 'exit'):
+            # Evaluate state
+            if next_state == 'sample_capture':
+                y = self.adc.get_data()
+                
+                if adc.TOF == 1:
+                    # Signal was not strong enough to pass trigger. increase
+                    # gain of system and exit
+                    condition(passive=True)
+                    next_state = 'exit'
+                elif adc.TOF == 0:
+                    next_state = 'fft_analysis'
+                    
+            elif next_state == 'fft_analysis':
+                pass
+            
+                    
+            else:
+                print('acoustics: state "%s" is unknown. ' % next_state
+                    + 'quiting pinger sense loop/machine.')
+                
+            # Increment loop counter
+            loop_counter += 1
+            # END OF LOOP
+            
+        return y # is None if signal does not pass criteria
+        
     def compute_pinger_direction(self):
         """
         output value represents direction to pinger in degrees.
@@ -200,7 +251,7 @@ class Acoustics():
                 
         # Loop in getting samples until the us
     
-    def condition(self):
+    def condition(self, passive=False):
         """Automatically determines the correct amount of gain to
         apply to the signal, and configures the LTC1564s accordingly. Also,
         due to the nature of the trigger used on the ADC, this function
@@ -221,8 +272,9 @@ class Acoustics():
         if self.auto_update is False:
             return
         
-        # grab a sample of data
-        self.adc.get_data()
+        # grab a sample of data if active
+        if !passive():
+            self.adc.get_data()
         
         # (detour) log data if applicable
         self.logger.process(self.adc, self.filt)

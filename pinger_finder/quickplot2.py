@@ -86,13 +86,13 @@ def plot_f(adc, y, ax):
     for chan in range(adc.n_channels):
         
         print("Done. Plotting #2")
-        ax.plot(f, abs(fft(y[chan])))
+        ax.plot(f, abs(fft(y[chan]))/M)
 
     print("Done Plotting")
     
     ax.axis(xmin=f_delta,
             xmax=fs/2,
             ymin=0,
-            ymax=None)
+            ymax=1)
     ax.set_xscale('log')
 

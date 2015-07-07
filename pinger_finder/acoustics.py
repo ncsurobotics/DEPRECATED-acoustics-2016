@@ -1,13 +1,14 @@
 from sys import argv
-import ConfigParser
+from ConfigParser import SafeConfigParser
 import datetime
 import time
 import csv
 import math
 from scipy.fftpack import fft
-from scipy.signal import argrelextrema
+#from scipy.signal import argrelextrema
 
 from bbb.ADC import ADS7865
+from bbb.ADC import ADC_Tools 
 from bbb.LTC1564 import LTC1564
 import locate_pinger
 import numpy as np
@@ -20,6 +21,7 @@ from environment import source
 
 from os import path
 LOG_DIR = path.join(path.dirname(path.realpath(__file__)), "saved_data/")
+PINGER_FINDER_DIR = path.dirname(path.realpath(__file__))
 
 
 # ##############################################
@@ -27,7 +29,7 @@ LOG_DIR = path.join(path.dirname(path.realpath(__file__)), "saved_data/")
 ################################################
 
 WORLD_ORIGIN = np.array([[0,0,0]])
-PINGER_CYCLE_TIME = 5 # seconds
+PINGER_CYCLE_TIME = 2 # seconds
 
 ARRAY_DEFAULT_LOCATION = WORLD_ORIGIN
 
@@ -41,6 +43,11 @@ HYDROPHONE_3_DEFAULT_LOCATIONS = np.array([
 TARGET_FREQ = 22e3 # Frequency of the pinger in hertz
 
 env = Environment()
+adc_tools = ADC_Tools()
+
+# Config parser
+config = SafeConfigParser()
+config.read(PINGER_FINDER_DIR+'/config.ini')
 
 # ##############################################
 #### General Purpose Functions #################
@@ -112,9 +119,6 @@ def get_t_axis(fig):
 class Acoustics():
 
     def __init__(self):
-        # load config file
-        self.config = ConfigParser.SafeConfigParser()
-        config_file = open("config.ini", "a")
         
         # Initialize aquisition/behavior part of acoustics system
         self.adc = ADS7865()
@@ -169,21 +173,21 @@ class Acoustics():
             if next_state == 'sample_capture':
                 y = self.adc.get_data()
                 
-                if adc.TOF == 1:
+                if self.adc.TOF == 1:
                     # Signal was not strong enough to pass trigger. increase
                     # gain of system and exit
                     next_state = 'exit'
                     
-                elif adc.TOF == 0:
+                elif self.adc.TOF == 0:
                     # Signal passed trigger. Check timer if for timeout.
                     if (loop_counter == 0): timer_start = time.time()
-                    else: watchdog_timer += timer_start - time.time()
+                    else: watchdog_timer =  time.time() - timer_start
                     
                     # Print watchdog timer for diagnostic purposes
-                    print('acoustics: watchdog_timer = %.2s' % watchdog_timer)
+                    print('acoustics: watchdog_timer = %.2f' % watchdog_timer)
                     
                     # Timer passed. Move on to FFT analysis
-                    if watchdog_timer < PINGER_CYCLE_TIME*0.1:
+                    if watchdog_timer < PINGER_CYCLE_TIME*1.1:
                         next_state = 'fft_analysis'
                     else:
                         # Watchdog timer expired. data is void.
@@ -192,47 +196,65 @@ class Acoustics():
                         next_state = 'exit'
                     
             elif next_state == 'fft_analysis':
+                print("acoustics: Conducting FFT analysis")
                 # Identify trigger channel
-                trg_ch_idx = self.adc.TFLG_CH
-                
-                # generate fft string on trigger ch
-                Y_abs = abs( fft(y[trg_ch_idx]) )
+                trg_ch_idx = self.adc.TRG_CH 
                 
                 # generate typical fft-based parameters
                 fs  = self.adc.sample_rate  # hz
-                M   = Y_abs.size            # bins
+                M   = y[trg_ch_idx].size            # bins
                 df  = fs / M                # hz/bin
                 
+                # generate fft string on trigger ch
+                print("acoustics: y.size = %d" % len(y))
+                print("acoustics: abs( fft(y[trg_ch_idx]) ) and idx = %d" % trg_ch_idx)
+                Y_abs = abs( fft(y[trg_ch_idx]) ) / M
+  
                 # generate peak search parameters
-                noise_floor = self.config.getfloat('ADC', 'noise_floor') # units???
-                peak_tol = 3*df
-                pinger_frequency = self.config.getfloat('Acoustics', 'pinger_frequency') # units???
+                noise_floor = config.getfloat('ADC', 'noise_floor') # units???
+                peak_tol = 500 # Hertz - 1/2 minimum frequency band to discern again
+                pinger_frequency = config.getfloat('Acoustics', 'pinger_frequency') # units???
+                
+                # Generate Warning if expectations are too generous
+                if df > 2*peak_tol:
+                    print("Acoustics: WARNING - peak tol = %f Hz" % peak_tol
+                        + "Which means you can discern a signal "
+                        + "%f Hz away from target freq, " % peak_tol
+                        + "though your sampling parameters allow for "
+                        + "a maximum peak tol of %f Hz" % df/2
+                        + "You should change your sampling parameters.")
                 
                 # search for peaks above noise floor
                 Y_abs = np.clip(Y_abs, noise_floor, 10e3)
-                peaks = argrelextrema(Y_abs, np.greater)
+                peaks = adc_tools.find_local_maxima(Y_abs)
                 
-                # print list of peaks for diagnosticd purposes
-                print('acoustics: Found peaks at.. ')
-                i = 0
-                for pk in peaks:
-                    print('acoustics: %.2f KHz' % pk*df/1000 )
-                    if i==0: print('\b << fundamental')
-                    i += 1
+                if peaks:
+                    # print list of peaks for diagnosticd purposes
+                    print('acoustics: Found peaks at.. ')
+                    i = 0
+                    for pk in peaks:
+                        print('acoustics: found peak at %.2f KHz' % (pk*df/1000) )
+                        i += 1
  
-                # see if first maxima within rang
-                if pinger_frequency-peak_tol <= peaks[0]*df <= pinger_frequency+peak_tol:
+                    # see if first maxima within rang
+                    if pinger_frequency-peak_tol <= peaks[0]*df <= pinger_frequency+peak_tol:
+                        print("acoustics: peak is within targeted freq range. Passing sample forward")
+                        next_state = 'exit'
+                    else: 
+                        # correct pinger was not detected. Recapturing sample.
+                        #time.sleep(2)
+                        next_state = 'sample_capture'
+                else:
+                    # No peaks detected at all
+                    print("acoustics: Woah!!! no data peaks detected, check yourself.")
                     next_state = 'exit'
-                else: 
-                    # correct pinger was not detected. Recapturing sample.
-                    next_state = 'sample_capture'
  
             else:
                 print('acoustics: state "%s" is unknown. ' % next_state
                     + 'quiting pinger sense loop/machine.')
                     
             # Try to adjust for any problems before leaving this loop
-            if next_state == 'exit': condition(passive=True)
+            if next_state == 'exit': self.condition(passive=True)
                 
             # Increment loop counter
             loop_counter += 1
@@ -259,6 +281,40 @@ class Acoustics():
     def compute_pinger_direction2(self,ang_ret=False):
         # Grab a sample of pinger data
         self.adc.get_data()
+        
+        # (detour) log data if applicable
+        self.logger.process(self.adc, self.filt)
+        
+        # Estimate pinger location: Get a value that represents the
+        # time delay of arrival for each individual hydrophone
+        tdoa_times = get_heading.compute_relative_delay_times(self.adc, 
+            TARGET_FREQ, 
+            self.array,
+            env.c)
+        
+        # Get direction
+        toa_dists = tdoa_times*env.c
+        info_string = self.array.get_direction(toa_dists)
+        
+        # Report angles if applicable
+        if ang_ret:
+            angles = [(-math.atan2(b,a)*180/math.pi+90) for (a,b) in self.array.ab]
+            
+            n = self.array.n_elements
+            if n == 2:
+                return {'ab': angles[0]}
+                
+            elif n == 3:
+                return {'ra': angles[0],
+                    'rb': angles[1],
+                    'ab': angles[2]
+                }
+            else:
+                raise IOError('%d hydrophone elements was not expected' % n)
+                
+    def compute_pinger_direction3(self,ang_ret=False):
+        # Grab a sample of pinger data
+        self.get_data()
         
         # (detour) log data if applicable
         self.logger.process(self.adc, self.filt)
@@ -324,7 +380,7 @@ class Acoustics():
             return
         
         # grab a sample of data if active
-        if !passive():
+        if not passive:
             self.adc.get_data()
         
         # (detour) log data if applicable
@@ -422,6 +478,7 @@ class Acoustics():
         sel (int) that the uses supplies. See ADC.py's 
         very own preset function for a more detailed
         description of each preset."""
+        print("acoustics: Loading preset %d" % sel)
         
         # Configure the ADC
         self.adc.preset(sel)

@@ -40,7 +40,7 @@ data_dict = ('')
 #######################
     
 def init_acoustics():
-    acoustics.preset(0)
+    acoustics.preset(101)
     
 def send(msg):
     pAC.write(msg + '\n')
@@ -90,7 +90,7 @@ def task_manager(input):
         
         # Get data
         acoustics.log_ready('srp')
-        data_dictionary['data']['heading'] = acoustics.compute_pinger_direction2(ang_ret=True)
+        data_dictionary['data']['heading'] = acoustics.compute_pinger_direction3(ang_ret=True)
         
         # Convert response into string
         str_response = str(data_dictionary)
@@ -126,7 +126,7 @@ def task_manager(input):
 def main_loop():
     # Settings
     viewer_active = False
-    log.tog_logging()
+    # log.tog_logging()
 
     while 1:
         int_signal = ''
@@ -142,7 +142,7 @@ def main_loop():
                 
                 # Run acoustics anyway to see if it should condition the signal
                 acoustics.log_ready('s')
-                acoustics.condition()
+                #acoustics.get_data()
                 
             
             if viewer_active:

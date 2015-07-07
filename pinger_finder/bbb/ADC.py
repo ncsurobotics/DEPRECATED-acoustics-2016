@@ -44,6 +44,7 @@ TOTAL_CHANNELS = 4
 SAMPLES_PER_CONV = 2
 STATUS_BLOCK = 1
 TIMEOUT_STATUS_BIT = 2
+DBOVF_BIT = 3
 TFLG0_BIT = 4
 TFLG1_BIT = 5
 
@@ -213,6 +214,7 @@ class ADS7865():
         self.delay = [-99]*4
         
         self.digital_gain = 1
+
         self.update_threshold(DEFAULT_THRESHOLD)
         self.sr_specd = 0  # parameter for keeping the up with the last spec
         self.modified = True
@@ -393,10 +395,10 @@ class ADS7865():
             determining the samplesize, sampling rate, # of simultaneous
             channels, and (initial) threshold value.
             """
-            self.update_deadband_ms(1)
-            self.set_sample_len(1e3)
+            self.update_deadband_ms(0.5e3)
+            self.set_sample_len(3e3)
             self.update_sample_rate(400e3)
-            self.threshold = .5 
+            self.update_threshold(.5)
             self.ez_config(4)
             
         elif sel == 1:
@@ -407,7 +409,7 @@ class ADS7865():
             self.update_deadband_ms(1)
             self.set_sample_len(1e3)
             self.update_sample_rate(800e3)
-            self.threshold = .1 
+            self.update_threshold(.1)
             self.ez_config(0)
 
         elif sel == 100:
@@ -425,7 +427,7 @@ class ADS7865():
             self.update_deadband_ms(0)
             self.set_sample_len(1e3)
             self.update_sample_rate(400e3)
-            self.threshold = 0
+            self.update_threshold(0)
             self.ez_config(4)
         elif sel == 101:
             """
@@ -439,9 +441,9 @@ class ADS7865():
             """
             self.update_deadband_ms(0)
             self.set_sample_len(1e3)
-            self.update_sample_rate(700e3)
-            self.threshold = 2
-            self.ez_config(2)
+            self.update_sample_rate(300e3)
+            self.update_threshold(1)
+            self.ez_config(0)
 
         elif sel == 102:
             """
@@ -454,7 +456,7 @@ class ADS7865():
             self.update_deadband_ms(1)
             self.set_sample_len(10e3)
             self.update_sample_rate(400e3)
-            self.threshold = .5 
+            self.update_threshold(.5)
             self.ez_config(4)
 
 
@@ -904,10 +906,15 @@ class ADS7865():
         self.TOF = TOF
         
         # Read the memory: Extract TRG_CH Data
-        TRG_CH = (get_bit(raw_data[0], TFLG0_BIT) 
-            + 2*get_bit(raw_data[0], TFLG1_BIT)
-        )
-        self.TRG_CH 
+        self.TRG_CH  = get_bit(raw_data[0], TFLG0_BIT) 
+        print
+        if self.n_channels != 2:
+            self.TRG_CH += 2*get_bit(raw_data[0], TFLG1_BIT)
+        print("ADC: Triggered off ch %d" % self.TRG_CH)
+
+        # Read the DB overflow bit
+        DBOVF = get_bit(raw_data[0], DBOVF_BIT)
+        print("ADC: DBOVF = %d" % DBOVF)
         
         # Read the memory: Move on. Treat actual data as raw data now.
         raw_data = raw_data[1:]
@@ -983,3 +990,31 @@ class ADC_Tools():
         
         # Return tuple containing the data
         return tuple(vpp)
+
+    def find_local_maxima(self, a):
+        """
+        args:
+            y = array (numpy or list) of values
+        """
+        
+        # Initial arrays and bits
+        peaks = []
+        rising_bit = 0
+        
+        
+        for i in range(1,a.size):
+            prev_value = a[i-1]
+        
+            if rising_bit:
+                # was previously on local rise. Now checking if slope goes negative.
+                if (a[i] - prev_value < 0):
+                    # Peak found. Save it. Reset the rising_bit
+                    peaks.append(i-1)
+                    rising_bit = 0
+        
+            else:
+                # Looking for local rise.
+                if (a[i] - prev_value) > 0:
+                    rising_bit = 1
+
+        return peaks

@@ -16,6 +16,7 @@ import select
 import uart #enable_uart()
 import oneclk
 from acoustics import Acoustics
+import time
 
 # ######################
 ### Global Constants ###
@@ -29,6 +30,9 @@ def define_commlink():
 
 PORT_NAME = "/dev/ttyO5"
 acoustics = Acoustics() # Acoustics Control Object
+
+# load global config settings
+config = acoustics.pass_config_module()
 
 pAC = define_commlink() # Acoustics communication port
 log = acoustics.logger
@@ -90,7 +94,15 @@ def task_manager(input):
         
         # Get data
         acoustics.log_ready('srp')
-        data_dictionary['data']['heading'] = acoustics.compute_pinger_direction3(ang_ret=True)
+        (data_dictionary['data']['heading'], epoch) = acoustics.get_last_measurement()
+        
+        #
+        if data_dictionary['data']['heading'] == None:
+            data_dictionary['data']['epoch'] = None
+            data_dictionary['txt'] = 'have not located pinger yet'
+            data_dictionary['error'] = 1
+        else:
+            data_dictionary['data']['epoch'] = time.time() - epoch
         
         # Convert response into string
         str_response = str(data_dictionary)
@@ -127,6 +139,9 @@ def main_loop():
     # Settings
     viewer_active = False
     # log.tog_logging()
+    
+    # Start the timer
+    cycle_start = time.time()
 
     while 1:
         int_signal = ''
@@ -135,16 +150,26 @@ def main_loop():
             input = read()
             #input = 'get_data'
             if input:
+                # Process user input
                 print("RX: {0}".format(input))
                 task_manager(input)
             else:
                 print("I got nothin.")
+              
                 
-                # Run acoustics anyway to see if it should condition the signal
+            # Run acoustics in the background
+            acoustics.refresh_config()
+            if (time.time()-cycle_start > config.getfloat('Terminal', 'sampling_interval')):
+                # Perform sample capture
                 acoustics.log_ready('s')
-                #acoustics.get_data()
+                acoustics.update_measurement()
                 
-            
+                # Restart the timer
+                cycle_start = time.time()
+            else:
+                pass
+                
+            # Plots output for debugging purposes
             if viewer_active:
                 acoustics.plot_recent(fourier=True)
                 

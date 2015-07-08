@@ -22,6 +22,7 @@ from environment import source
 from os import path
 LOG_DIR = path.join(path.dirname(path.realpath(__file__)), "saved_data/")
 PINGER_FINDER_DIR = path.dirname(path.realpath(__file__))
+BASE_DIR = path.dirname(path.dirname(path.realpath(__file__)))
 
 
 # ##############################################
@@ -47,7 +48,7 @@ adc_tools = ADC_Tools()
 
 # Config parser
 config = SafeConfigParser()
-config.read(PINGER_FINDER_DIR+'/config.ini')
+config.read(BASE_DIR+'/config.ini')
 
 # ##############################################
 #### General Purpose Functions #################
@@ -126,6 +127,9 @@ class Acoustics():
         self.plt = None
         self.auto_update = None
         
+        # Initialize Data buffer
+        self.data_buffer = (None, None)
+        
         # Initialize abstract hydrophone object
         self.array = hydrophones.Array() 
         
@@ -147,26 +151,33 @@ class Acoustics():
         pass
         
     def get_data(self):
+        """Performs all steps necessary to collect a good set of data for processing,
+        or to determine a "good data unavailable" condition, which can also be
+        processed. Generally, if a ping of the correct frequency and expected 
+        power occurs within a known cycle time, then this code will capture
+        such a ping the instant it happens. Else, it will adjust ADC settings
+        for better results the next time it's called. 
+
+        GENERAL PSUEDO CODE
+        # Perform Sample Capture
+            # Measure elapsed time if applicable
+            # if TOF: Adjust gain; next_state = exit/fail
+            # if !TOF: next_state = FFT Analysis
+            
+        # Perform FFT Analysis
+            # if pinger_detected: next_state = exit/success
+            # if !pinger_detected:
+                # if timer_expired: next_state = exit/fail
+                # if !timer_expired: next_state = sample_capture
+        """
         # begins process by initiating a sample capture and initializing
-        # loop counter
+        # loop counter and timer
         next_state = 'sample_capture'
         loop_counter = 0
         watchdog_timer = 0 # seconds
         
         # BEGIN LOOP
-        """
-        GENERAL PSUEDO CODE
-        # Perform Sample Capture
-            # Measure elapsed time if applicable
-            # if TOF: Adjust gain; next_state = exit
-            # if !TOF: next_state = FFT Analysis
-            
-        # Perform FFT Analysis
-            # if pinger_detected: next_state = compute_heading
-            # if !pinger_detected:
-                # if timer_expired: next_state = exit
-                # if !timer_expired: next_state = sample_capture
-        """
+       
         
         while (next_state != 'exit'):
 
@@ -247,7 +258,7 @@ class Acoustics():
                 else:
                     # No peaks detected at all
                     print("acoustics: Woah!!! no data peaks detected, check yourself.")
-                    next_state = 'exit'
+                    next_state = 'sample_capture'
  
             else:
                 print('acoustics: state "%s" is unknown. ' % next_state
@@ -314,37 +325,62 @@ class Acoustics():
                 
     def compute_pinger_direction3(self,ang_ret=False):
         # Grab a sample of pinger data
-        self.get_data()
+        y = self.get_data()
         
-        # (detour) log data if applicable
-        self.logger.process(self.adc, self.filt)
-        
-        # Estimate pinger location: Get a value that represents the
-        # time delay of arrival for each individual hydrophone
-        tdoa_times = get_heading.compute_relative_delay_times(self.adc, 
-            TARGET_FREQ, 
-            self.array,
-            env.c)
-        
-        # Get direction
-        toa_dists = tdoa_times*env.c
-        info_string = self.array.get_direction(toa_dists)
-        
-        # Report angles if applicable
-        if ang_ret:
-            angles = [(-math.atan2(b,a)*180/math.pi+90) for (a,b) in self.array.ab]
+        if y:
+            # (detour) log data if applicable
+            self.logger.process(self.adc, self.filt)
             
-            n = self.array.n_elements
-            if n == 2:
-                return {'ab': angles[0]}
+            # Estimate pinger location: Get a value that represents the
+            # time delay of arrival for each individual hydrophone
+            tdoa_times = get_heading.compute_relative_delay_times(self.adc, 
+                TARGET_FREQ, 
+                self.array,
+                env.c)
+            
+            # Get direction
+            toa_dists = tdoa_times*env.c
+            info_string = self.array.get_direction(toa_dists)
+            
+            # Report angles if applicable
+            if ang_ret:
+                angles = [(-math.atan2(b,a)*180/math.pi+90) for (a,b) in self.array.ab]
                 
-            elif n == 3:
-                return {'ra': angles[0],
-                    'rb': angles[1],
-                    'ab': angles[2]
-                }
-            else:
-                raise IOError('%d hydrophone elements was not expected' % n)
+                n = self.array.n_elements
+                if n == 2:
+                    return {'ab': angles[0]}
+                    
+                elif n == 3:
+                    return {'ra': angles[0],
+                        'rb': angles[1],
+                        'ab': angles[2]
+                    }
+                else:
+                    raise IOError('%d hydrophone elements was not expected' % n)
+        else:
+            # Did not get an acceptable sample. Return None.
+            return None
+            
+    def update_measurement(self):
+        # Use code that a) collects a new measurment and b) returns a result
+        # if the signal was good (of otherwise makes adjustments for next
+        # time) to get data
+        result = self.compute_pinger_direction3(ang_ret=True)
+        
+        # Use logic to decide whether or not to update data buffer
+        update_occured = False
+        if result == None:
+            # Data was captured. Do not update buffer
+            pass
+        else:
+            # Data was captured. Update buffer.
+            self.data_buffer = (result, time.time())
+            update_occured = True
+            
+        return update_occured
+            
+    def get_last_measurement(self):
+        return self.data_buffer
             
     def calibrate(self):
         cal_data = config.get(acoustics, 'cal_data')
@@ -508,6 +544,15 @@ class Acoustics():
         
     def close(self):
         self.adc.unready()
+        
+    def pass_config_module(self):
+        """Returns object representing the config file, as instanced
+        by SafeConfigParser for use in external programs.
+        """
+        return config
+        
+    def refresh_config(self):
+        config.read(BASE_DIR+'/config.ini')
         
 # ##################################
 #### Logging Tool ##################

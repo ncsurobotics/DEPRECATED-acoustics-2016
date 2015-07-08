@@ -232,8 +232,11 @@ class Acoustics():
                         + "Which means you can discern a signal "
                         + "%f Hz away from target freq, " % peak_tol
                         + "though your sampling parameters allow for "
-                        + "a maximum peak tol of %f Hz" % df/2
+                        + "a maximum peak tol of %f Hz" % (df/2)
                         + "You should change your sampling parameters.")
+                        
+                    print("Acoustics: OVERIDING peak toleranace")
+                    peak_tol = df / 2.0
                 
                 # search for peaks above noise floor
                 Y_abs = np.clip(Y_abs, noise_floor, 10e3)

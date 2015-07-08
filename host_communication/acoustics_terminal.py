@@ -137,7 +137,7 @@ def task_manager(input):
 
 def main_loop():
     # Settings
-    viewer_active = False
+    viewer_active = True
     # log.tog_logging()
     
     # Start the timer
@@ -164,14 +164,16 @@ def main_loop():
                 acoustics.log_ready('s')
                 acoustics.update_measurement()
                 
+                # Plots output for debugging purposes
+                if viewer_active:
+                    acoustics.plot_recent(fourier=True)
+                
                 # Restart the timer
                 cycle_start = time.time()
             else:
                 pass
                 
-            # Plots output for debugging purposes
-            if viewer_active:
-                acoustics.plot_recent(fourier=True)
+            
                 
             # Now see if someone is trying to do something on the backend
             while sys.stdin in select.select([sys.stdin], [], [], 0)[0]:

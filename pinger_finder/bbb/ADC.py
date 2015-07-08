@@ -441,8 +441,8 @@ class ADS7865():
             """
             self.update_deadband_ms(0)
             self.set_sample_len(1e3)
-            self.update_sample_rate(300e3)
-            self.update_threshold(1)
+            self.update_sample_rate(700e3)
+            self.update_threshold(.1)
             self.ez_config(0)
 
         elif sel == 102:
@@ -881,7 +881,7 @@ class ADS7865():
         pypruss.pru_write_memory(0, PRU0_DB_MEM_OFFSET, [db_hex,])
 
         # Share Threshold with PRU0
-        thr_hex = self.V_to_12bit_Hex(self.threshold)
+        thr_hex = self.V_to_12bit_Hex(self.corrected_threshold)
         pypruss.pru_write_memory(0, PRU0_THR_Mem_Offset, [thr_hex, ])
 
         # Launch the Sample collection program

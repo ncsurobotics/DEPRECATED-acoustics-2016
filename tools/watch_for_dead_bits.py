@@ -13,6 +13,7 @@ def match_against(comp, *args):
 
 
 class Mask:
+
     """
     """
 
@@ -20,7 +21,6 @@ class Mask:
         self.burn_bit = 1
         self.capture = [0] * 12
         self.word_size = 12
-
 
     # Consider replacing both of these functions with a single function
     # that has a burn=True keyword argument.  That way, there's no

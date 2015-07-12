@@ -173,6 +173,7 @@ class Acoustics():
         # begins process by initializing loop counter and timer
         loop_counter = 0
         watchdog_timer = 0 # seconds 
+        capture_flg = False
         
         # adjust sampling parameters (condition) if a sample captures has been
         # previously performed. Otherwise, just perform a sample capture.
@@ -195,7 +196,9 @@ class Acoustics():
                     
                 elif self.adc.TOF == 0:
                     # Signal passed trigger. Check timer if for timeout.
-                    if (loop_counter == 0): timer_start = time.time()
+                    if (capture_flg == False): 
+                        timer_start = time.time()
+                        capture_flg = True
                     else: watchdog_timer =  time.time() - timer_start
                     
                     # Print watchdog timer for diagnostic purposes
@@ -414,7 +417,7 @@ class Acoustics():
         self.valid_signal_flg = False
         
         # Basic variables
-        max_vpp = 4.5
+        max_vpp = 2
         min_vpp = 2 * self.adc.threshold * 1.1 # 10% overhead at min
         
         # check if autoupdate is on
@@ -495,7 +498,12 @@ class Acoustics():
         # update analog gain
         self.filt.gain_mode(LTC_gain-1)
         
-        # update digital gain
+        # update digital gain. Clip if exceeds maximum
+        max_digital_gain = config.getfloat('ADC', 'max_digital_gain')
+        if digital_gain > max_digital_gain:
+            print("Acoustics: Clipping gain at %f" % max_digital_gain)
+            digital_gain = max_digital_gain
+            
         self.adc.update_digital_gain(digital_gain)
     
     def plot_recent(self, fourier=False):
@@ -536,6 +544,7 @@ class Acoustics():
         # Configure other parameters
         if sel == 0:
             self.filt.gain_mode(0)
+            self.filt.filter_mode(15)
             self.auto_update = True
             
         if sel == 1:
@@ -548,6 +557,7 @@ class Acoustics():
 
         elif sel == 101:
             self.filt.gain_mode(0)
+            self.filt.filter_mode(15)
             self.auto_update = True
     
     def set_auto_update(self, bool):

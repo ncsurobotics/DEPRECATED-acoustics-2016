@@ -1,7 +1,7 @@
 from .port import Port
 
 CS_PIN = ''
-F_PINS = ''
+F_PINS = ['P9_15', 'P9_16', 'P9_17', 'P9_18']
 G_PINS = ['P9_11', 'P9_12', 'P9_13', 'P9_14']
 
 DEFAULT_F = 0
@@ -84,7 +84,7 @@ class LTC1564():
                 mode: int
         """
 
-        if 0 <= mode <= 1:
+        if 0 <= mode <= 15:
             print("LTC1564: Writing %d to filt stage." % mode)
 
             if CS_PIN:

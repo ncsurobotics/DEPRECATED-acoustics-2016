@@ -218,9 +218,9 @@ def debug_wizard(adc, filt_obj=None, plt=None):
         elif input_matches('7'):
             adc.read_dac()
 
-        # elif input_matches('8'):
-        #     from test_filters import test_filters
-        #     test_filters(adc, filt_obj, plt)
+        elif input_matches('8'):
+            from test_filters import test_filters
+            test_filters(adc, filt_obj, plt)
 
 
 def print_debugs(keys):

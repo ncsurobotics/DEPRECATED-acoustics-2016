@@ -18,6 +18,9 @@ import oneclk
 from acoustics import Acoustics
 import time
 
+# Flush stout so that system logging file can update with information
+sys.stdout.flush()
+
 # ######################
 ### Global Constants ###
 #########################
@@ -137,13 +140,15 @@ def task_manager(input):
 
 def main_loop():
     # Settings
-    viewer_active = True
-    # log.tog_logging()
+    viewer_active = config.getboolean('Terminal', 'viewer_active')
+    if config.getboolean('Terminal', 'log_at_start'):
+        log.tog_logging()
     
     # Start the timer
     cycle_start = time.time()
 
     while 1:
+        sys.stdout.flush()
         int_signal = ''
         try:
             # Try reading and acting upon seawolf's input first
@@ -176,8 +181,9 @@ def main_loop():
             
                 
             # Now see if someone is trying to do something on the backend
-            while sys.stdin in select.select([sys.stdin], [], [], 0)[0]:
-                int_signal = sys.stdin.readline().rstrip('\n')
+            if config.getboolean('Terminal', 'debugging'):
+                while sys.stdin in select.select([sys.stdin], [], [], 0)[0]:
+                    int_signal = sys.stdin.readline().rstrip('\n')
             
             # Enter debug mode if backend user asks to
             if int_signal == 'g':

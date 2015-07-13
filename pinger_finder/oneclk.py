@@ -4,6 +4,7 @@ from acoustics import Acoustics
 import locate_pinger
 import quickplot
 
+
 def main(cmd=None):
     if (cmd is None):
         cmd = argv[1]
@@ -40,7 +41,7 @@ def main(cmd=None):
     elif (cmd == 'plt'):
         # Load plotting stuff
         plt = load_matplotlib()
-    
+
         # Load ADC Stuff
         acoustics = Acoustics()
         acoustics.preset(100)

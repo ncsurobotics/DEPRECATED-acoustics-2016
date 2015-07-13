@@ -2,6 +2,7 @@ import numpy as np
 
 SAMPLES_PER_CONV = 2
 
+
 def main(adc, plt, recent=False, ask=False):
 
     # If desired, user will be prompted to hit the Enter key
@@ -24,11 +25,11 @@ def main(adc, plt, recent=False, ask=False):
         print("quickplot: Trigger failed. Aborting plot")
     else:
         plot_output(adc, y, plt)
-    
+
     # snippet reflects that if user sets recent to false (and thus is grabbing
     # fresh data), he is unable to control the ready state of the ADC, so this
     # snippet of code does that for him.
-    if recent==False:
+    if recent == False:
         adc.unready()
     return y
 

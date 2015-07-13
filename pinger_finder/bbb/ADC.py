@@ -11,7 +11,7 @@ if platform.platform() == 'Linux-3.8.13-bone47-armv7l-with-debian-7.4':
     import pypruss  # Python PRUSS wrapper
 else:
     print("ADC: Not on BBB. Pypruss is unavailable")
-    
+
 import numpy as np
 
 from . import boot
@@ -91,10 +91,12 @@ def twos_comp(val, bits):
 
     return val
 
-def get_bit(word,bit):
+
+def get_bit(word, bit):
     """Check if "bit" is set in "word". Word can be of any arbitrary
     length."""
-    return ((word&(1<<bit))!=0);
+    return ((word & (1 << bit)) != 0)
+
 
 def conv_rate_warning():
     logging.warning("Your code updates the conversion rate instead of the"
@@ -163,7 +165,7 @@ class ADS7865():
         # until this system level command is ran. Do not try to use the
         # pypruss library before running this command.
         boot.load()
-        
+
         # GPIO Stuff
         self.DBus = Port(DB_pin_table)
         self.DBus.set_port_dir("in")
@@ -183,8 +185,6 @@ class ADS7865():
         self._CS = Port(CS_pin)
         self._CS.set_port_dir("out")
         self._CS.write_to_port(0)
-        
-        
 
         # PRUSS Stuff
         self.ddr = {}
@@ -211,8 +211,8 @@ class ADS7865():
         self.arm_status = "unknown"
         self.seq_desc = "unknown"
         self.ch = ['unknown'] * 4
-        self.delay = [-99]*4
-        
+        self.delay = [-99] * 4
+
         self.digital_gain = 1
 
         self.update_threshold(DEFAULT_THRESHOLD)
@@ -225,7 +225,7 @@ class ADS7865():
         # Loads overlays: For that will be later needed for
         # muxing pins from GPIO to pruout/pruin types and vice versa.
         self.sw_reset()
-        
+
         # Any other variables that will later be relevent
         self.TOF = None
         self.TRG_CH = None
@@ -371,19 +371,18 @@ class ADS7865():
 
             # Update n channels
             self.n_channels = 4
-          
 
         if self.sr_specd:       # Last parameter that the user specd was SR
             self.update_sample_rate(self.sample_rate)
         else:
             conv_rate_warning()
-        
+
     def update_delays(self):
         if self.n_channels == 2:
-            self.delay = [0,0]
+            self.delay = [0, 0]
         elif self.n_channels == 4:
-            delay = 1/self.conversion_rate
-            self.delay = [0,0,delay,delay] 
+            delay = 1 / self.conversion_rate
+            self.delay = [0, 0, delay, delay]
         else:
             raise IOError("%r is not a valid channel size." % self.n_channels)
 
@@ -417,9 +416,9 @@ class ADS7865():
             """
             Prototype (Test config #0)
             Date: Friday, May 8th
-            
+
             Purpose: Anything
-            
+
             General Considerations: This isn't as much a preset as much as
             it is a prototyping tool. Unlike other presets embedded in this
             function, the user is free to change the settings anytime as he
@@ -459,7 +458,6 @@ class ADS7865():
             self.update_sample_rate(400e3)
             self.update_threshold(.5)
             self.ez_config(4)
-
 
         else:
             logging.warning("Unknown preset!")
@@ -533,13 +531,13 @@ class ADS7865():
 
         # Update sampling rate
         self.sample_rate = float(sr)
-        
+
         # Update sampling period
         if self.sample_rate != 0:
-            self.sampling_period = 1/self.sample_rate
+            self.sampling_period = 1 / self.sample_rate
         else:
             self.sampling_period = None
-            
+
         # Update Conversion rate
         self.conversion_rate = self.sr_to_cr(sr)
 
@@ -552,17 +550,17 @@ class ADS7865():
                 + " exceeds the system's limit"
                 + " (%dKHz)" % (CONV_RATE_LIMIT / 1000)
             )
-            
+
         # Update delay config (dependent on conversion rate)
         self.update_delays()
-        
+
     def update_sample_length(self, SL):
         # Establish parameters
         MAX_SAMPS = 18000
-        
+
         # Set up variables
         SL = int(eval(SL))
-        
+
         # Give user opportunity for a sanity check
         if SL >= MAX_SAMPS:
             logging.warning(
@@ -570,27 +568,27 @@ class ADS7865():
                 + " (%d samples) is greater and value tested before" % SL
                 + " (%d samples). The BBB has been known to crash" % MAX_SAMPS
                 + " when asking for 20000+ samples")
-                
+
             raw_input("Hit enter to continue, or kill the program now: ")
-            
+
         # Write argument to the ADC's settings
         self.sample_length = SL
 
     def update_deadband_ms(self, ms):
         print("ADS7865: Deadband length set to %dms" % int(ms))
         self.deadband_ms = ms
-        
+
     def update_threshold(self, desired_threshold):
         # Save desired_threshold value
         self.threshold = desired_threshold
-        
+
         # Compute & save corrected threshold
         self.corrected_threshold = desired_threshold / self.digital_gain
-    
+
     def update_digital_gain(self, desired_gain):
         # save argument
         self.digital_gain = desired_gain
-        
+
         # Update threshold attribute to adjust self.corrected_threshold
         # to a value respresenting the new digital gain value
         self.update_threshold(self.threshold)
@@ -609,7 +607,7 @@ class ADS7865():
 
         print("Performing ADC device reset...")
         self.config([CODE_SWRESET])
-        
+
         # Immediate parameters that get defined at reset
         self.n_channels = 2
 
@@ -626,7 +624,7 @@ class ADS7865():
 
         # Update other more complex parameters
         self.update_sample_rate(self.sampling_rate)
-        
+
         # Update meta parameters
         self.modified = True
 
@@ -651,14 +649,14 @@ class ADS7865():
     def update_config_text(self, seq, channels):
         """
         Takes the formatted strings seq and channels uses them to
-        update internal parameters useful for printing out the 
-        config of the ADC. 
-        
+        update internal parameters useful for printing out the
+        config of the ADC.
+
         args:
             seq: string acting as a oneliner describing the ADC config.
             examples includes "CHA0+/CHB0+ -> CHA1+"/CH1+" or just
             "CHA0+/CHB0+"
-            
+
             channels: list of string containing the same information
             embedded in seq, sans the "/" and "->" visual formatting
             stuff.
@@ -670,7 +668,7 @@ class ADS7865():
         self.ch_idx = []
         for i in range(TOTAL_CHANNELS):
             self.ch[i] = channels[i]
-            
+
             if self.ch[i] == DIFF_PAIR_1:
                 self.ch_idx.append(1)
             elif self.ch[i] == DIFF_PAIR_2:
@@ -680,10 +678,10 @@ class ADS7865():
             elif self.ch[i] == DIFF_PAIR_4:
                 self.ch_idx.append(4)
             elif self.ch[i] == '':
-                pass # Blank channel
+                pass  # Blank channel
             else:
                 raise ValueError('ch "{0}" is an invalid '.format(channels[i])
-                    + "channel.")
+                                 + "channel.")
 
     def V_to_12bit_Hex(self, Vin):
         """
@@ -792,9 +790,8 @@ class ADS7865():
 
         if CR == 0:
             raise ValueError("CR currently set to 0 (DEFAULT), indicating that"
-                + "user forgot to preset the sample/conversion rate."
-                + "prior to calling this function.")
-
+                             + "user forgot to preset the sample/conversion rate."
+                             + "prior to calling this function.")
 
         CR_BITECODE = int(round(1.0 / CR * F_CLK))  # Converts user CR input to Hex.
 
@@ -845,13 +842,13 @@ class ADS7865():
         Args:
             length: Number of samples to record. Overides natural behavior to
           use the value stored in self.length
-          
+
             n_channels: Number of channel that will collect samples. overrides
           natural behavior to use the value storing in self.n_channels
-          
+
             raw: Bit that lets the user specify that he wants the data in the
           raw binary non-2's compliment format instead of 2's compliment.
-          
+
             fmt_volts: Specify's whether to convert the raw binary data into
           human readable volts form.
 
@@ -876,10 +873,10 @@ class ADS7865():
         # memory
         pru_SL_mapping = (length - MIN_SAMPLE_LENGTH) * BYTES_PER_SAMPLE
         pypruss.pru_write_memory(0, PRU0_SL_MEM_OFFSET, [pru_SL_mapping, ])
-        
+
         # Share deadband length with PRU0
-        db_hex = int(round(self.deadband_ms / 1000.0 * F_CLK * 2.0)) # counts
-        pypruss.pru_write_memory(0, PRU0_DB_MEM_OFFSET, [db_hex,])
+        db_hex = int(round(self.deadband_ms / 1000.0 * F_CLK * 2.0))  # counts
+        pypruss.pru_write_memory(0, PRU0_DB_MEM_OFFSET, [db_hex, ])
 
         # Share Threshold with PRU0
         thr_hex = self.V_to_12bit_Hex(self.corrected_threshold)
@@ -899,27 +896,27 @@ class ADS7865():
         # pypruss.exit()         # Exit PRU
 
         # Read the memory: Extract raw status code
-        raw_data = read_sample(self.ddr, length+STATUS_BLOCK)
+        raw_data = read_sample(self.ddr, length + STATUS_BLOCK)
         status_code = raw_data[0] & 0x3F
-        
+
         # Read the memory: Extract TOF Flag
         TOF = get_bit(raw_data[0], TIMEOUT_STATUS_BIT)
         self.TOF = TOF
-        
+
         # Read the memory: Extract TRG_CH Data
-        self.TRG_CH  = get_bit(raw_data[0], TFLG0_BIT) 
+        self.TRG_CH = get_bit(raw_data[0], TFLG0_BIT)
         print
         if self.n_channels != 2:
-            self.TRG_CH += 2*get_bit(raw_data[0], TFLG1_BIT)
+            self.TRG_CH += 2 * get_bit(raw_data[0], TFLG1_BIT)
         print("ADC: Triggered off ch %d" % self.TRG_CH)
 
         # Read the DB overflow bit
         DBOVF = get_bit(raw_data[0], DBOVF_BIT)
         print("ADC: DBOVF = %d" % DBOVF)
-        
+
         # Read the memory: Move on. Treat actual data as raw data now.
         raw_data = raw_data[1:]
-        
+
         # Print out stuff
         print("ADC: Returned Status code = %d" % status_code)
         print("ADC: Returned TOF code = %d" % TOF)
@@ -947,18 +944,18 @@ class ADS7865():
                 # unavailable.
                 if fmt_volts:
                     y[chan] = y[chan] * self.lsb
-                    
+
                     # Apply digital gain
                     y_orig[chan] = y[chan]
                     y[chan] = y[chan] * self.digital_gain
 
         # Perform some commands that ready the ADC for another burst.
         self.reload()
-        
+
         # Storing collected samples internally
-        self.y = y 
+        self.y = y
         self.y_orig = y_orig
-        
+
         # Return values
         return (y, TOF)
 
@@ -972,19 +969,21 @@ class ADS7865():
             self.ready_pruss_for_burst()
 
         y, TOF = self.burst()
-        
-        if TOF==False:
+
+        if TOF == False:
             return y
         else:
             return None
 
+
 class ADC_Tools():
+
     def meas_vpp(self, ADC):
         """Computes the vpp for each channel that the ADC is using.
         """
         # initialize variables
         vpp = []
-        
+
         # Compute the vpp for each channel
         for ch in range(ADC.n_channels):
             vpp.append(np.amax(ADC.y[ch]) - np.amin(ADC.y[ch]))
@@ -997,22 +996,21 @@ class ADC_Tools():
         args:
             y = array (numpy or list) of values
         """
-        
+
         # Initial arrays and bits
         peaks = []
         rising_bit = 0
-        
-        
-        for i in range(1,a.size):
-            prev_value = a[i-1]
-        
+
+        for i in range(1, a.size):
+            prev_value = a[i - 1]
+
             if rising_bit:
                 # was previously on local rise. Now checking if slope goes negative.
                 if (a[i] - prev_value < 0):
                     # Peak found. Save it. Reset the rising_bit
-                    peaks.append(i-1)
+                    peaks.append(i - 1)
                     rising_bit = 0
-        
+
             else:
                 # Looking for local rise.
                 if (a[i] - prev_value) > 0:

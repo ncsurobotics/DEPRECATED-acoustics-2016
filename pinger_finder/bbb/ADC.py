@@ -396,10 +396,10 @@ class ADS7865():
             determining the samplesize, sampling rate, # of simultaneous
             channels, and (initial) threshold value.
             """
-            self.update_deadband_ms(0.1e3)
-            self.set_sample_len(3e3)
+            self.update_deadband_ms(0.5e3)
+            self.set_sample_len(1e3)
             self.update_sample_rate(700e3)
-            self.update_threshold(.5)
+            self.update_threshold(1)
             self.ez_config(0)
             
         elif sel == 1:
@@ -443,7 +443,7 @@ class ADS7865():
             self.update_deadband_ms(0)
             self.set_sample_len(1e3)
             self.update_sample_rate(700e3)
-            self.update_threshold(.5)
+            self.update_threshold(1)
             self.ez_config(0)
 
         elif sel == 102:

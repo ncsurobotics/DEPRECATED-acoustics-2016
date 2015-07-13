@@ -417,7 +417,8 @@ class Acoustics():
         self.valid_signal_flg = False
         
         # Basic variables
-        max_vpp = 2
+        max_vpp = 2.5
+        clip_vpp = 4.7
         min_vpp = 2 * self.adc.threshold * 1.1 # 10% overhead at min
         
         # check if autoupdate is on
@@ -433,7 +434,8 @@ class Acoustics():
         
         # grab some sample metadata
         vpp = np.amax(adc_tools.meas_vpp(self.adc))
-        print("acoustics.py: signal vpp is %.2f, min_vpp is %.2f" % (vpp, min_vpp))
+        print("acoustics.py: signal vpp is %.2f, min_vpp is %.2f " % (vpp, min_vpp)
+            + ", max_vpp is %.2f" % max_vpp)
         old_gain_LTC = self.filt.Gval + 1   # V/V
         old_gain_ADC = self.adc.digital_gain
         old_gain_total = old_gain_LTC*old_gain_ADC
@@ -450,8 +452,14 @@ class Acoustics():
                     
         elif vpp > max_vpp:
             # Signal is too strong. Determine a new gain value to attenuate
-            # the signal in orer to put it inside the window we'd like.
-            new_gain_total = max_vpp/raw_vpp
+            # the signal in orer to put it inside the window we'd like
+            if vpp >= clip_vpp:
+                # Signal is clipping. Must bring it down quickly
+                new_gain_total = min_vpp/raw_vpp
+            else:
+                # Signal is not clipping
+                new_gain_total = max_vpp/raw_vpp
+                
             change_gain_flag = True
                 
         else:

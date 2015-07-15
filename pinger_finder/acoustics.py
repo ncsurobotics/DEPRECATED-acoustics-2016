@@ -38,7 +38,6 @@ ARRAY_DEFAULT_LOCATION = WORLD_ORIGIN
 HYDROPHONE_3_DEFAULT_LOCATIONS = np.array([
     [-15e-3, 0, (-15e-3) / 2],
     [15e-3, 0, (-15e-3) / 2],
-    #[     0,0,(15e-3)/2]
 ])
 
 TARGET_FREQ = 22e3  # Frequency of the pinger in hertz
@@ -132,12 +131,16 @@ class Acoustics():
         # Initialize Data buffer
         self.data_buffer = (None, None)
 
+        # Initialize pinger frequency via config file
+        self.pinger_freq = config.getfloat('Acoustics', 'pinger_frequency')
+
         # Initialize abstract hydrophone object
         self.array = hydrophones.Array()
 
         # Define hydrophone locations
         self.array.move(ARRAY_DEFAULT_LOCATION)
-        self.array.define(HYDROPHONE_3_DEFAULT_LOCATIONS)
+        d = config.getfloat('Acoustics','array_spacing')
+        self.array.define( hydrophone.generate_yaw_array_definition(d) )
 
         # Various parameter used later in this class
         self.valid_signal_flg = ''
@@ -145,12 +148,6 @@ class Acoustics():
 
         # Init logging class
         self.logger = Logging()
-
-    def _digital_boost(self):
-        """Applied digital gain to signal in a manner that reflects more sensitive
-        trigger action and plotted data points.
-        """
-        pass
 
     def get_data(self):
         """Performs all steps necessary to collect a good set of data for processing,
@@ -347,7 +344,7 @@ class Acoustics():
             # Estimate pinger location: Get a value that represents the
             # time delay of arrival for each individual hydrophone
             tdoa_times = get_heading.compute_relative_delay_times(self.adc,
-                                                                  TARGET_FREQ,
+                                                                  self.pinger_freq,
                                                                   self.array,
                                                                   env.c)
 
@@ -373,6 +370,21 @@ class Acoustics():
         else:
             # Did not get an acceptable sample. Return None.
             return None
+
+    def _refresh_array_spacing(self):
+        """Following refresh of config file, the array model must be
+        updated.
+        """
+        # set update tolerance
+        tol = 0.001e-2
+
+        # update if necessary
+        d = config.getfloat('Acoustics', 'array_spacing') # Assumes Config has been refreshed
+
+        if not (-tol < d-self.array.d[0] < tol)
+            # User has supplied a new value of hydrophone distance
+            print("acoustics.py: update array with %.2fcm spacing" % d/100.0)
+            self.array.define( generate_yaw_array_definition(d) )
 
     def update_measurement(self):
         # Use code that a) collects a new measurment and b) returns a result
@@ -582,9 +594,13 @@ class Acoustics():
         by SafeConfigParser for use in external programs.
         """
         return config
+    def _refresh_pinger_freq(self):
+        self.pinger_freq = config.getfloat('Acoustics','pinger_frequency')
 
     def refresh_config(self):
         config.read(BASE_DIR + '/config.ini')
+        self._refresh_array_spacing()
+        self._refresh_pinger_freq()
 
 # ##################################
 #### Logging Tool ##################

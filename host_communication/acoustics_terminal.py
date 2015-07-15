@@ -118,6 +118,28 @@ def task_manager(input):
         print(str_response)
         pAC.write(str_response + '\n')
 
+    elif "change_pinger_freq" in input:
+        # Takes input in the form "change_pinger_freq,23e3"
+        # parse user input for desired frequency
+        (_, desired_freq) = input.split(',')
+        desired_freq = float(desired_freq) # will throw up error if not float
+
+        # write data to config file
+        config.set('Acoustics', 'pinger_frequency', str(desired_freq))
+        with open(root_directory+'/config.ini', 'a') as configfile:
+            config.write(configfile)
+
+    elif "change_hydrophone_spacing" in input:
+        # Takes input in the form "change_hydrophone_spacing,23.4e-2"
+        # parse user input for desired frequency
+        (_, desired_spacing) = input.split(',')
+        desired_spacing = float(desired_spacing) # will throw up error if not float
+
+        # write data to config file
+        config.set('Acoustics', 'array_spacing', str(desired_spacing))
+        with open(root_directory+'/config.ini', 'a') as configfile:
+            config.write(configfile)
+
     elif input == "locate pinger":
 
         # Get data

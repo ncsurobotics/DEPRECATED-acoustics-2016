@@ -125,6 +125,10 @@ class Hydrophones(Phys_Obj):
 ############# Functions ##########
 ##################################
 
+def generate_yaw_array_definition(d):
+    coordinate_locations = np.array([[-d/2.0, 0, 0],[d/2.0, 0, 0]])
+    return coordinate_locations
+
 
 def dd_to_hyperboloid_coe(D1minusD2, element_spacing):
     d = element_spacing / 2

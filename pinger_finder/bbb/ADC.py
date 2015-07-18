@@ -396,10 +396,10 @@ class ADS7865():
             channels, and (initial) threshold value.
             """
             self.update_deadband_ms(0.5e3)
-            self.set_sample_len(3e3)
-            self.update_sample_rate(400e3)
-            self.update_threshold(.5)
-            self.ez_config(4)
+            self.set_sample_len(1e3)
+            self.update_sample_rate(700e3)
+            self.update_threshold(1)
+            self.ez_config(1)
             
         elif sel == 1:
             """Secondary competition config. This is the goto place for

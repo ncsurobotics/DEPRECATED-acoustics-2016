@@ -247,7 +247,7 @@ def adc_config(adc, loc):
     # Get user's threshold value
     response(loc.curr, "Please enter a threshold value (Volts)")
     THR = query(loc.curr)
-    adc.threshold = eval(THR)
+    adc.update_threshold(eval(THR))
 
     # Get user's config
     adc.ez_config()  # Empty argument means to use a wizard like this one

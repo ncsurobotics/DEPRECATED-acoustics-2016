@@ -16,28 +16,28 @@ PIN_LOOKUPTABLE = os.path.join(MUX_PATH, PINS_FILE)
 
 def load():
     # enable all pins to be used as io
-    os.system("config-pin overlay cape-universal") # Also enables pypruss
+    os.system("config-pin overlay cape-universal")  # Also enables pypruss
     os.system("config-pin overlay cape-univ-hdmi")
 
 
 def arm():
-    os.system("config-pin P8.27 pruin")  # DB0	#PRU1
-    os.system("config-pin P8.28 pruin")  # DB1	#PRU1
-    os.system("config-pin P8.29 pruin")  # DB2	#PRU1
-    os.system("config-pin P8.39 pruin")  # DB3	#PRU1
-    os.system("config-pin P8.40 pruin")  # DB4	#PRU1
-    os.system("config-pin P8.41 pruin")  # DB5	#PRU1
-    os.system("config-pin P8.42 pruin")  # DB6	#PRU1
-    os.system("config-pin P8.43 pruin")  # DB7	#PRU1
-    os.system("config-pin P8.44 pruin")  # DB8	#PRU1
-    os.system("config-pin P8.45 pruin")  # DB9	#PRU1
-    os.system("config-pin P8.46 pruin")  # DB10	#PRU1
-    os.system("config-pin P9.26 pruin")  # DB11	#PRU1
+    os.system("config-pin P8.27 pruin")  # DB0  #PRU1
+    os.system("config-pin P8.28 pruin")  # DB1  #PRU1
+    os.system("config-pin P8.29 pruin")  # DB2  #PRU1
+    os.system("config-pin P8.39 pruin")  # DB3  #PRU1
+    os.system("config-pin P8.40 pruin")  # DB4  #PRU1
+    os.system("config-pin P8.41 pruin")  # DB5  #PRU1
+    os.system("config-pin P8.42 pruin")  # DB6  #PRU1
+    os.system("config-pin P8.43 pruin")  # DB7  #PRU1
+    os.system("config-pin P8.44 pruin")  # DB8  #PRU1
+    os.system("config-pin P8.45 pruin")  # DB9  #PRU1
+    os.system("config-pin P8.46 pruin")  # DB10 #PRU1
+    os.system("config-pin P9.26 pruin")  # DB11 #PRU1
 
-    os.system("config-pin P9.29 pruout")  # bCONVST	#PRU0
-    os.system("config-pin P9.31 pruout")  # bWR		#PRU0
-    os.system("config-pin P9.30 pruout")  # bRD		#PRU0
-    os.system("config-pin P9.27 pruin")  # BUSY		#PRU0
+    os.system("config-pin P9.29 pruout")  # bCONVST #PRU0
+    os.system("config-pin P9.31 pruout")  # bWR     #PRU0
+    os.system("config-pin P9.30 pruout")  # bRD     #PRU0
+    os.system("config-pin P9.27 pruin")  # BUSY     #PRU0
 
 
 def dearm():
@@ -68,7 +68,7 @@ def uart():
 
     os.system("config-pin -a %s uart" % UART_RX)
     os.system("config-pin %s uart" % UART_TX)
-    # os.system("stty -F /dev/%s raw %d" 	% (UART_DEV_FILE, BAUD))
+    # os.system("stty -F /dev/%s raw %d"    % (UART_DEV_FILE, BAUD))
     print("boot.py: Finished loading uart pins")
 
 
@@ -78,5 +78,5 @@ def nouart():
 
     os.system("config-pin %s gpio" % UART_RX)
     os.system("config-pin %s gpio" % UART_TX)
-    #os.system("stty -F /dev/%s sane" 	% (UART_DEV_FILE, BAUD))
+    #os.system("stty -F /dev/%s sane"   % (UART_DEV_FILE, BAUD))
     print("boot.py: uart pins have been unloaded.")

@@ -8,12 +8,14 @@ import sys
 sys.path.insert(0, hc_directory)
 
 import serial as s
-import uart #enable_uart()
+import uart  # enable_uart()
 
 PORT_NAME = "/dev/ttyO5"
 
+
 def INIT():
     uart.enable_uart()
+
 
 def main():
     # Initialize ports
@@ -23,19 +25,18 @@ def main():
 
     # Listen for texts and echo them ba
     print("Acoustics: UART(5) echo-terminal active. Currently listening for any data"
-    + " that comes in from the FT232RL.")
+          + " that comes in from the FT232RL.")
     while 1:
         try:
             input = pAC.readline()
             if input:
                 print("Acoustics: RX'd %r. Echoing it back out." % input)
-                pAC.write(input+'\n')
-                
+                pAC.write(input + '\n')
+
         except KeyboardInterrupt:
             print("Closing Port %s." % PORT_NAME)
             pAC.close()
             break
-            
 
 
 if __name__ == '__main__':

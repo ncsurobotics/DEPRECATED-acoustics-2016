@@ -218,9 +218,9 @@ def debug_wizard(adc, filt_obj=None, plt=None):
         elif input_matches('7'):
             adc.read_dac()
 
-        # elif input_matches('8'):
-        #     from test_filters import test_filters
-        #     test_filters(adc, filt_obj, plt)
+        elif input_matches('8'):
+            from test_filters import test_filters
+            test_filters(adc, filt_obj, plt)
 
 
 def print_debugs(keys):
@@ -315,11 +315,11 @@ def adc_noise_analysis(adc, signal_data, plt=None):
 
     for samp in y:
         Vnrms_sq += (1 / T * samp**2 * Ts)
-    print("You got %f VoltsRMS noise here (about %f bits)." % (np.sqrt(Vnrms_sq),np.sqrt(Vnrms_sq)/adc.LSB))
+    print("You got %f VoltsRMS noise here (about %f bits)." % (np.sqrt(Vnrms_sq), np.sqrt(Vnrms_sq) / adc.LSB))
 
     # plot if user has imported matplot lib
     if plt:
-        (n, bins, patches) = plt.hist(y/adc.LSB, 50, normed=1, histtype='bar')
+        (n, bins, patches) = plt.hist(y / adc.LSB, 50, normed=1, histtype='bar')
         plt.title('Distribuition of error amongst %s samples' % y.size)
         plt.xlabel("error (code)")
         plt.show()

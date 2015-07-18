@@ -1,27 +1,29 @@
 import csv
 
+
 class Datafile:
+
     """Class meant to define datasets objects that you can pack and export
     in a somewhat intuitive manner
     """
+
     def __init__(self):
         self.filename = None
         self.filepath = None
-        
+
     def package(self):
-        if self.fileName == None
+        if self.fileName is None:
             print("filename: ")
-            
-        
-        
-    
-    
+
+
 class Simple_Data_Plot(Datafile):
+
     """
     """
-    
+
     def convert_data(self, data):
-        
+        pass
+
 
 def submit_file(path, fieldnames, data):
     """
@@ -50,7 +52,7 @@ def RunCSVExport(data):
         inner_dict = dict(zip(fieldnames, d))
         mylist.append(inner_dict)
 
-    Submit(path, fieldnames, mylist)
+    submit_file(path, fieldnames, mylist)
 
 """
 """

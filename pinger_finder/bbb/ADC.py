@@ -443,7 +443,7 @@ class ADS7865():
             self.set_sample_len(1e3)
             self.update_sample_rate(700e3)
             self.update_threshold(1)
-            self.ez_config(0)
+            self.ez_config(1)
 
         elif sel == 102:
             """

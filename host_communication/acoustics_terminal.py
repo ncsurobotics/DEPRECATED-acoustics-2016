@@ -126,7 +126,7 @@ def task_manager(input):
 
         # write data to config file
         config.set('Acoustics', 'pinger_frequency', str(desired_freq))
-        with open(root_directory+'/config.ini', 'a') as configfile:
+        with open(root_directory+'/config.ini', 'wb') as configfile:
             config.write(configfile)
 
     elif "change_hydrophone_spacing" in input:
@@ -137,7 +137,7 @@ def task_manager(input):
 
         # write data to config file
         config.set('Acoustics', 'array_spacing', str(desired_spacing))
-        with open(root_directory+'/config.ini', 'a') as configfile:
+        with open(root_directory+'/config.ini', 'wb') as configfile:
             config.write(configfile)
 
     elif input == "locate pinger":

@@ -140,7 +140,7 @@ class Acoustics():
         # Define hydrophone locations
         self.array.move(ARRAY_DEFAULT_LOCATION)
         d = config.getfloat('Acoustics','array_spacing')
-        self.array.define( hydrophone.generate_yaw_array_definition(d) )
+        self.array.define( hydrophones.generate_yaw_array_definition(d) )
 
         # Various parameter used later in this class
         self.valid_signal_flg = ''
@@ -358,7 +358,7 @@ class Acoustics():
 
                 n = self.array.n_elements
                 if n == 2:
-                    return {'ab': angles[0]}
+                    return {'ab': angles[0], 'cd': None}
 
                 elif n == 3:
                     return {'ra': angles[0],
@@ -380,11 +380,11 @@ class Acoustics():
 
         # update if necessary
         d = config.getfloat('Acoustics', 'array_spacing') # Assumes Config has been refreshed
-
-        if not (-tol < d-self.array.d[0] < tol)
+        
+        if not (-tol < d-self.array.d[0] < tol):
             # User has supplied a new value of hydrophone distance
-            print("acoustics.py: update array with %.2fcm spacing" % d/100.0)
-            self.array.define( generate_yaw_array_definition(d) )
+            print("acoustics.py: update array with %.2fcm spacing" % (d *100.0))
+            self.array.define( hydrophones.generate_yaw_array_definition(d) )
 
     def update_measurement(self):
         # Use code that a) collects a new measurment and b) returns a result

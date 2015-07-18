@@ -210,9 +210,9 @@ def compute_relative_delay_times(adc, target_freq, array, c):
         if max_dist < el_dist:
             print("get_heading.py: Warning! Array elements "
                   + " %d and %d" % (el_a, el_b)
-                  + " are %.2f cm apart, which is more than" % el_dist * 100
-                  + " 1 wavelength apart (%.2f cm) for the" % max_dist * 100
-                  + " given target signal of %.2fKHz." % target_freq / 1000
+                  + " are %.2f cm apart, which is more than" % (el_dist * 100)
+                  + " 1 wavelength apart (%.2f cm) for the" % (max_dist * 100)
+                  + " given target signal of %.2fKHz." % (target_freq / 1000)
                   + " Please fix this.")
 
         # Compute toa for each element.

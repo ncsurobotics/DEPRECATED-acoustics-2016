@@ -1,6 +1,8 @@
 import sys
 sys.path.insert(0, '../tests/')
+sys.path.insert(1, '../tools/')
 
+import watch_for_dead_bits
 import os
 import functools
 
@@ -205,8 +207,8 @@ def debug_wizard(adc, filt_obj=None, plt=None):
         if input_matches('q'):
             break
 
-        # elif input_matches('1', 'watch_for_dead_bits'):
-        #     watch_for_dead_bits.main(adc)
+        elif input_matches('1', 'watch_for_dead_bits'):
+            watch_for_dead_bits.main(adc)
 
         elif input_matches('3'):  # check_DBus
             temp = adc.DBus.read_str()
@@ -338,6 +340,8 @@ def title():
 
 
 def load_matplotlib():
+    import pdb; pdb.set_trace()
+
     print("Loading Matplotlib library...")
     import matplotlib
     matplotlib.use('GTK')

@@ -7,10 +7,10 @@ import logging
 from os import path
 
 import platform
-if platform.platform() == 'Linux-3.8.13-bone47-armv7l-with-debian-7.4':
+if 'Linux-3.8.13-bone47-armv7l-with-debian' in platform.platform():
     import pypruss  # Python PRUSS wrapper
 else:
-    print("ADC: Not on BBB. Pypruss is unavailable")
+    print("ADC: Detected that this code is not running on a BBB device. Pypruss is unavailable")
 
 import numpy as np
 
@@ -18,7 +18,7 @@ from . import boot
 from . import BIN_DIR
 from .port import Port
 
-logging.basicConfig(level=logging.DEBUG, format='%(module)s.py: %(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(level=logging.WARNING, format='%(module)s.py: %(asctime)s - %(levelname)s - %(message)s')
 
 # Global ADC program Constants
 PRU0_DDR_MEM_OFFSET = 1
@@ -200,7 +200,7 @@ class ADS7865():
                "sample points are stored in DDRAM, which is found at the "
                "address range starting at {addr}")
 
-        print(msg.format(
+        logging.info(msg.format(
             samp=self.ddr['size'] / 1000.0,
             addr=str(hex(self.ddr['addr'])))
         )
@@ -246,13 +246,33 @@ class ADS7865():
         #callee_sPD = self.DBus.portDirection
 
         #
+        if (boot.arm_state() == True):
+            logging.warning('ADC is armed! And thus, it cannot be issued any commands! ' +
+                'program will go ahead and dearm ADC immediately, but take note ' +
+                'that the action of dearming the ADC takes about 1000ms, and ' +
+                'this delay may severly hinder the performance of your autonomous ' +
+                'code if you weren\'t expecting this to happen. The better ' +
+                'practice is to dearm the adc yourself.')
+            self.unready()
+        
+        if (boot.arm_state() == None):
+            logging.warning('ADC is neither armed nor unarmed. It is in ' +
+                'a modified state. This usually happens when the bbb ' +
+                'is first booted or the user modified the pin configuration ' +
+                '(config-pin) in a non-conventional way. Action will be ' +
+                'taken to "dearm" the adc now, but if this is not ' +
+                'expected behavior, please investigate this issue.')
+            self.unready()
+                
+            
+            
         for cmd in cmd_list:
             self.WR.write_to_port(0)  # Open ADC's input Latch
 
             self.DBus.set_port_dir("out")  # Latch open, safe to make DB pins an out
             self.DBus.write_to_port(cmd)  # Write the value to the DB pins
 
-            print('ADS7865: Databus cmd %s has been sent.' % self.DBus.read_str())
+            logging.info('ADS7865: Databus cmd %s has been sent.' % self.DBus.read_str())
             self.WR.write_to_port(1)  # Latch down the input
 
         self.DBus.set_port_dir("in")  # Return DB pins back to inputs.
@@ -441,9 +461,9 @@ class ADS7865():
             """
             self.update_deadband_ms(0)
             self.set_sample_len(1e3)
-            self.update_sample_rate(700e3)
+            self.update_sample_rate(300e3)
             self.update_threshold(1)
-            self.ez_config(1)
+            self.ez_config(0)
 
         elif sel == 102:
             """
@@ -575,7 +595,7 @@ class ADS7865():
         self.sample_length = SL
 
     def update_deadband_ms(self, ms):
-        print("ADS7865: Deadband length set to %dms" % int(ms))
+        logging.info("ADS7865: Deadband length set to %dms" % int(ms))
         self.deadband_ms = ms
 
     def update_threshold(self, desired_threshold):
@@ -642,6 +662,9 @@ class ADS7865():
         # do not close # self.BUSY.close()
         self._CS.close()
         self._CONVST.close()
+        
+        # Disarming if applicable
+        self.unready()
 
     ############################
     # General ADC Commands  #####
@@ -823,7 +846,7 @@ class ADS7865():
         if self.arm_status == 'unarmed':
             logging.warning("ADC Already dearmed!!! You are double dearming somewhere.")
         else:
-            print('ADS7865: Dearming the PRUSS')
+            logging.warning('ADS7865: Dearming the PRUSS')
             boot.dearm()
             self.arm_status = 'unarmed'
 
@@ -908,20 +931,20 @@ class ADS7865():
         print
         if self.n_channels != 2:
             self.TRG_CH += 2 * get_bit(raw_data[0], TFLG1_BIT)
-        print("ADC: Triggered off ch %d" % self.TRG_CH)
+        logging.info("ADC: Triggered off ch %d" % self.TRG_CH)
 
         # Read the DB overflow bit
         DBOVF = get_bit(raw_data[0], DBOVF_BIT)
-        print("ADC: DBOVF = %d" % DBOVF)
+        logging.info("ADC: DBOVF = %d" % DBOVF)
 
         # Read the memory: Move on. Treat actual data as raw data now.
         raw_data = raw_data[1:]
 
         # Print out stuff
-        print("ADC: Returned Status code = %d" % status_code)
-        print("ADC: Returned TOF code = %d" % TOF)
+        logging.info("ADC: Returned Status code = %d" % status_code)
+        logging.info("ADC: Returned TOF code = %d" % TOF)
         if TOF:
-            print("ADC: TIMEOUT occured!")
+            logging.warning("ADC: TIMEOUT occured!")
 
         y_orig = y = [0] * n_channels
         for chan in range(n_channels):

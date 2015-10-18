@@ -1,5 +1,6 @@
 import os
 import linecache
+import subprocess
 
 # Typical Control Variable for UART
 UART_DEV_FILE = "ttyO5"
@@ -80,3 +81,17 @@ def nouart():
     os.system("config-pin %s gpio" % UART_TX)
     #os.system("stty -F /dev/%s sane"   % (UART_DEV_FILE, BAUD))
     print("boot.py: uart pins have been unloaded.")
+
+def arm_state():
+    
+    p27_info = subprocess.check_output(['config-pin', '-q', 'p8.27'])
+    if 'P8_27 Mode: gpio Direction' in p27_info:
+        armed = False
+    elif 'P8_27 Mode: pruin' in p27_info:
+        armed = True
+    elif 'P8_27 Mode: default' in p27_info:
+        armed = None
+    else:
+        raise SystemError('Unrecognized system state, please restart program. If problem persist, try updating boot.py!')
+    
+    return armed

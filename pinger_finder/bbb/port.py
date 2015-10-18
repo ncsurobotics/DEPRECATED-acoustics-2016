@@ -36,8 +36,9 @@ class Port():
                 on that particular header (including leading zeros). Thus,
                 strings such as "P8_01", "P8_46", "P9_02" are valid.
 
-                pin_name_list[0] must represent the LSB,
-                pin_name_list[-1] must represent the MSB
+                Note, the following rules apply to the argument pin_name_list:
+                 * pin_name_list[0] must represent the LSB of the port
+                 * pin_name_list[-1] must represent the MSB of the port
         """
 
         # If user supplies a string (which is convenient if he

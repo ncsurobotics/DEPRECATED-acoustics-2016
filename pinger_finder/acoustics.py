@@ -220,7 +220,7 @@ class Acoustics():
 
                 # generate typical fft-based parameters
                 fs = self.adc.sample_rate  # hz
-                M = y[trg_ch_idx].size            # bins
+                M = y[trg_ch_idx].size     # bins
                 df = fs / M                # hz/bin
 
                 # generate fft string on trigger ch
@@ -661,7 +661,7 @@ class Logging():
 
         # File is empty. Write headers at top.
         if file.tell() == 0:
-            header = adc.ch[0:n] + ["timestamp", 'Gain', 'sample rate', 'ping_loc']
+            header = adc.ch[0:n] + ["timestamp", 'AGain', 'DGain' 'sample rate', 'ping_loc']
             writer.writerow(header)
 
         for sample in range(len(adc.y[0])):
@@ -675,6 +675,7 @@ class Logging():
             if sample == 0:
                 row.append(timestamp)
                 row.append(filt.Gval)
+                row.append(adc.digital_gain)
                 row.append(adc.sample_rate)
                 row.append(pinger_data)
 
@@ -690,12 +691,13 @@ class Logging():
 
         # File is empty. Write headers at top.
         if file.tell() == 0:
-            header = ["timestamp", 'Gain', 'sample rate', 'ping_loc']
+            header = ["timestamp", 'AGain', 'DGain', 'sample rate', 'ping_loc']
             writer.writerow(header)
 
         row = []
         row.append(timestamp)
         row.append(filt.Gval)
+        row.append(adc.digital_gain)
         row.append(adc.sample_rate)
         row.append(pinger_data)
 
@@ -733,6 +735,7 @@ class Logging():
             # ENDIF
         # ENDWHILE
         
+        # Wipe the cmd buffer
         self.cmd_buffer = ''
         return
 
@@ -781,6 +784,7 @@ class Logging():
 
     def stop_logging(self):
         # Release base name
+        saved_name = self.base_name
         self.base_name = None
 
         # Close files
@@ -789,10 +793,10 @@ class Logging():
         self.ping_f.close()
 
         # set flag
-        self.log_active = False
+        self.active = False
 
         # print confirmation
-        print("acoustics.py: Logging disabled. Closing '%s' csv files" % self.base_name)
+        print("acoustics.py: Logging disabled. Closing '%s' csv files" % saved_name)
 
     def tog_logging(self):
 

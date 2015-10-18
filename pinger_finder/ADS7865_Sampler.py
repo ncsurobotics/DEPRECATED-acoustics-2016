@@ -48,8 +48,8 @@ def plot_output(adc, y, plt):
 
     ax.axis(xmin=0,
             xmax=None,
-            ymin=-2.5,
-            ymax=2.5)
+            ymin=-2.55,
+            ymax=2.55)
 
     ax.legend(legend_list)
     plt.show()

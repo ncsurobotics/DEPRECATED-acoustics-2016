@@ -117,6 +117,7 @@ def UI():
 
         elif input_matches('data', 'adc_collect_data'):
             if ADC_active:
+                import pdb; pdb.set_trace()
                 Signal_Data['y'] = ADS7865_Sampler.main(ADS7865, plt)
             else:
                 response(loc.curr, "Please run 'load_adc_app' first")

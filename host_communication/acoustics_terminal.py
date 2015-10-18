@@ -102,7 +102,7 @@ def task_manager(input):
         data_dictionary = create_data_dictionary()
 
         # Get data
-        acoustics.log_ready('srp')
+        # Don't need this anymore... acoustics.log_ready('srp')
         (data_dictionary['data']['heading'], epoch) = acoustics.get_last_measurement()
 
         #
@@ -129,9 +129,15 @@ def task_manager(input):
         # Start the logging file
         log.start_logging(desired_title)
         
+        # return name of logging file
+        pAC.write(log.base_name + '\n')
+        
     elif "stop_log" in input:
         # stop logging data on seawolf
         log.stop_logging()
+        
+        # send msg saying the logger was stopped
+        pAC.write('successfully killed the logger\n')
 
     elif "change_pinger_freq" in input:
         # Takes input in the form "change_pinger_freq,23e3"
@@ -143,6 +149,9 @@ def task_manager(input):
         config.set('Acoustics', 'pinger_frequency', str(desired_freq))
         with open(root_directory+'/config.ini', 'wb') as configfile:
             config.write(configfile)
+            
+        # send back response just to let user know op. was successful
+        pAC.write('frequency changed successfully\n')
 
     elif "change_hydrophone_spacing" in input:
         # Takes input in the form "change_hydrophone_spacing,23.4e-2"
@@ -154,6 +163,9 @@ def task_manager(input):
         config.set('Acoustics', 'array_spacing', str(desired_spacing))
         with open(root_directory+'/config.ini', 'wb') as configfile:
             config.write(configfile)
+         
+        # send back response just to let user know op. was successful   
+        pAC.write('spacing changed successfully\n')
 
     elif input == "hello":
         send("Hello to you too, Seawolf.")
@@ -189,7 +201,7 @@ def main_loop():
             acoustics.refresh_config()
             if (time.time() - cycle_start > config.getfloat('Terminal', 'sampling_interval')):
                 # Perform sample capture
-                acoustics.log_ready('s')
+                #acoustics.log_ready('s')
                 acoustics.update_measurement()
 
                 # Plots output for debugging purposes

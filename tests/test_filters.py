@@ -69,8 +69,6 @@ def test_gain(ADC, filt, plt):  # Testing gain
         if plt:
             # slap on the plot legend & name
             axes[r, c].set_title('Signal at G = {}'.format(n))
-            import pdb
-            pdb.set_trace()
             axes[r, c].legend(legend_list)
 
     # Show plt

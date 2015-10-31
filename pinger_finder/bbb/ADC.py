@@ -18,7 +18,7 @@ from . import boot
 from . import BIN_DIR
 from .port import Port
 
-logging.basicConfig(level=logging.WARNING, format='%(module)s.py: %(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(level=logging.INFO, format='%(module)s.py: %(asctime)s - %(levelname)s - %(message)s')
 
 # Global ADC program Constants
 PRU0_DDR_MEM_OFFSET = 1
@@ -81,6 +81,8 @@ def read_sample(user_mem, sample_length):
         y.append(c)
         # print(c)
 
+    ddr_mem.close()
+    f.close()
     return y
 
 
@@ -920,6 +922,7 @@ class ADS7865():
 
         # Read the memory: Extract raw status code
         raw_data = read_sample(self.ddr, length + STATUS_BLOCK)
+        logging.info("ADC: RAW_DATA %d:" % raw_data[0])
         status_code = raw_data[0] & 0x3F
 
         # Read the memory: Extract TOF Flag
@@ -932,6 +935,7 @@ class ADS7865():
         if self.n_channels != 2:
             self.TRG_CH += 2 * get_bit(raw_data[0], TFLG1_BIT)
         logging.info("ADC: Triggered off ch %d" % self.TRG_CH)
+        
 
         # Read the DB overflow bit
         DBOVF = get_bit(raw_data[0], DBOVF_BIT)

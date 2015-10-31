@@ -82,12 +82,18 @@ EXIT_INCR_DEADBAND:
 .endm
 
 .macro Flag_Trigger_Channel
-    QBBC EXIT_Flag_Trigger_Channel0, DQ.Sub_Sample, 0
-    SET  DQ.Sample_Ctrl, TFLG0
-EXIT_Flag_Trigger_Channel0:
-    QBBC EXIT_Flag_Trigger_Channel1, DQ.Super_Sample, 0
-    SET  DQ.Sample_Ctrl, TFLG1
-EXIT_Flag_Trigger_Channel1:
+     QBBC EXIT_Flag_Trigger_Channel0, DQ.Super_Sample, 0
+        // The sub sample is 1. we are either looking at
+        // channel 1, or channel 3.
+        SET  DQ.Sample_Ctrl, TFLG0
+     
+     EXIT_Flag_Trigger_Channel0:
+     QBBC EXIT_Flag_Trigger_Channel1, DQ.Super_Sample, 1
+        // the super sample is 1. We are looking at channels
+        // 2 and 3 (depending on what the sub sample is.
+        SET  DQ.Sample_Ctrl, TFLG1
+     
+     EXIT_Flag_Trigger_Channel1:
 .endm
     
 
@@ -118,6 +124,7 @@ PREPARE:
     Conf_DataDst_For_DDR_Address    // Data will go to DDRAM.
     Get_SL_From_Host                // Receive SL from HOST.
     MOV  DQ.Sub_Sample, 0           // Known that first sample is sub_sample 0
+    MOV  DQ.Super_Sample, 0         // Known that first sample is super_sample 0
     //MOV  DAQConf.Samp_Len, 35     // Set sample length to 10  
     
     MOV GP.Extension, 0xFFFFF000        // Negative sign extension register

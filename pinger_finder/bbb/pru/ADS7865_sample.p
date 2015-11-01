@@ -90,7 +90,7 @@ EXIT_INCR_DEADBAND:
      EXIT_Flag_Trigger_Channel0:
      QBBC EXIT_Flag_Trigger_Channel1, DQ.Super_Sample, 1
         // the super sample is 1. We are looking at channels
-        // 2 and 3 (depending on what the sub sample is.
+        // 2 and 3 (depending on what the sub sample is).
         SET  DQ.Sample_Ctrl, TFLG1
      
      EXIT_Flag_Trigger_Channel1:

@@ -120,6 +120,16 @@ class Acoustics:
         # read logger confirmation output
         if self.read() == None:
             print("acoustics.py: No return response from stop_logger() cmd!")
+            
+    def enable_acoustics(self):
+        # Enables Acoustics
+        self.send('enable')
+        print(self.read())
+        
+    def disable_acoustics(self):
+        # Disables Acoustics
+        self.send('disable')
+        print(self.read())
         
     def help(self):
         """ Prints all the methods and attributes which the caller will have

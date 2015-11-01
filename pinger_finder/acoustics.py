@@ -188,7 +188,7 @@ class Acoustics():
             
             elif next_state == 'sample_capture':
                 y = self.adc.get_data()
-
+                
                 if self.adc.TOF == 1:
                     # Signal was not strong enough to pass trigger. increase
                     # gain of system and exit
@@ -230,7 +230,8 @@ class Acoustics():
 
                 # generate peak search parameters
                 noise_floor = config.getfloat('ADC', 'noise_floor')  # units???
-                peak_tol = 500  # Hertz - 1/2 minimum frequency band to discern again
+                #peak_tol = 500  # Hertz - 1/2 minimum frequency band to discern again
+                peak_tol = 22e3  # REMOVE after Nov 1st.
                 pinger_frequency = config.getfloat('Acoustics', 'pinger_frequency')  # units???
 
                 # Generate Warning if expectations are too generous
@@ -239,7 +240,7 @@ class Acoustics():
                           + "Which means you can discern a signal "
                           + "%f Hz away from target freq, " % peak_tol
                           + "though your sampling parameters allow for "
-                          + "a maximum peak tol of %f Hz" % (df / 2)
+                          + "a minimum peak tol of %f Hz" % (df / 2)
                           + "You should change your sampling parameters.")
 
                     print("Acoustics: OVERIDING peak toleranace")
@@ -585,7 +586,7 @@ class Acoustics():
 
         elif sel == 101:
             self.filt.gain_mode(0)
-            self.filt.filter_mode(2)
+            self.filt.filter_mode(3)
             self.auto_update = True
 
     def set_auto_update(self, bool):

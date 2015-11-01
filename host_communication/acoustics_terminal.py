@@ -49,7 +49,7 @@ data_dict = ('')
 
 
 def init_acoustics():
-    acoustics.preset(101)
+    acoustics.preset(0)
 
 
 def send(msg):
@@ -69,6 +69,12 @@ def read():
 
 def usage(port):
     pass
+def disable_acoustics():
+    print("Disabling Acoustics")
+    config.set('Acoustics', 'enabled', 'False')
+    with open(root_directory+'/config.ini', 'wb') as configfile:
+        config.write(configfile)
+    send("Acoustic has been disabled.")
 
 
 def process_input(port):
@@ -106,7 +112,12 @@ def task_manager(input):
         (data_dictionary['data']['heading'], epoch) = acoustics.get_last_measurement()
 
         #
-        if data_dictionary['data']['heading'] == None:
+        if config.getboolean('Acoustics', 'enabled')==False:
+            data_dictionary['data']['epoch'] = None
+            data_dictionary['txt'] = 'Acoustics is disabled!'
+            data_dictionary['error'] = 1
+        
+        elif data_dictionary['data']['heading'] == None:
             data_dictionary['data']['epoch'] = None
             data_dictionary['txt'] = 'have not located pinger yet'
             data_dictionary['error'] = 1
@@ -169,7 +180,16 @@ def task_manager(input):
 
     elif input == "hello":
         send("Hello to you too, Seawolf.")
-
+        
+    elif input == "enable":
+        print("Enabling Acoustics")
+        config.set('Acoustics', 'enabled', 'True')
+        with open(root_directory+'/config.ini', 'wb') as configfile:
+            config.write(configfile)
+        send("Acoustics has been enabled.")
+            
+    elif input == "disable":
+        disable_acoustics()
     else:
         send("Unknown command! Please enter 'locate pinger' or 'hello'.")
 
@@ -179,6 +199,8 @@ def main_loop():
     viewer_active = config.getboolean('Terminal', 'viewer_active')
     if config.getboolean('Terminal', 'log_at_start'):
         log.tog_logging()
+        
+    disable_acoustics() # Defualt to acoustics disabled everytime
     
     # Start the timer
     cycle_start = time.time()
@@ -200,14 +222,17 @@ def main_loop():
             # Run acoustics in the background
             acoustics.refresh_config()
             if (time.time() - cycle_start > config.getfloat('Terminal', 'sampling_interval')):
-                # Perform sample capture
-                #acoustics.log_ready('s')
-                acoustics.update_measurement()
-
-                # Plots output for debugging purposes
-                if viewer_active:
-                    acoustics.plot_recent(fourier=True)
-
+                if config.getboolean('Acoustics', 'enabled')==False:
+                    print("Acoustics is disabled")
+                else:
+                    # Perform sample capture
+                    #acoustics.log_ready('s')
+                    acoustics.update_measurement()
+    
+                    # Plots output for debugging purposes
+                    if viewer_active:
+                        acoustics.plot_recent(fourier=True)
+    
                 # Restart the timer
                 cycle_start = time.time()
             else:

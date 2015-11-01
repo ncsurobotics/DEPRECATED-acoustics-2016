@@ -29,7 +29,7 @@ def DC_signal_strength(stdscr):
     
     # Setup custom ADC/Filt parameters
     acoustics.filt.gain_mode(15)
-    acoustics.filt.filter_mode(15)
+    acoustics.filt.filter_mode(3)
     acoustics.adc.update_deadband_ms(0)
     acoustics.adc.set_sample_len(1e3)
     acoustics.adc.update_sample_rate(300e3)
@@ -71,7 +71,7 @@ def AC_signal_strength(stdscr=None):
     
     # Setup custom ADC/Filt parameters
     acoustics.filt.gain_mode(15)
-    acoustics.filt.filter_mode(15)
+    acoustics.filt.filter_mode(3)
     acoustics.adc.update_deadband_ms(0)
     acoustics.adc.set_sample_len(1e3)
     acoustics.adc.update_sample_rate(300e3)

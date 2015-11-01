@@ -18,7 +18,7 @@ from . import boot
 from . import BIN_DIR
 from .port import Port
 
-logging.basicConfig(level=logging.INFO, format='%(module)s.py: %(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(level=logging.WARNING, format='%(module)s.py: %(asctime)s - %(levelname)s - %(message)s')
 
 # Global ADC program Constants
 PRU0_DDR_MEM_OFFSET = 1
@@ -419,9 +419,9 @@ class ADS7865():
             """
             self.update_deadband_ms(0.5e3)
             self.set_sample_len(1e3)
-            self.update_sample_rate(700e3)
+            self.update_sample_rate(300e3)
             self.update_threshold(1)
-            self.ez_config(1)
+            self.ez_config(4)
             
         elif sel == 1:
             """Secondary competition config. This is the goto place for
@@ -464,8 +464,8 @@ class ADS7865():
             self.update_deadband_ms(0)
             self.set_sample_len(1e3)
             self.update_sample_rate(300e3)
-            self.update_threshold(1)
-            self.ez_config(0)
+            self.update_threshold(0)
+            self.ez_config(4)
 
         elif sel == 102:
             """

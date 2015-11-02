@@ -9,6 +9,20 @@ DIM1 = 0
 
 
 class Array(Phys_Obj):
+    # Always mind the coordinate axes!
+    #
+    #           z    y          
+    #           ^   7           
+    #           |  /            
+    #           | /              
+    #           |/               
+    #           - - - - - - > x
+    #
+    # ...z represents the vertical axis (gravity acts in
+    # this direction. y represents the forward direction of
+    # the array. As shown, the frame (a.k.a. coordinate axes)
+    # are fixed to the array such the if the array rotates, then
+    # the frame will rotate the same amount.
 
     def __init__(self):
         super(Array, self).__init__()
@@ -62,8 +76,9 @@ class Array(Phys_Obj):
             # determine center of mass for each pair
             self.COM.append(l0 + (l1 - l0) / 2)
 
-            # Get nNormal for each pair
-            norm_vect = np.array([[-d_vect[2], 0, d_vect[0]]])
+            # Get nNormal for each pair (assuming each pair rests on
+            # the z = 0 plane).
+            norm_vect = np.array([[-d_vect[1], d_vect[0], 0]])
             norm_uvect = norm_vect / np.linalg.norm(norm_vect)
             self.norm_uvect.append(norm_uvect)
 
@@ -127,6 +142,13 @@ class Hydrophones(Phys_Obj):
 
 def generate_yaw_array_definition(d):
     coordinate_locations = np.array([[-d/2.0, 0, 0],[d/2.0, 0, 0]])
+    return coordinate_locations
+    
+def generate_yaw_pitch_dual_array_definition(yaw_d, pitch_d):
+    # Generate an array consisting of a yaw hydrophone pair
+    # and a pitch hydrophone pair.
+    coordinate_locations = np.array([[-yaw_d/2.0, 0, 0],  [yaw_d/2.0, 0, 0],
+                                     [0, -pitch_d/2, 0],  [0, pitch_d/2, 0]])
     return coordinate_locations
 
 

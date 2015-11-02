@@ -75,7 +75,13 @@ def disable_acoustics():
     with open(root_directory+'/config.ini', 'wb') as configfile:
         config.write(configfile)
     send("Acoustic has been disabled.")
-
+    
+def enable_acoustics():
+    print("Enabling Acoustics")
+    config.set('Acoustics', 'enabled', 'True')
+    with open(root_directory+'/config.ini', 'wb') as configfile:
+        config.write(configfile)
+    send("Acoustic has been enabled.")
 
 def process_input(port):
     input = port.readline()
@@ -109,7 +115,7 @@ def task_manager(input):
 
         # Get data
         # Don't need this anymore... acoustics.log_ready('srp')
-        (data_dictionary['data']['heading'], epoch) = acoustics.get_last_measurement()
+        (data_dictionary['data']['heading'], epoch, dynamic_ss, raw_vpp) = acoustics.get_last_measurement()
 
         #
         if config.getboolean('Acoustics', 'enabled')==False:
@@ -123,6 +129,8 @@ def task_manager(input):
             data_dictionary['error'] = 1
         else:
             data_dictionary['data']['epoch'] = time.time() - epoch
+            data_dictionary['data']['signal_strength'] = dynamic_ss # 1 = 100% signal signal_strength
+            data_dictionary['data']['raw_transducer_voltage'] = raw_vpp
 
         # Convert response into string
         str_response = str(data_dictionary)
@@ -182,11 +190,7 @@ def task_manager(input):
         send("Hello to you too, Seawolf.")
         
     elif input == "enable":
-        print("Enabling Acoustics")
-        config.set('Acoustics', 'enabled', 'True')
-        with open(root_directory+'/config.ini', 'wb') as configfile:
-            config.write(configfile)
-        send("Acoustics has been enabled.")
+        enable_acoustics()
             
     elif input == "disable":
         disable_acoustics()
@@ -199,8 +203,11 @@ def main_loop():
     viewer_active = config.getboolean('Terminal', 'viewer_active')
     if config.getboolean('Terminal', 'log_at_start'):
         log.tog_logging()
-        
-    disable_acoustics() # Defualt to acoustics disabled everytime
+    
+    if config.getboolean('Acoustics', 'default_enable_state')==False:
+        disable_acoustics() # Default to acoustics disabled
+    else:
+        enable_acoustics() # Default to acoustics enabled
     
     # Start the timer
     cycle_start = time.time()
@@ -211,7 +218,9 @@ def main_loop():
         try:
             # Try reading and acting upon seawolf's input first
             input = read()
-            #input = 'get_data'
+            print('DEBUGGING NOV 2nd'); input = 'get_data'
+            
+            
             if input:
                 # Process user input
                 print("RX: {0}".format(input))
@@ -317,6 +326,8 @@ def create_data_dictionary():
     data = {
         'heading': None,  # Hydrophone pair measurements
         'epoch': None,  # time since last measurement
+        'signal_strength': None, # Meause of how strong the received signal is.
+        'raw_transducer_voltage': None # Measure of acoustic energy reaching the robot.
     }
 
     base = {

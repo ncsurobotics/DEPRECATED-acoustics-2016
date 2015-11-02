@@ -130,7 +130,7 @@ class Acoustics():
         self.auto_update = None
 
         # Initialize Data buffer
-        self.data_buffer = (None, None)
+        self.data_buffer = (None, None, None, None)
 
         # Initialize pinger frequency via config file
         self.pinger_freq = config.getfloat('Acoustics', 'pinger_frequency')
@@ -141,7 +141,14 @@ class Acoustics():
         # Define hydrophone locations
         self.array.move(ARRAY_DEFAULT_LOCATION)
         d = config.getfloat('Acoustics','array_spacing')
-        self.array.define( hydrophones.generate_yaw_array_definition(d) )
+        array_conf = config.get('Acoustics', 'array_configuration')
+        if array_conf == 'yaw':
+            self.array.define( hydrophones.generate_yaw_array_definition(d) )
+        elif array_conf == 'dual':
+            self.array.define( hydrophones.generate_yaw_pitch_dual_array_definition(d,d) )
+        else:
+            raise IOError("Unrecognized hydrophone array configuration (%s)."
+            % array_conf)
 
         # Various parameter used later in this class
         self.valid_signal_flg = ''
@@ -336,6 +343,13 @@ class Acoustics():
                 raise IOError('%d hydrophone elements was not expected' % n)
 
     def compute_pinger_direction3(self, ang_ret=False):
+        # Helpful index definitions
+        idx_pair_ab = 0
+        idx_pair_cd = 5
+        idx_tri_ra = 0
+        idx_tri_rb = 1
+        idx_tri_ab = 2
+        
         # Grab a sample of pinger data
         y = self.get_data()
 
@@ -360,13 +374,16 @@ class Acoustics():
 
                 n = self.array.n_elements
                 if n == 2:
-                    return {'ab': angles[0], 'cd': None}
+                    return {'ab': angles[idx_pair_ab], 'cd': None}
 
                 elif n == 3:
                     return {'ra': angles[0],
                             'rb': angles[1],
                             'ab': angles[2]
                             }
+                            
+                elif n == 4:
+                    return {'ab': angles[idx_pair_ab], 'cd': angles[idx_pair_cd]}
                 else:
                     raise IOError('%d hydrophone elements was not expected' % n)
         else:
@@ -404,7 +421,9 @@ class Acoustics():
             self.logger.process(self.adc, self.filt)
         else:
             # Data was captured. Update buffer.
-            self.data_buffer = (result, time.time())
+            (dynamic_ss, raw_vpp) = self.compute_last_signal_strength()
+            self.data_buffer = (result, time.time(),dynamic_ss,raw_vpp)
+            import pdb;pdb.set_trace()
             update_occured = True
             
             # Record data that says a ping was captured
@@ -413,6 +432,21 @@ class Acoustics():
 
         return update_occured
 
+    def compute_last_signal_strength(self):
+        # initial parameters
+        full_scale_range = 5.0 #volts
+        
+        # Generate intermediate values
+        dynamic_vpp = np.amax(adc_tools.meas_vpp(self.adc))
+        LTC1563_gain = (self.filt.Gval + 1)
+        
+        # Compute signal strengths
+        dynamic_ss = dynamic_vpp/full_scale_range
+        raw_vpp = dynamic_vpp / (self.adc.digital_gain*LTC1563_gain)
+        
+        return (dynamic_ss, raw_vpp)
+        
+    
     def get_last_measurement(self):
         return self.data_buffer
 

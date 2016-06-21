@@ -1,8 +1,8 @@
 from .port import Port
 
 CS_PIN = ''
-F_PINS = ['P9_15', 'P9_16', 'P9_17', 'P9_18']
-G_PINS = ['P9_11', 'P9_12', 'P9_13', 'P9_14']
+F_PINS = ['P9_18', 'P9_17', 'P9_16', 'P9_15'] # [lsb,...,msb]
+G_PINS = ['P9_14','P9_13','P9_12','P9_11'] # [lsb,...,msb]
 
 DEFAULT_F = 0
 DEFAULT_G = 0

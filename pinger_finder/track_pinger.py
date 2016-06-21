@@ -3,7 +3,8 @@ import logging
 import get_heading
 from bbb import boot
 
-logging.basicConfig(level=logging.info, format='%(asctime)s - %(levelname)s - %(message)s')
+#20 = info logging level
+logging.basicConfig(level=20, format='%(asctime)s - %(levelname)s - %(message)s')
 
 TARGET_FREQ = 22e3  # hz
 

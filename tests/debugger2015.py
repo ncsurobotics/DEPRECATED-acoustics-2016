@@ -17,6 +17,7 @@ sys.path.insert(0, pf_directory)
 
 import numpy as np
 import acoustics as bbb
+import led
 
 def signal_strength(stdscr):
     # setup
@@ -24,6 +25,7 @@ def signal_strength(stdscr):
     
     acoustics = bbb.Acoustics()
     acoustics.filt.gain_mode(0)
+    acoustics.filt.filter_mode(2)
     acoustics.adc.update_deadband_ms(0)
     acoustics.adc.set_sample_len(1e3)
     acoustics.adc.update_sample_rate(300e3)
@@ -43,7 +45,7 @@ def signal_strength(stdscr):
         print(n)
         for chan in range(acoustics.adc.n_channels):
             avg = np.mean(acoustics.adc.y[chan])
-            msg = "%s = %8.2f" % (acoustics.adc.ch[chan], avg)
+            msg = "%s = %8.4f" % (acoustics.adc.ch[chan], avg)
             stdscr.addstr(chan, 0, msg)
         stdscr.addstr(chan+2, 0, 'cycle = ' + str(n))
         n += 1
@@ -53,7 +55,12 @@ def signal_strength(stdscr):
         
 def check_dac():
     acoustics = bbb.Acoustics()
-    acoustics.adc.read_dac()
+    USR0 = led.USR0_LED()
+    while 1:
+        acoustics.adc.read_dac()
+        if acoustics.adc.dac_voltage > 2:
+            USR0.brightness(1)
+            USR0.brightness(0)
     
 # Check for correct call
 if len(sys.argv) > 2:

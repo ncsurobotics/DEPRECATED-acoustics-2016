@@ -59,6 +59,7 @@ DIFF_PAIR_4 = "CHB1" + PLUSMINUS
 CODE_READDAC = 0x103
 CODE_SWRESET = 0x105
 CODE_READSEQ = 0x106
+CODE_WRITEDAC = 0x101
 
 # Global Functions
 
@@ -401,7 +402,11 @@ class ADS7865():
         if self.n_channels == 2:
             self.delay = [0, 0]
         elif self.n_channels == 4:
-            delay = 1 / self.conversion_rate
+            if self.conversion_rate != 0:
+                delay = 1 / self.conversion_rate
+            else:
+                delay = None
+
             self.delay = [0, 0, delay, delay]
         else:
             raise IOError("%r is not a valid channel size." % self.n_channels)
@@ -446,9 +451,10 @@ class ADS7865():
             preset or make a new one."""
             self.update_deadband_ms(0)
             self.set_sample_len(1e3)
-            self.update_sample_rate(400e3)
-            self.update_threshold(0)
-            self.ez_config(4)
+            self.update_sample_rate(300e3)
+            self.update_threshold(.1)
+            self.ez_config(0)
+            
         elif sel == 101:
             """
             Test Config for Acoustics terminal
@@ -463,7 +469,7 @@ class ADS7865():
             self.set_sample_len(1e3)
             self.update_sample_rate(300e3)
             self.update_threshold(1)
-            self.ez_config(0)
+            self.ez_config(4)
 
         elif sel == 102:
             """
@@ -519,6 +525,11 @@ class ADS7865():
         # Update DAC related atributes
         self.dac_voltage = dac_voltage_readout
         self.lsb = self.dac_voltage / (2**(WORD_SIZE - 1))  # Volts
+
+    def write_dac(self, val):
+        self.config([0x101])
+        self.config([val])
+        self.read_dac()
 
     def _update_conversion_rate(self, cr):
         """ Update the conversion rate
@@ -764,7 +775,7 @@ class ADS7865():
         print("  sl:\t%d samples" % sl)
 
         # Threshold
-        print("  thr:\t%d Volts" % self.threshold)
+        print("  thr:\t%.1f Volts" % self.threshold)
 
         # arm status
         armed = self.arm_status

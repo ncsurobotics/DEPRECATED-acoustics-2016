@@ -184,6 +184,7 @@ def debug_wizard(adc, filt_obj=None, plt=None):
             'dummy_read_dac',
             'read_seq',
             'read_dac',
+            'write_dac',
             'unittest_filts',
             'q']
 
@@ -219,8 +220,11 @@ def debug_wizard(adc, filt_obj=None, plt=None):
 
         elif input_matches('7'):
             adc.read_dac()
-
         elif input_matches('8'):
+            val = eval(raw_input('what would you like to write to the dac: '))
+            adc.write_dac(val)
+
+        elif input_matches('9'):
             from test_filters import test_filters
             test_filters(adc, filt_obj, plt)
 
@@ -340,11 +344,10 @@ def title():
 
 
 def load_matplotlib():
-    import pdb; pdb.set_trace()
 
     print("Loading Matplotlib library...")
     import matplotlib
-    matplotlib.use('GTK')
+    matplotlib.use('GtkAgg')
     import matplotlib.pyplot as plt
     plt.ion()
     plt.hold(False)

@@ -164,15 +164,55 @@ def compute_time_diff(target_freq, fs, a, b):
 ### System level function ####
 ##############################
 
+"""
+Computes the relative delay times for each hydrophone pair"""
+def compute_relative_delay_times(adc, target_freq, array, c, pattern=None, elem2adc=[]):
+    
+    """
+    args: 
+        dict_set-- a list integers wheras element at index n is supposed
+        to represent the ADC channel corresponding to hydrophone n."""
+    def check_if_one_to_one(dict_set):
+        used = []
+        for item in dict_set:
+            value = item
+            #import pdb; pdb.set_trace()
+            if value in used:
+                raise ValueError("non 1-to-1 mapping used!")
+            else:
+                used.append(value)
 
-def compute_relative_delay_times(adc, target_freq, array, c):
-    """
-    Computes the relative delay times for each hydrophone pair
-    """
     # Initialize parameters
     n_ch = adc.n_channels
-    n_times = array.n_elements
     y = adc.y
+    n_times = array.n_elements
+
+
+
+    # perform some error checking on pattern
+    if pattern != None:
+        for each_pair in pattern:
+            try:
+                if len(each_pair) != 2:
+                    raise ValueError("invalid format: each pair in pattern must consist of two elements")
+                else:
+                    pass
+            except TypeError:
+                raise TypeError('Please ensure "pattern" argument is a list of 2-element tuples. The tuple elements must be integers.')
+
+    # perform error checking on elem2adc
+    if elem2adc != None:
+        check_if_one_to_one(elem2adc)
+
+
+
+    # assign adc 2 hydrophone-element mappings. if not specified just go
+    # with 1-by-1 to the ADC.
+    if pattern==None:
+        for i in range(n_ch):
+            adc_ch = i
+            elem2adc[i] = adc_ch
+    
 
     # Check if user has ADC Configured correctly
     if n_ch < n_times:
@@ -184,25 +224,40 @@ def compute_relative_delay_times(adc, target_freq, array, c):
         raise IOError(msg)
 
     # Check if user has hydrophone array spaced correctly
+    pass
 
     # User can set the pattern or tdoa assignment here. Basically, each tuple takes on
     # the format (ref_element, target_element), but the ref_element
-    # in this case should not be confused whatever is the reference element
+    # in this case should not be confused as whatever is the reference element
     # of the array. Rather, this 'pattern' can be any arbitrary combination
     # that yield's a leap in distance less than half a wavelength per pair.
     # whether the reference element is used first, last, or etc. does not
-    # matter.
-
-    if n_times == 2:    # for a 2 element array
-        pattern = [(0, 1)]
-    elif n_times == 3:  # for a 3 element array
-        pattern = [(1, 0), (0, 2)]
-    elif n_times == 4:  # for a 4 element array
-        pattern = [(0, 1), (1, 2), (2, 3)]
+    # matter. This allows the user to continue using the phase detection method
+    # on arrays that are even larger than the 1/2 the source signals wavelength.
+    # One can visulize this like rungs on a ladder, where the climber can climb
+    # a great vertical distance so long as there are intermediate rungs along the way.
+    # This is meant to increase the usefulness of triangular (or even arbitrary 
+    # polygonal) arrays. Every additional hydrophone element adds 2 addition
+    # degrees of freedom. In other words, an n-polygonal array has 1+2(n-1) degrees
+    # of freedom. So a 5 point hydrophone array has up to 9 degrees
+    # of freedom so long as the user can come up with a sequence where each pair of 
+    # of elements is not more than 1/2 wavelength apart.
+    if pattern==None:
+        if n_times == 2:    # for a 2 element array
+            pattern = [(0, 1)]
+        elif n_times == 3:  # for a 3 element array
+            pattern = [(1, 0), (0, 2)]
+        elif n_times == 4:  # for a 4 element array
+            pattern = [(0, 1), (1, 2), (2, 3)]
+    #^else, pattern is already specified
 
     # get relative delays for each combination, but ladder step along the way
     toa = [0] * n_times
     for (el_a, el_b) in pattern:
+        
+        # utilize mappings
+        cha = elem2adc[el_a]
+        chb = elem2adc[el_b]
 
         # check if user has h-phone array spaced correctly
         max_dist = c / target_freq
@@ -219,8 +274,8 @@ def compute_relative_delay_times(adc, target_freq, array, c):
         tdoa = compute_time_diff(
             target_freq,
             adc.sample_rate,
-            adc.y[el_a],
-            adc.y[el_b])
+            adc.y[cha],
+            adc.y[chb])
 
         toa[el_b] = tdoa - toa[el_a]
 

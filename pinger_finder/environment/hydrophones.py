@@ -68,7 +68,7 @@ class Array(Phys_Obj):
             self.norm_uvect.append(norm_uvect)
 
             # Get y_based rotation
-            abs_y_rot = np.arccos(np.dot(norm_vect[DIM1], K_HAT[DIM1]) / np.linalg.norm(norm_vect))
+            abs_y_rot = np.arccos(np.dot(norm_vect[0], K_HAT[0]) / np.linalg.norm(norm_vect)) # [0] is ugly syntax to yield a 1D vector
             if (norm_uvect[DIM1, 0] < 0):
                 y_rot = -abs_y_rot
             else:

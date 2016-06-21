@@ -19,6 +19,7 @@ from acoustics import Acoustics
 
 acoustics = Acoustics()
 acoustics.filt.gain_mode(0)
+acoustics.filt.filter_mode(1)
 acoustics.adc.update_deadband_ms(0)
 acoustics.adc.set_sample_len(4e3)
 acoustics.adc.update_sample_rate(300e3)

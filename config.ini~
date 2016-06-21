@@ -4,18 +4,15 @@ base_path = '/root/Projects/acoustics'
 [ADC]
 max_digital_gain = 10
 average_dc_bias = .01
-noise_floor = 0.10
+noise_floor = 0.05
 
 [Acoustics]
 pinger_frequency = 22000.0
 array_spacing = 0.0234
-enabled = True
-default_enable_state = True
-array_configuration = dual
 
 [Terminal]
 sampling_interval = 5
-debugging = False
-viewer_active = False
+debugging = True
+viewer_active = True
 log_at_start = False
 

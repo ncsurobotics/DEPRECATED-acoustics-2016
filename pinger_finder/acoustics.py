@@ -130,7 +130,7 @@ class Acoustics():
         self.auto_update = None
 
         # Initialize Data buffer
-        self.data_buffer = (None, None)
+        self.data_buffer = (None, None, None, None)
 
         # Initialize pinger frequency via config file
         self.pinger_freq = config.getfloat('Acoustics', 'pinger_frequency')
@@ -141,7 +141,14 @@ class Acoustics():
         # Define hydrophone locations
         self.array.move(ARRAY_DEFAULT_LOCATION)
         d = config.getfloat('Acoustics','array_spacing')
-        self.array.define( hydrophones.generate_yaw_array_definition(d) )
+        array_conf = config.get('Acoustics', 'array_configuration')
+        if array_conf == 'yaw':
+            self.array.define( hydrophones.generate_yaw_array_definition(d) )
+        elif array_conf == 'dual':
+            self.array.define( hydrophones.generate_yaw_pitch_dual_array_definition(d,d) )
+        else:
+            raise IOError("Unrecognized hydrophone array configuration (%s)."
+            % array_conf)
 
         # Various parameter used later in this class
         self.valid_signal_flg = ''
@@ -188,7 +195,7 @@ class Acoustics():
             
             elif next_state == 'sample_capture':
                 y = self.adc.get_data()
-
+                
                 if self.adc.TOF == 1:
                     # Signal was not strong enough to pass trigger. increase
                     # gain of system and exit
@@ -220,7 +227,7 @@ class Acoustics():
 
                 # generate typical fft-based parameters
                 fs = self.adc.sample_rate  # hz
-                M = y[trg_ch_idx].size            # bins
+                M = y[trg_ch_idx].size     # bins
                 df = fs / M                # hz/bin
 
                 # generate fft string on trigger ch
@@ -230,7 +237,8 @@ class Acoustics():
 
                 # generate peak search parameters
                 noise_floor = config.getfloat('ADC', 'noise_floor')  # units???
-                peak_tol = 500  # Hertz - 1/2 minimum frequency band to discern again
+                #peak_tol = 500  # Hertz - 1/2 minimum frequency band to discern again
+                peak_tol = 22e3  # REMOVE after Nov 1st.
                 pinger_frequency = config.getfloat('Acoustics', 'pinger_frequency')  # units???
 
                 # Generate Warning if expectations are too generous
@@ -239,7 +247,7 @@ class Acoustics():
                           + "Which means you can discern a signal "
                           + "%f Hz away from target freq, " % peak_tol
                           + "though your sampling parameters allow for "
-                          + "a maximum peak tol of %f Hz" % (df / 2)
+                          + "a minimum peak tol of %f Hz" % (df / 2)
                           + "You should change your sampling parameters.")
 
                     print("Acoustics: OVERIDING peak toleranace")
@@ -335,6 +343,13 @@ class Acoustics():
                 raise IOError('%d hydrophone elements was not expected' % n)
 
     def compute_pinger_direction3(self, ang_ret=False):
+        # Helpful index definitions
+        idx_pair_ab = 0
+        idx_pair_cd = 5
+        idx_tri_ra = 0
+        idx_tri_rb = 1
+        idx_tri_ab = 2
+        
         # Grab a sample of pinger data
         y = self.get_data()
 
@@ -359,13 +374,16 @@ class Acoustics():
 
                 n = self.array.n_elements
                 if n == 2:
-                    return {'ab': angles[0], 'cd': None}
+                    return {'ab': angles[idx_pair_ab], 'cd': None}
 
                 elif n == 3:
                     return {'ra': angles[0],
                             'rb': angles[1],
                             'ab': angles[2]
                             }
+                            
+                elif n == 4:
+                    return {'ab': angles[idx_pair_ab], 'cd': angles[idx_pair_cd]}
                 else:
                     raise IOError('%d hydrophone elements was not expected' % n)
         else:
@@ -403,7 +421,9 @@ class Acoustics():
             self.logger.process(self.adc, self.filt)
         else:
             # Data was captured. Update buffer.
-            self.data_buffer = (result, time.time())
+            (dynamic_ss, raw_vpp) = self.compute_last_signal_strength()
+            self.data_buffer = (result, time.time(),dynamic_ss,raw_vpp)
+            import pdb;pdb.set_trace()
             update_occured = True
             
             # Record data that says a ping was captured
@@ -412,6 +432,21 @@ class Acoustics():
 
         return update_occured
 
+    def compute_last_signal_strength(self):
+        # initial parameters
+        full_scale_range = 5.0 #volts
+        
+        # Generate intermediate values
+        dynamic_vpp = np.amax(adc_tools.meas_vpp(self.adc))
+        LTC1563_gain = (self.filt.Gval + 1)
+        
+        # Compute signal strengths
+        dynamic_ss = dynamic_vpp/full_scale_range
+        raw_vpp = dynamic_vpp / (self.adc.digital_gain*LTC1563_gain)
+        
+        return (dynamic_ss, raw_vpp)
+        
+    
     def get_last_measurement(self):
         return self.data_buffer
 
@@ -585,7 +620,7 @@ class Acoustics():
 
         elif sel == 101:
             self.filt.gain_mode(0)
-            self.filt.filter_mode(2)
+            self.filt.filter_mode(3)
             self.auto_update = True
 
     def set_auto_update(self, bool):
@@ -661,7 +696,7 @@ class Logging():
 
         # File is empty. Write headers at top.
         if file.tell() == 0:
-            header = adc.ch[0:n] + ["timestamp", 'Gain', 'sample rate', 'ping_loc']
+            header = adc.ch[0:n] + ["timestamp", 'AGain', 'DGain' 'sample rate', 'ping_loc']
             writer.writerow(header)
 
         for sample in range(len(adc.y[0])):
@@ -675,6 +710,7 @@ class Logging():
             if sample == 0:
                 row.append(timestamp)
                 row.append(filt.Gval)
+                row.append(adc.digital_gain)
                 row.append(adc.sample_rate)
                 row.append(pinger_data)
 
@@ -690,12 +726,13 @@ class Logging():
 
         # File is empty. Write headers at top.
         if file.tell() == 0:
-            header = ["timestamp", 'Gain', 'sample rate', 'ping_loc']
+            header = ["timestamp", 'AGain', 'DGain', 'sample rate', 'ping_loc']
             writer.writerow(header)
 
         row = []
         row.append(timestamp)
         row.append(filt.Gval)
+        row.append(adc.digital_gain)
         row.append(adc.sample_rate)
         row.append(pinger_data)
 
@@ -733,6 +770,7 @@ class Logging():
             # ENDIF
         # ENDWHILE
         
+        # Wipe the cmd buffer
         self.cmd_buffer = ''
         return
 
@@ -781,6 +819,7 @@ class Logging():
 
     def stop_logging(self):
         # Release base name
+        saved_name = self.base_name
         self.base_name = None
 
         # Close files
@@ -789,10 +828,10 @@ class Logging():
         self.ping_f.close()
 
         # set flag
-        self.log_active = False
+        self.active = False
 
         # print confirmation
-        print("acoustics.py: Logging disabled. Closing '%s' csv files" % self.base_name)
+        print("acoustics.py: Logging disabled. Closing '%s' csv files" % saved_name)
 
     def tog_logging(self):
 

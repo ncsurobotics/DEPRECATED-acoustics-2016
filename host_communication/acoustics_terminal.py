@@ -49,7 +49,7 @@ data_dict = ('')
 
 
 def init_acoustics():
-    acoustics.preset(101)
+    acoustics.preset(0)
 
 
 def send(msg):
@@ -69,7 +69,19 @@ def read():
 
 def usage(port):
     pass
-
+def disable_acoustics():
+    print("Disabling Acoustics")
+    config.set('Acoustics', 'enabled', 'False')
+    with open(root_directory+'/config.ini', 'wb') as configfile:
+        config.write(configfile)
+    send("Acoustic has been disabled.")
+    
+def enable_acoustics():
+    print("Enabling Acoustics")
+    config.set('Acoustics', 'enabled', 'True')
+    with open(root_directory+'/config.ini', 'wb') as configfile:
+        config.write(configfile)
+    send("Acoustic has been enabled.")
 
 def process_input(port):
     input = port.readline()
@@ -102,16 +114,23 @@ def task_manager(input):
         data_dictionary = create_data_dictionary()
 
         # Get data
-        acoustics.log_ready('srp')
-        (data_dictionary['data']['heading'], epoch) = acoustics.get_last_measurement()
+        # Don't need this anymore... acoustics.log_ready('srp')
+        (data_dictionary['data']['heading'], epoch, dynamic_ss, raw_vpp) = acoustics.get_last_measurement()
 
         #
-        if data_dictionary['data']['heading'] == None:
+        if config.getboolean('Acoustics', 'enabled')==False:
+            data_dictionary['data']['epoch'] = None
+            data_dictionary['txt'] = 'Acoustics is disabled!'
+            data_dictionary['error'] = 1
+        
+        elif data_dictionary['data']['heading'] == None:
             data_dictionary['data']['epoch'] = None
             data_dictionary['txt'] = 'have not located pinger yet'
             data_dictionary['error'] = 1
         else:
             data_dictionary['data']['epoch'] = time.time() - epoch
+            data_dictionary['data']['signal_strength'] = dynamic_ss # 1 = 100% signal signal_strength
+            data_dictionary['data']['raw_transducer_voltage'] = raw_vpp
 
         # Convert response into string
         str_response = str(data_dictionary)
@@ -129,9 +148,15 @@ def task_manager(input):
         # Start the logging file
         log.start_logging(desired_title)
         
+        # return name of logging file
+        pAC.write(log.base_name + '\n')
+        
     elif "stop_log" in input:
         # stop logging data on seawolf
         log.stop_logging()
+        
+        # send msg saying the logger was stopped
+        pAC.write('successfully killed the logger\n')
 
     elif "change_pinger_freq" in input:
         # Takes input in the form "change_pinger_freq,23e3"
@@ -143,6 +168,9 @@ def task_manager(input):
         config.set('Acoustics', 'pinger_frequency', str(desired_freq))
         with open(root_directory+'/config.ini', 'wb') as configfile:
             config.write(configfile)
+            
+        # send back response just to let user know op. was successful
+        pAC.write('frequency changed successfully\n')
 
     elif "change_hydrophone_spacing" in input:
         # Takes input in the form "change_hydrophone_spacing,23.4e-2"
@@ -154,10 +182,18 @@ def task_manager(input):
         config.set('Acoustics', 'array_spacing', str(desired_spacing))
         with open(root_directory+'/config.ini', 'wb') as configfile:
             config.write(configfile)
+         
+        # send back response just to let user know op. was successful   
+        pAC.write('spacing changed successfully\n')
 
     elif input == "hello":
         send("Hello to you too, Seawolf.")
-
+        
+    elif input == "enable":
+        enable_acoustics()
+            
+    elif input == "disable":
+        disable_acoustics()
     else:
         send("Unknown command! Please enter 'locate pinger' or 'hello'.")
 
@@ -168,6 +204,11 @@ def main_loop():
     if config.getboolean('Terminal', 'log_at_start'):
         log.tog_logging()
     
+    if config.getboolean('Acoustics', 'default_enable_state')==False:
+        disable_acoustics() # Default to acoustics disabled
+    else:
+        enable_acoustics() # Default to acoustics enabled
+    
     # Start the timer
     cycle_start = time.time()
 
@@ -177,7 +218,9 @@ def main_loop():
         try:
             # Try reading and acting upon seawolf's input first
             input = read()
-            #input = 'get_data'
+            print('DEBUGGING NOV 2nd'); input = 'get_data'
+            
+            
             if input:
                 # Process user input
                 print("RX: {0}".format(input))
@@ -188,14 +231,17 @@ def main_loop():
             # Run acoustics in the background
             acoustics.refresh_config()
             if (time.time() - cycle_start > config.getfloat('Terminal', 'sampling_interval')):
-                # Perform sample capture
-                acoustics.log_ready('s')
-                acoustics.update_measurement()
-
-                # Plots output for debugging purposes
-                if viewer_active:
-                    acoustics.plot_recent(fourier=True)
-
+                if config.getboolean('Acoustics', 'enabled')==False:
+                    print("Acoustics is disabled")
+                else:
+                    # Perform sample capture
+                    #acoustics.log_ready('s')
+                    acoustics.update_measurement()
+    
+                    # Plots output for debugging purposes
+                    if viewer_active:
+                        acoustics.plot_recent(fourier=True)
+    
                 # Restart the timer
                 cycle_start = time.time()
             else:
@@ -280,6 +326,8 @@ def create_data_dictionary():
     data = {
         'heading': None,  # Hydrophone pair measurements
         'epoch': None,  # time since last measurement
+        'signal_strength': None, # Meause of how strong the received signal is.
+        'raw_transducer_voltage': None # Measure of acoustic energy reaching the robot.
     }
 
     base = {

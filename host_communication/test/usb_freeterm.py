@@ -2,7 +2,6 @@ import sys
 sys.path.insert(0, '../')
 
 import serial as s
-import uart  # enable_uart()
 
 # ###########################
 ##### Global Constants ######

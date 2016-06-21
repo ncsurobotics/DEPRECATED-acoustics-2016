@@ -1,0 +1,16 @@
+TEST FOR SEAWOLF ACOUSTICS.PY CLIENT    
+* Run acoustics
+
+* run acoustics.py client in separate window in interactive mode
+python -i acoustics.py
+
+* perform the following commands and watch their outputs
+ac = Acoustics()
+ac.connect("/dev/ttyUSB0")
+ac.get_data()
+ac.start_logger('juice')
+ac.get_data()
+ac.get_data()
+
+---- de-breif ----
+acoustics.py client only has 4 external commands: connect, get_data, start_logger, stop_logger. This sequence of steps aims to test all of these commands

@@ -5,21 +5,17 @@
 # pylint: disable=invalid-variable-name
 
 """
-ZetCode Tkinter tutorial
-
-This program creates a Quit
-button. When we press the button,
-the application terminates.
-
-Author: Jan Bodnar
-Last modified: November 2015
-Website: www.zetcode.com
+This program provideds a gui for connecting to
+the BBB acoustics systems via ethernet.
 """
 import time
 import threading
+import socket
+import struct
 
 from Tkinter import Tk, BOTH, TOP, RIGHT, LEFT
 from ttk import Frame, Button, Style
+import ttk
 
 import matplotlib
 matplotlib.use("TkAgg")
@@ -46,15 +42,45 @@ class SubFrame(Frame):
         Frame.__init__(self, parent)
         self.parent = parent
 
-    def add_button(self, name, func, loc):
+    def add_label(self, text, loc):
+    	"""adds some label text in the desired location"""
+
+    	label = ttk.Label(self.parent, text=text)
+    	label.place(x=loc[0], y=loc[1])
+        #self.pack(side=LEFT, fill=BOTH, expand=1)
+
+    def add_button(self, name, func, loc, **kwargs):
         """Adds a button in the desired location of the SubFrame"""
 
         # set title of button
-        button = Button(self, text=name, command=func)
+        print(func,kwargs)
+        button = Button(self, text=name, command=func, **kwargs)
 
         # place the button
         button.place(x=loc[0], y=loc[1])
-        self.pack(side=LEFT, fill=BOTH, expand=1)
+        #self.pack(side=LEFT, fill=BOTH, expand=1)
+
+    def add_entry_box(self, loc, header=None):
+        # get entry box parameters
+        x1 = loc[0]
+        y1 = loc[1]
+
+        # place entry box
+        entry = ttk.Entry(self)
+        entry.place(x=x1, y=y1)
+
+        # if specified, put a header above the entry box
+        if header is not None:
+            x2 = x1
+            y2 = y1 - 20
+
+            self.add_label(header, [x2,y2])
+
+        # return the entry box for future get() commands
+        return entry
+
+    def commit(self):
+    	self.pack(side=LEFT, fill=BOTH, expand=1)
 
 
 class TkManager():
@@ -66,6 +92,7 @@ class TkManager():
         # object placeholder
         self.mpl_canvas = None
         self.button_frame = None
+        self.user_entry_field = None
 
     def init(self):
         # create a window
@@ -78,14 +105,22 @@ class TkManager():
         self.style = Style()
         self.style.theme_use('clam')
 
-    def auto_populate(self):
+    def auto_populate(self, acoustics_connect_func, acoustics_drytest_func, acoustics_send_func):
         """automatically does the layout stuff for this program"""
         # create a button frame object
         self.button_frame = SubFrame(self.root)
         button_frame = self.button_frame
 
         # Add buttons to the GUI
-        button_frame.add_button('quit', button_frame.quit, [5, 5])
+        button_frame.add_label('Acoustics Interface', [0,0])
+        button_frame.add_button('Connect to acoustics', acoustics_connect_func, [5, 20])
+        button_frame.add_button('test acoustics', acoustics_drytest_func, [5, 60])
+        button_frame.add_button('quit', button_frame.quit, [5, 100], width=4)
+        self.user_entry_field = button_frame.add_entry_box([5,160], "debug")
+        button_frame.add_button("send", acoustics_send_func, [50, 100])
+
+        # pack up the frame
+        button_frame.commit()
 
 
         if self.mpl_canvas is not None:
@@ -110,33 +145,20 @@ class TkManager():
     def getRoot(self):
         return self.root
 
+    def get_debug_cmd(self):
+        field = self.user_entry_field
+        if field is not None:
+            return field.get()
+        else:
+            print("debug field does not exist!")
+            return None
+
     def attach_mpl(self, mpl_figure):
         self.mpl_canvas = FigureCanvasTkAgg(mpl_figure, master=self.root)
 
     def attach_thread(self, func, waittime):
         self.root.after(waittime, func, (self.root, waittime))
 
-
-class Example(Frame):
-
-    def __init__(self, parent):
-        Frame.__init__(self, parent)
-
-        self.parent = parent
-
-        self.initUI()
-
-    def initUI(self):
-
-        self.parent.title("Quit button")
-        self.style = Style()
-        self.style.theme_use("default")
-
-        self.pack(fill=BOTH, expand=1)
-
-        quitButton = Button(self, text="Quit",
-                            command=self.quit)
-        quitButton.place(x=50, y=50)
 
 
 class Acoustics():
@@ -156,6 +178,19 @@ class Acoustics():
         self.data_lock = threading.Lock()
         self.network_disconnect_flg = threading.Event()
 
+        # networking variables
+        self.network = {}
+        self.network['sock'] = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.network['IP'] = '152.1.150.32'
+        self.network['portn'] = 22022
+        self.network['sock'].setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        self.network['connected'] = False
+        #self.conn = None
+        
+        # gui stuff
+        self.gui = None
+
+
         # fake data parameters
         self.fake_data_rate = 1000.0 #hz
 
@@ -163,7 +198,53 @@ class Acoustics():
         self.counter = 0
 
         # acoustics handles
-        self.data_channels = ['CHA0','CHA1','CHB0','CHB1']
+        self.data_channels = ['CHA0', 'CHA1', 'CHB0', 'CHB1']
+
+    def connect(self):
+        """Connect to the beaglebone via a TCP connection"""
+
+        # attain network parameters
+        IP = self.network['IP']
+        port = self.network['portn']
+
+        print "connecting"
+        #self.conn = self.network['sock'].connect((IP, port))
+        self.network['sock'].connect((IP, port)) #^^ connection is implied for clients
+        self.set_conn_status(True)
+
+        print "connection successful"
+
+    def is_connected(self):
+        return self.network['connected']
+
+    def send(self, msg):
+        if self.is_connected():
+            sock = self.network['sock']
+            sock.send(msg)
+        else:
+            print("network not connected!!! Can't send msg.")
+
+    def set_conn_status(self, status):
+        """returns true if connection to acoustics system has been established."""
+        self.network['connected'] = status
+
+    def getsend_debug(self):
+        """scripted cmd to pull a message out of the gui's text box, and
+        send it to the beaglebone black"""
+        msg = self.gui.get_debug_cmd()
+        if msg is not None:
+            self.send(msg)
+        else:
+            print "No message to Send?!"
+
+    def drytest(self):
+        # signal rx_thread that real data is going to come in
+        self.state[0] = 'test-1'
+
+        # send cmds to acoustics that start the drytest
+        self.send('stream') # cmd to start the stream
+
+
 
     def rx_loop(self):
         """Main thread for communicating with the acoustics module.
@@ -190,6 +271,11 @@ class Acoustics():
         self.mpl_fig = f
         self.axes = f.add_subplot(111)
 
+    def attach_gui(self, root):
+        """Takes "root" as a reference to the TKinter layout manager
+        defined in this same file. """
+        self.gui = root
+
     def start(self):
         self.rx_thread.start()
 
@@ -211,8 +297,12 @@ class Acoustics():
 
         if t is not None:
             # update the x axis
-            for i in range(n_traces):
-                self.lines[i].set_xdata(t)
+            for i in range(n_traces): 
+                self.lines[i].set_data(t,y_vectors[i])
+            
+            self.axes.set_xlim([0, t[-1]])
+            self.axes.set_ylim([-0.1, 0.1])
+            return
 
         for i in range(n_traces):
             # update each y axis
@@ -258,13 +348,51 @@ class Acoustics():
         # perform init if necessary
         if self.state[0] == 'init':
             self.init_graph()
-            self.state[0] = 'run'
+            self.state[0] = 'demo'
 
 
-        elif self.state[0] == 'run':
+        elif self.state[0] == 'demo':
             # update plot
-            y = self.fake_get_data() #TODO: implement a real get data function
+            y = self.fake_get_data()
             self.update_plot(t=None, y_vectors=y)
+
+        elif self.state[0] == 'test-1':
+            print "in test-1"
+            # issue get data command
+            self.send('get data')
+            #import pdb; pdb.set_trace()
+
+            # update state
+            self.state[0] = 'test-2'
+
+        elif self.state[0] == 'test-2':
+            print "in test-2"
+            recv = self.network['sock'].recv
+
+            # receive packet size
+            n_ch = eval( recv(128) )
+            n_point = eval( recv(128) )
+            
+            y = []
+            for ch in range(n_ch):
+                # ping server
+                self.network['sock'].send('o')
+                print 'ping'
+
+                # receive data
+                n_byte = struct.calcsize('f'*n_point)
+                data = struct.unpack('f'*n_point, recv(n_byte))
+                y.append(data)
+                
+            # update the plot
+            self.update_plot(t=range(n_point), y_vectors=y)
+
+            # update user
+            print("%d points" % n_point)
+
+            # update state
+            self.state[0] = 'test-1'
+
 
 
         # return control to tkinter
@@ -287,6 +415,9 @@ def main():
     f = Figure(figsize=(.1, .1), dpi=50)
     acoustics.attach_mpl_figure(f)
 
+    # attach gui to acoustics module
+    acoustics.attach_gui(gui)
+
     # add matplotlib figure to gui
     gui.attach_mpl(f)
     def animate(i):
@@ -302,7 +433,9 @@ def main():
 
     # complete formatting and show the gui
     try:
-        gui.auto_populate()
+        gui.auto_populate(acoustics.connect, 
+            acoustics.drytest,
+            acoustics.getsend_debug)
         gui.run()
     finally:
         acoustics.close()

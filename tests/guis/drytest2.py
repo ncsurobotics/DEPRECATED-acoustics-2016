@@ -3,9 +3,6 @@ sys.path.append("../../pinger_finder/")
 import threading
 import time
 
-#from bbb.ADC import ADS7865
-#from bbb.LTC1564 import LTC1564
-
 import gui_curses
 
 def create_hydrophone_array(config, gui):
@@ -35,8 +32,15 @@ def create_hydrophone_array(config, gui):
 
         blips = gui.get_blips()
 
+    elif config == 'standard':
+        gui.add_blip(subframe_name, (5,5), name='CHA0')
+        gui.add_blip(subframe_name, (9,5), name='CHB0')
+        gui.add_blip(subframe_name, (7,7), name='CHA1')
+        gui.add_blip(subframe_name, (7,9), name='CHB1')
+        blips = gui.get_blips()
+
     else:
-        raise ValueError("Unknown confige %s" % config)
+        raise ValueError("Unknown config %s" % config)
 
     return blips
 
@@ -49,20 +53,82 @@ def demo(gui):
             gui.pulse_blip(hydrophone, 0.5)
             time.sleep(1)
 
-def main():
-    # 
+def test(adc, gui):
+    """code for testing hydrophones. uses curses GUI module"""
+
+    # get blip array
+    hydrophones = gui.get_blips()
+
+    while 1:
+        # perform a sample capture
+        adc.get_data()
+
+        # print trigger ch
+        timeout_flag = adc.TOF
+        #import pdb; pdb.set_trace()
+        if timeout_flag:
+            pass
+        else:
+            # capture pinged channel name
+            ping = adc.TRG_CH
+            pinged_ch = adc.ch[ping]
+
+            for hydrophone_name in hydrophones:
+                if pinged_ch[0:4] in hydrophone_name:
+                    gui.pulse_blip(hydrophone_name, 5)
+                    print "pulsed {}".format(pinged_ch)
+
+        
+
+
+
+def startup_ADC():
+    from bbb.ADC import ADS7865
+    from bbb.LTC1564 import LTC1564
+
+    adc = ADS7865()
+    filt = LTC1564()
+
+    filt.gain_mode(15)
+    filt.filter_mode(3)
+    adc.ez_config(5)
+
+    adc.update_deadband_ms(0*0.5e3)    # dead time
+    adc.set_sample_len(1e3)            # sample length
+    adc.update_sample_rate(300e3)      # sample rate
+    adc.update_threshold(0.03)          # trigger threshold
+
+    return adc
+
+
+def main2():
+    # get GUI object
     gui = gui_curses.Curses_GUI()
 
     # draw the hydrophone array
     hydrophones = create_hydrophone_array('demo', gui)
 
     # create a processing thread
-    #import pdb; pdb.set_trace()
-    #import pdb; pdb.set_trace()
     process_thread = threading.Thread(target=demo, args=(gui,) )
     process_thread.start()
 
     # run the gui
     gui.mainloop()
 
-main()
+def main1():
+    # get GUI object
+    gui = gui_curses.Curses_GUI()
+
+    # draw the hydrophone array
+    hydrophones = create_hydrophone_array('standard', gui)
+
+    # create a processing thread
+    adc = startup_ADC()
+    #test(adc,gui)
+    process_thread = threading.Thread(target=test, args=(adc,gui) )
+    process_thread.start()
+
+    # run the gui
+    gui.mainloop()
+
+main1()

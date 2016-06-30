@@ -64,7 +64,7 @@ class Blip(Entity):
         else:
             self.write_char(' ', [0,0])
 
-
+#TODO: make a label entity
 
 class SubFrame(Entity):
     """Frame object for curses gui"""
@@ -81,6 +81,7 @@ class SubFrame(Entity):
 
         # content parameters
         self.sprite = {}
+        self.label = []
 
     def add_sprite(self, new_sprite, name):
         """Adds a sprite to the drawing frame
@@ -111,6 +112,9 @@ class SubFrame(Entity):
 
                 # print the character
                 stdscr.addch(y1,x1, ord(ch))
+
+    #TODO: add an add_label method
+
 
 
 
@@ -144,7 +148,7 @@ class Curses_GUI(object):
         self.subframe[name] = SubFrame(loc)
         
     
-    def add_blip(self, subframe, loc):
+    def add_blip(self, subframe, loc, name):
         """Adds a blip to the scene.
         Args:
           * subframe: string representing the name of the subframe
@@ -153,8 +157,12 @@ class Curses_GUI(object):
         """
         # add a blip object
         blip_sprite = Blip(loc)
-        id = str(len(self.blips))
-        blip_name = 'blip'+id
+        if name is None:
+            id = str(len(self.blips))
+            blip_name = 'blip'+id
+        else:
+            blip_name = name
+                
         self.subframe[subframe].add_sprite(blip_sprite, blip_name)
 
         # save blip

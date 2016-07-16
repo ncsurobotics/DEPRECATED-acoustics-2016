@@ -75,7 +75,7 @@ def enter_program1(port):
     adc.update_deadband_ms(0*0.5e3)    # dead time
     adc.set_sample_len(1e3)            # sample length
     adc.update_sample_rate(400e3)      # sample rate
-    adc.update_threshold(0.04)          # trigger threshold
+    adc.update_threshold(0.1)          # trigger threshold
     filt.gain_mode(15)
     filt.filter_mode(14)
     

@@ -33,10 +33,10 @@ def create_hydrophone_array(config, gui):
         blips = gui.get_blips()
 
     elif config == 'standard':
-        gui.add_blip(subframe_name, (5,5), name='CHA0')
-        gui.add_blip(subframe_name, (9,5), name='CHB0')
-        gui.add_blip(subframe_name, (7,7), name='CHA1')
-        gui.add_blip(subframe_name, (7,9), name='CHB1')
+        gui.add_blip(subframe_name, (5,5), name='CHA1')
+        gui.add_blip(subframe_name, (9,5), name='CHB1')
+        gui.add_blip(subframe_name, (7,9), name='CHA0')
+        gui.add_blip(subframe_name, (7,7), name='CHB0')
         blips = gui.get_blips()
 
     else:
@@ -71,6 +71,7 @@ def test(adc, gui):
         else:
             # capture pinged channel name
             ping = adc.TRG_CH
+            print "adc trig = {}".format(ping)
             pinged_ch = adc.ch[ping]
 
             for hydrophone_name in hydrophones:
@@ -96,7 +97,7 @@ def startup_ADC():
     adc.update_deadband_ms(0*0.5e3)    # dead time
     adc.set_sample_len(1e3)            # sample length
     adc.update_sample_rate(300e3)      # sample rate
-    adc.update_threshold(0.03)          # trigger threshold
+    adc.update_threshold(0.1)          # trigger threshold
 
     return adc
 

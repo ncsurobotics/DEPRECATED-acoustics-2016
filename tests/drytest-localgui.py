@@ -301,7 +301,7 @@ class Acoustics():
                 self.lines[i].set_data(t,y_vectors[i])
             
             self.axes.set_xlim([0, t[-1]])
-            self.axes.set_ylim([-0.1, 0.1])
+            self.axes.set_ylim([-2.5, 2.5])
             return
 
         for i in range(n_traces):

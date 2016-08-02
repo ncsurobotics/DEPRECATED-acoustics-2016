@@ -614,7 +614,7 @@ class Acoustics():
         # Configure other parameters
         if sel == 0:
             self.filt.gain_mode(0)
-            self.filt.filter_mode(2)
+            self.filt.filter_mode(4)
             self.auto_update = True
 
         if sel == 1:

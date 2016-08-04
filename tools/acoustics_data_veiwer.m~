@@ -64,6 +64,11 @@ function run(setting)
 end
 
 function interactive_plot_data(setting, acoustics, channels)
+    % ARGS:
+    %   --setting: a structure containing the acoustics data.
+    %   --channels: a list of indices requesting which acoustics 
+    %   hydrophone channel to plot. each element in this list should
+    %   just be an element ranging from 1-4.
     % plot settings
     hold on
     

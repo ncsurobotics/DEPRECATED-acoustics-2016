@@ -4,61 +4,15 @@ import datetime
 import time
 import csv
 import math
-import inspect
-import os
-
-try:
-    from scipy.fftpack import fft
-except ImportError:
-    print "WARNING: importing numpy.fft.fft instead of scipy.fftpack.fft"
-    from numpy.fft import fft
-
+print "MAKE SURE SCIPY.fftpack.fft is equivalent to numpy.fft.fft"
+#from scipy.fftpack import fft
+from numpy.fft import fft
 import glob
 #from scipy.signal import argrelextrema
 
-# sense the name of the script that imported this data,
-# and use that information to somehow change these imports
-def is_sim_child():
-    # variables
-    frame               = inspect.currentframe()
-    parent_frames       = inspect.getouterframes(frame)
-    sim_file_filename   = 'mission_replay.py'
-    base_pathname       = os.path.dirname(__file__)
-    sim_rel_pathname    = '../tools/mission replay'
-    sim_file_fileloc    = os.path.join(base_pathname, sim_rel_pathname,sim_file_filename)
-    sim_file_fileloc    = os.path.abspath(sim_file_fileloc)
-
-    # run breif check just to make sure mission_replay.py exists,
-    # otherwise tell user that the file has probably been mis-named.
-    print sim_file_fileloc
-    if not os.path.isfile(sim_file_fileloc):
-        print("---\nERROR: sim-file {} not found! Please check to make ".format(sim_file_filename)
-            + "sure it is in the correct location (full check path = "
-            + "{})".format(sim_file_fileloc))
-    
-
-    for parent_frame in parent_frames:
-        frame_obj = parent_frame[0]
-        frame_name = parent_frame[1]
-        if sim_file_filename == frame_name:
-            return (True, frame_obj)
-
-        else:
-            pass
-
-    # parent sim file not found.
-    return (False, None)
-
-if is_sim_child()[0] == False:
-    from bbb.ADC import ADS7865
-    from bbb.ADC import ADC_Tools
-    from bbb.LTC1564 import LTC1564
-else:
-    print "---\nWARNING: Entering simulation mode!!!"
-    from bbb.ADC_sim import ADS7865
-    from bbb.ADC_sim import ADC_Tools
-    from bbb.LTC1564_sim import LTC1564
-    
+from bbb.ADC import ADS7865
+from bbb.ADC import ADC_Tools
+from bbb.LTC1564 import LTC1564
 import locate_pinger
 import numpy as np
 import quickplot2
@@ -77,6 +31,7 @@ BASE_DIR = path.dirname(path.dirname(path.realpath(__file__)))
 # ##############################################
 #### Settings ##################################
 ################################################
+class.
 
 WORLD_ORIGIN = np.array([[0, 0, 0]])
 PINGER_CYCLE_TIME = 2  # seconds
@@ -233,7 +188,7 @@ class Acoustics():
         # adjust sampling parameters (condition) if a sample captures has been
         # previously performed. Otherwise, just perform a sample capture.
         if self.adc.y != None: next_state='condition'
-        else: next_state='sample_capture'
+        else: next_state='sample_capture'   
         
         while (next_state != 'exit'):
 
@@ -285,8 +240,8 @@ class Acoustics():
 
                 # generate peak search parameters
                 noise_floor = config.getfloat('ADC', 'noise_floor')  # units???
-                peak_tol = 6e3  # Hertz - 1/2 minimum frequency band to discern again
-                #peak_tol = 22e3  # REMOVE after Nov 1st.
+                #peak_tol = 500  # Hertz - 1/2 minimum frequency band to discern again
+                peak_tol = 22e3  # REMOVE after Nov 1st.
                 pinger_frequency = config.getfloat('Acoustics', 'pinger_frequency')  # units???
 
                 # Generate Warning if expectations are too generous
@@ -471,6 +426,7 @@ class Acoustics():
             # Data was captured. Update buffer.
             (dynamic_ss, raw_vpp) = self.compute_last_signal_strength()
             self.data_buffer = (result, time.time(),dynamic_ss,raw_vpp)
+            import pdb;pdb.set_trace()
             update_occured = True
             
             # Record data that says a ping was captured

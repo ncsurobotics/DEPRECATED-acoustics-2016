@@ -1,5 +1,9 @@
 import numpy as np
-from scipy.fftpack import fft
+try:
+    from scipy.fftpack import fft
+except ImportError:
+    print "WARNING: importing numpy.fft.fft instead of scipy.fftpack.fft"
+    from numpy.fft import fft
 
 SAMPLES_PER_CONV = 2
 

@@ -2,7 +2,11 @@ import math
 from cmath import phase
 import numpy as np
 
-from scipy.fftpack import fft
+try:
+    from scipy.fftpack import fft
+except ImportError:
+    print "WARNING: importing numpy.fft.fft instead of scipy.fftpack.fft"
+    from numpy.fft import fft
 
 """
 Phase_diff = phase_a - phase_b.
@@ -166,12 +170,22 @@ def compute_time_diff(target_freq, fs, a, b):
 
 """
 Computes the relative delay times for each hydrophone pair"""
-def compute_relative_delay_times(adc, target_freq, array, c, pattern=None, elem2adc=[]):
-    
+def compute_relative_delay_times(adc, target_freq, array, c, pattern=None, elem2adc=None):
     """
     args: 
-        dict_set-- a list integers wheras element at index n is supposed
-        to represent the ADC channel corresponding to hydrophone n."""
+        * pattern-- a list 2-element tuples. Each tuple represents a pair
+        of hydrophones. Each hydrophone is designated by an integer associated
+        with the hydrophone (see labeling on the physical hydrophones.)
+
+        * elem2adc-- a list integers wheras element at index n is supposed
+        to represent the ADC channel corresponding to hydrophone n. Hence, the
+        pattern [0,2,3,1] represents the following mapping:
+            hydrophone0 correponds to ADC channel 0.
+            hydrophone1 correponds to ADC channel 2.
+            hydrophone2 correponds to ADC channel 3.
+            hydrophone3 correponds to ADC channel 1.
+    """
+    
     def check_if_one_to_one(dict_set):
         used = []
         for item in dict_set:
@@ -203,6 +217,8 @@ def compute_relative_delay_times(adc, target_freq, array, c, pattern=None, elem2
     # perform error checking on elem2adc
     if elem2adc != None:
         check_if_one_to_one(elem2adc)
+    else:
+        elem2adc = [-1]*n_ch
 
 
 

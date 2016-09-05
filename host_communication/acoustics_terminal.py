@@ -218,7 +218,7 @@ def main_loop():
         try:
             # Try reading and acting upon seawolf's input first
             input = read()
-            print('DEBUGGING NOV 2nd'); input = 'get_data'
+            #print('DEBUGGING NOV 2nd'); input = 'get_data'
             
             
             if input:

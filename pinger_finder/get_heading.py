@@ -225,9 +225,10 @@ def compute_relative_delay_times(adc, target_freq, array, c, pattern=None, elem2
     # assign adc 2 hydrophone-element mappings. if not specified just go
     # with 1-by-1 to the ADC.
     if pattern==None:
+        elem2adc = []
         for i in range(n_ch):
             adc_ch = i
-            elem2adc[i] = adc_ch
+            elem2adc.append(adc_ch)
     
 
     # Check if user has ADC Configured correctly

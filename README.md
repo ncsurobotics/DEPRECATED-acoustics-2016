@@ -21,9 +21,13 @@ You don't have to do this, but it might be nice to have. The installs directory 
      cd Installs/
      
 **Install SciPy**  
-Install SciPy using your package manager, eg.
+Installing scipy is easiest if you follow the official instruction on this webpage:
 
-    sudo apt-get install python-scipy
+    https://www.scipy.org/install.html
+
+*NOTE WELL*: When you purform this install, it is very likely that matplotlib won't install properly due to numpy being some old version (version 1.6.x in the most recent case). matplotlib requires version newer than 1.7.x. To update numpy, simply run this command:
+
+     pip install --upgrade numpy
      
 **Install steinkuehler's BBB universal device tree scripts**  
 

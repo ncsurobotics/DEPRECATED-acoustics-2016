@@ -1,5 +1,3 @@
-# acoustics
-Acoustics code for ncsurobotics' 2015 robot, Seawolf VI
 
 ### dependencies / configs
 This code depends on some external libraries, namely SciPy and PyPRUSS. To run this code, your must have/do the following:
@@ -39,13 +37,21 @@ Installing scipy is easiest if you follow the official instruction on this webpa
 Now you can issue the command "config-pin" from the commandline and use it for easily manipulate some of the IO/Muxes. The boot.py script takes advantage of this. Also, the makefile had several .dtbo files get copied to the firmware directory as well.
  
 **Disable the HDMI control**  
-Go to this adafruit tutorial (https://learn.adafruit.com/setting-up-wifi-with-beaglebone-black/hardware), find the section labeled "HDMI Port Interference", and go to the part about manipulating the uEnv.txt file. These instructions are how to disable the HDMI cape on the BBB (Which will free up a lot of important pins for controlling the ADC). Follow them. For reference, here's what was done on the lab BBB:
+We used to use this adafruit tutorial (https://learn.adafruit.com/setting-up-wifi-with-beaglebone-black/hardware) to disable the HDMI output from the BBB. The relevant part of it is the section labeled "HDMI Port Interference", where it talks about manipulating the uEnv.txt file. The instructions were used to disable the HDMI cape on the BBB (Which frees up a lot of important pins for controlling the ADC). 
+**Unfortunately, BBB's software has changed since that tutorial was written, so the steps are no longer the same.** The steps below were used on a new BBB in April of 2017, but you should keep in mind that the process may have changed since this guide was last updated.
 
-     mkdir /mnt/boot
-     mount /dev/mmcblk0p1 /mnt/boot/
-     nano /mnt/boot/uEnv.txt            #Uncomment the correct line... as said in the tutorial.
-     sudo reboot                        #You will have to ssh back in to the BBB after this.
- 
+For reference, here's what was done on the lab BBB:
+
+	**Step One**
+```
+mkdir /mnt/boot
+mount /dev/mmcblk0p1 /mnt/boot/
+```
+The problem is that "uEnv.txt", which you need to edit, is no longer located here. I am not sure if this step was necessary, but I wanted to document that we did it. After lots of searching on the internet, we figured out that uEnv.txt is now located in /boot/, so you simply edit it from a new location. Once you open the file, uncomment the line under the heading "##Disable HDMI (v3.8.x). Save the file, reboot the BBB and keep going.
+
+**Do not uncomment a line under a heading similar to "Beaglebone Black: HDMI (Audio/Video) disabled:** If you do so all four of the user LED's will turn on and you will not be able to ssh in. If that happens, however, don't panic: you may still be able to plug the BBB into your computer and access it as a USB device (use Linux for this). You can then edit the uEnv.txt file from your computer and comment out the line again.
+The same goes for any line that talks about disabling eMMC. eMMC is the beaglebone's main onboard memory so that would be... less than advisable.
+
 **Install Pypruss from source**  
 Go to the Pypruss Bitbucket repository(https://bitbucket.org/intelligentagent/pypruss) and follow their instructions. Pypruss was installed on the lab beaglebone by...
 

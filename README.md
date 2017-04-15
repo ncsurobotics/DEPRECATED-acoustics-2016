@@ -2,8 +2,10 @@
 ### dependencies / configs
 This code depends on some external libraries, namely SciPy and PyPRUSS. To run this code, your must have/do the following:
 
+  * **A beaglebone using the latest version of debian (debian 8.7). May need to aqcuire a +4GB SD card.**
+  * **version 4.1.x of a *non-TI* based linux kernel**: This code uses the uio_pruss module to control the PRUSS-ICSS. None of the TI kernels contain this module.
   * **python2.7**
-  * **SciPy**: Mostly for human interface stuff where plotting is involved.
+  * **SciPy**: Mostly for human interface stuff where plotting is involved. Used in some of the signal processing math too.
   * **Disable the HDMI Cape on the BBB**: This will free up some many of the PRUSS-ICSS pins.
   * **pypruss**: a python wrapper for the c library responsible for sending high level commands to the PRUSS-ICSS.
   * **pasm**: Compiler for the PRU assembly code. Seems to be included with beaglebones manufactured after April.
@@ -12,6 +14,21 @@ This code depends on some external libraries, namely SciPy and PyPRUSS. To run t
 
 To take care of these dependencies, please follow the steps below.
 
+**Flash the Beaglebone Black with the latest version of Ubuntu**
+This will install debian 8.7 on the beaglebone.
+
+  1. Go to https://beagleboard.org/latest-images, and download the latest **IoT** image. As of the writing of this README, that would be the link labeled "Debian 8.7 2017-03-19 4GB SD IoT".
+  1. unzip the .xz file, write the image (the .iso file) to an +4GB SD card, and flash the image to the beaglebone. More detailed instructions on how to flash the beaglebone can be found on the internet.
+
+**Ensure that version 4.1.x of a *non-TI* based linux kernel is running on the BBB**
+The latest images utilize version 4.4.x-ti-... of the linux kernel, which are linux kernel pushed by Texas Instruments (TI). These kernels do not support the UIO_PRUSS module, which the core acoustic code depends on. Per the advice in this thread(https://groups.google.com/forum/#!msg/beagleboard/6vKLJpJoPGY/kc-iW_fbAgAJ), we're going issue the following commands to revert the kernel back to 4.1.x:
+
+     #on BBB through ssh:
+     cd /opt/scripts/tools/ 
+     git pull 
+     sudo ./update_kernel.sh --bone-rt-kernel --lts-4_1 
+     sudo reboot #upon reboot, your beaglebone will be running kernel version 4.1.x
+
 **(Optional) Make an Installs directory.**  
 You don't have to do this, but it might be nice to have. The installs directory will act as a point of reference in this short guide.
 
@@ -19,15 +36,12 @@ You don't have to do this, but it might be nice to have. The installs directory 
      cd Installs/
      
 **Install SciPy**  
-Installing scipy is easiest if you follow the official instruction on this webpage:
+Installing scipy is easiest if you use apt-get:
 
-    https://www.scipy.org/install.html
-
-*NOTE WELL*: When you perform this install, it is very likely that matplotlib won't install properly due to numpy being some old version (version 1.6.x in the most recent case). matplotlib requires version newer than 1.7.x. To update numpy, simply run this command:
-
-     pip install --upgrade numpy
+    sudo apt-get install python-scipy
      
-**Install steinkuehler's BBB universal device tree scripts**  
+**Install steinkuehler's BBB universal device tree scripts (No longer necessary)**  
+
 
      git clone https://github.com/cdsteinkuehler/beaglebone-universal-io.git
      cd /beaglebone-universal-io/

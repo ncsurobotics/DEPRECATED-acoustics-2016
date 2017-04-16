@@ -14,7 +14,7 @@ This code depends on some external libraries, namely SciPy and PyPRUSS. To run t
 
 To take care of these dependencies, please follow the steps below.
 
-**Flash the Beaglebone Black with the latest version of Ubuntu**
+**Flash the Beaglebone Black with the latest version of Debian Linux**
 This will install debian 8.7 on the beaglebone.
 
   1. Go to https://beagleboard.org/latest-images, and download the latest **IoT** image. As of the writing of this README, that would be the link labeled "Debian 8.7 2017-03-19 4GB SD IoT".

@@ -9,6 +9,10 @@ from os import path
 import platform
 if 'Linux-3.8.13-bone47-armv7l-with-debian' in platform.platform():
     import pypruss  # Python PRUSS wrapper
+elif 'Linux-4.1.38-bone-rt-r24-armv7l-with-debian-8.7' in platform.platform():
+    import pypruss  # Python PRUSS wrapper
+elif '-bone-' in platform.platform():
+    import pypruss  # Python PRUSS wrapper
 else:
     print("ADC: Detected that this code is not running on a BBB device. Pypruss is unavailable")
 

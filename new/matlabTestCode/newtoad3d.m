@@ -12,7 +12,6 @@ fprintf('Welcome to URC acoustic simulator.\nAll values should be input in metri
 cd = [0, 0, 0; 0, -.025, 0; .025, -.025, 0; .025, 0, 0];
 % plotting the hydrophone locations
 x = 1;
-
 while x == 1
     % puts all plots on same plot
     xLoc = input('distance left (-) or right (+) of the robot (x): ');
@@ -32,10 +31,10 @@ while x == 1
     y = 2;
     z = 3;
     
-    Rik = (signalToa(toa(1) - toa(3))) * speedOfSound;
-    Rij = (signalToa(toa(1) - toa(2))) * speedOfSound;
-    Rkj = (signalToa(toa(3) - toa(2))) * speedOfSound;
-    Rkl = (signalToa(toa(3) - toa(4))) * speedOfSound;
+    Rik = (signalToa2(toa(1) - toa(3))) * speedOfSound;
+    Rij = (signalToa2(toa(1) - toa(2))) * speedOfSound;
+    Rkj = (signalToa2(toa(3) - toa(2))) * speedOfSound;
+    Rkl = (signalToa2(toa(3) - toa(4))) * speedOfSound;
     
     ji = cd(2,:) - cd(1,:);
     ki = cd(3,:) - cd(1,:);
@@ -64,9 +63,12 @@ while x == 1
     N = 8*Rik^2 * (G*(cd(1,x) - H) + I*(cd(1,y)-J) + cd(1,x)) + 2*L*K;
     O = 4*Rik^2 * ((cd(1,x)-H)^2 + (cd(1,y) - J)^2) - K^2;
     
-    OutZ = N/(2*M) - sqrt((N/(2*M))^2 - O/M)
-    OutX = G*OutZ + H
-    OutY = A*(OutX) + B*OutZ + C
+    OutZ = N/(2*M) - sqrt((N/(2*M))^2 - O/M);
+    OutX = G*OutZ + H;
+    OutY = A*(OutX) + B*OutZ + C;
     
+
+    fprintf('IN:    x = %2.2f y = %2.2f z = %2.2f\n', xLoc, yLoc, zLoc);
+    fprintf('OUT:   x = %2.2f y = %2.2f z = %2.2f\n', OutX, OutY, -1 * OutZ);
     x = input('enter 1 to insert a new pinger location, enter 0 to quit: ');
 end

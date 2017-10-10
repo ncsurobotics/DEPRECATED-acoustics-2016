@@ -36,12 +36,12 @@ while x == 1
     end
     toa = dist./SpeedOfSound;
     toaAct = [toa(2) - toa(1); toa(3) - toa(4)];
-    toaCalc = [signalToa(toaAct(1)); signalToa(toaAct(2))];
+    toaCalc = [signalToa2(toaAct(1)); signalToa2(toaAct(2))];
         
     %calculating and printing percent error of toa
     toaErr = (abs(toaAct) - abs(toaCalc))./abs(toaAct) * 100;
     table = [toaAct'; toaCalc'; toaErr'];
-    fprintf('expected toa %10.9f\ncalculated toa %10.9f\n percent error %4.3f \n', table);
+    %fprintf('expected toa %10.9f\ncalculated toa %10.9f\n percent error %4.3f \n', table);
     fprintf('\n');
     %%
     % for actual acoustics D is hardcoded, this is the distance between the
@@ -66,7 +66,7 @@ while x == 1
     yawCalc = atand(sideToSideB/sideToSideA);
     yawAct = atand(pingerLoc(1,1)/pingerLoc(1,2));
     fprintf('expected Yaw: %3.2f\n', yawAct);
-    fprintf('TOA Yaw no signal: %3.2f\n', yawCalc + 90);
+    %fprintf('TOA Yaw no signal: %3.2f\n', yawCalc + 90);
     fprintf('TOA Yaw from signal: %3.2f\n', yawCalcSig + 90);
     fprintf('\n');
     
@@ -76,7 +76,7 @@ while x == 1
     pitchActZY = atand(pingerLoc(1,3)/pingerLoc(1,2));
     pitchActR = atand(pingerLoc(1,3)/sqrt(sum(pingerLoc(1:2).^2)));
     fprintf('expected Pitch: %3.2f\n', 90 - abs(pitchActZY));
-    fprintf('TOA Pitch no signal: %3.2f\n', 90 + (pitchCalc)  );
+    %fprintf('TOA Pitch no signal: %3.2f\n', 90 + (pitchCalc)  );
     fprintf('TOA Pitch from signal: %3.2f\n', 90 + (pitchCalcSig) );
     x = input('enter 1 to insert a new pinger location, enter 0 to quit: ');
 end

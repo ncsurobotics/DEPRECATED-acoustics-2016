@@ -31,30 +31,34 @@ clc
 
 %yaw calculations
 %modifying B to have correct forward and backward
-fprintf('sideA: %10.8f\n', sideToSideASig)
-fprintf('sideB: %10.8f\n', sideToSideBSig)
-fprintf('sideT: %10.8f\n', toaCalc(2))
+% fprintf('sideA: %10.8f\n', sideToSideASig)
+% fprintf('sideB: %10.8f\n', sideToSideBSig)
+% fprintf('sideT: %10.8f\n', toaCalc(2))
 
 try
     front = 1; %inLineASig/abs(inLineASig);
     yawCalcSig= atan2d(-1 * sideToSideASig, front * sideToSideBSig);
     fprintf('TOA Yaw from signal: %3.2f\n', yawCalcSig);
+    fprintf('%10s%10s%10s%10s\n', 'toa', 'A', 'B', 'angle');
+    fprintf('%10.8f,%10.8f,%10.8f,%10.8f\n', toaCalc(2), sideToSideASig, sideToSideBSig, yawCalcSig)
     fprintf('\n');
 catch
     fprintf('ERROR: could not cacluclate yaw\n\n')
-    
+    fprintf('sideT: %10.8f\n', toaCalc(2))
 end
 
 % pitch calculations
-fprintf('inLineT: %10.8f\n', toaCalc(1))
-fprintf('inLineA: %10.8f\n', inLineASig)
-fprintf('inLineB: %10.8f\n', inLineBSig)
+% fprintf('inLineT: %10.8f\n', toaCalc(1))
+% fprintf('inLineA: %10.8f\n', inLineASig)
+% fprintf('inLineB: %10.8f\n', inLineBSig)
 
 try
     pitchCalcSig = atan2d(inLineASig, inLineBSig);
     fprintf('TOA Pitch from signal: %3.2f\n', pitchCalcSig);
+    fprintf('%10s%10s%10s%10s\n', 'toa', 'A', 'B', 'angle');
+    fprintf('%10.8f,%10.8f,%10.8f,%10.8f\n', toaCalc(1), inLineASig, inLineBSig, pitchCalcSig)
 catch
      fprintf('ERROR: could not cacluclate pitch\n')
- 
+     fprintf('inLineT: %10.8f\n', toaCalc(1))
 end   
 end

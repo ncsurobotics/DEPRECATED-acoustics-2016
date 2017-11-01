@@ -1,4 +1,4 @@
-function testToa3d(toa)
+function out = testToa3d(toa, Fs, pf, db)
 % all units are in meters
 SpeedOfSound = 1484;
 
@@ -11,7 +11,7 @@ cd = [0, -.1, 0; 0, -.119, 0; .019/2, 0, 0; -.019/2, 0, 0];
 % plotting the hydrophone locations
 
 %the number of pinger to alocate to find distance and toa easier
-toaCalc = [sigToa(toa(:, 2), toa(:, 1), '2', '1') ; sigToa(toa(:, 3), toa(:, 4), '3', '4') ];
+toaCalc = [sigToa(toa(:, 2), toa(:, 1), '2', '1', Fs, pf, db) ; sigToa(toa(:, 3), toa(:, 4), '3', '4', Fs, pf, db) ];
 
 %%
 % for actual acoustics D is hardcoded, this is the distance between the
@@ -27,38 +27,22 @@ sideToSideBSig = sqrt(sideToSideD^2 - sideToSideASig^2);
 inLineASig = toaCalc(1) * SpeedOfSound/2;
 inLineBSig = sqrt(inLineD^2 - inLineASig^2);
 
-clc
 
 %yaw calculations
-%modifying B to have correct forward and backward
-% fprintf('sideA: %10.8f\n', sideToSideASig)
-% fprintf('sideB: %10.8f\n', sideToSideBSig)
-% fprintf('sideT: %10.8f\n', toaCalc(2))
-
+out = {};
 try
     front = 1; %inLineASig/abs(inLineASig);
     yawCalcSig= atan2d(-1 * sideToSideASig, front * sideToSideBSig);
-    fprintf('TOA Yaw from signal: %3.2f\n', yawCalcSig);
-    fprintf('%10s%10s%10s%10s\n', 'toa', 'A', 'B', 'angle');
-    fprintf('%10.8f,%10.8f,%10.8f,%10.8f\n', toaCalc(2), sideToSideASig, sideToSideBSig, yawCalcSig)
-    fprintf('\n');
+    out{1} = sprintf('%d, %10.8f,%10.8f,%10.8f,%10.8f\n', length(toa), toaCalc(2), sideToSideASig, sideToSideBSig, yawCalcSig);
 catch
-    fprintf('ERROR: could not cacluclate yaw\n\n')
-    fprintf('sideT: %10.8f\n', toaCalc(2))
+    out{1} = sprintf('%d, %10.8f,%10.8f,%10.8f,%10.8f\n', length(toa), toaCalc(2), sideToSideASig, sideToSideBSig, 0);
 end
 
 % pitch calculations
-% fprintf('inLineT: %10.8f\n', toaCalc(1))
-% fprintf('inLineA: %10.8f\n', inLineASig)
-% fprintf('inLineB: %10.8f\n', inLineBSig)
-
 try
     pitchCalcSig = atan2d(inLineASig, inLineBSig);
-    fprintf('TOA Pitch from signal: %3.2f\n', pitchCalcSig);
-    fprintf('%10s%10s%10s%10s\n', 'toa', 'A', 'B', 'angle');
-    fprintf('%10.8f,%10.8f,%10.8f,%10.8f\n', toaCalc(1), inLineASig, inLineBSig, pitchCalcSig)
+    out{2} = sprintf('%d, %10.8f,%10.8f,%10.8f,%10.8f\n', length(toa), toaCalc(1), inLineASig, inLineBSig, pitchCalcSig);
 catch
-     fprintf('ERROR: could not cacluclate pitch\n')
-     fprintf('inLineT: %10.8f\n', toaCalc(1))
+    out{2} = sprintf('%d, %10.8f,%10.8f,%10.8f,%10.8f\n', length(toa), toaCalc(1), inLineASig, inLineBSig, 0);
 end   
 end

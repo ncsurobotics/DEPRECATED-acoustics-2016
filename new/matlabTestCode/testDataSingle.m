@@ -1,4 +1,4 @@
-filename = 'data/conf1.csv';
+filename = '/home/rafael/Documents/Robotics Documentation/acoustics/data/conf1.csv';
 data = csvread(filename, 7, 00);
 data = data(:, 1:4);
 t = 1:length(data);

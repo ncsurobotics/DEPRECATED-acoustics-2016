@@ -45,4 +45,11 @@ try
 catch
     out{2} = sprintf('%d, %10.8f,%10.8f,%10.8f,%10.8f\n', length(toa), toaCalc(1), inLineASig, inLineBSig, 0);
 end   
+if db
+    fprintf('length, toaCalc, a, b, yaw\n');
+    fprintf(out{1});
+    fprintf('length, toaCalc, a, b, pitch\n');
+    fprintf(out{2});
+end
+
 end

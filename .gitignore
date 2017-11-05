@@ -11,5 +11,5 @@
 *.py~
 *ipynb*
 *.bin
-
+**/acoustics-data
 /Pics

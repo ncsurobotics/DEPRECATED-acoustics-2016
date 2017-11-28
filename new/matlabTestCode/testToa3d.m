@@ -33,17 +33,17 @@ out = {};
 try
     front = 1; %inLineASig/abs(inLineASig);
     yawCalcSig= atan2d(-1 * sideToSideASig, front * sideToSideBSig);
-    out{1} = sprintf('%d, %10.8f,%10.8f,%10.8f,%10.8f\n', length(toa), toaCalc(2), sideToSideASig, sideToSideBSig, yawCalcSig);
+    out{1} = sprintf('%d, %10.2e,%10.2e, %10.2e,%10.3f\n', length(toa), toaCalc(2), sideToSideASig, sideToSideBSig, yawCalcSig);
 catch
-    out{1} = sprintf('%d, %10.8f,%10.8f,%10.8f,%10.8f\n', length(toa), toaCalc(2), sideToSideASig, sideToSideBSig, 0);
+    out{1} = sprintf('%d, %10.2e,%10.2e,%10.2e,%10.3f\n', length(toa), toaCalc(2), sideToSideASig, sideToSideBSig, 0);
 end
 
 % pitch calculations
 try
     pitchCalcSig = atan2d(inLineASig, inLineBSig);
-    out{2} = sprintf('%d, %10.8f,%10.8f,%10.8f,%10.8f\n', length(toa), toaCalc(1), inLineASig, inLineBSig, pitchCalcSig);
+    out{2} = sprintf('%d, %10.2e,%10.2e,%10.2e,%10.3f\n', length(toa), toaCalc(1), inLineASig, inLineBSig, pitchCalcSig);
 catch
-    out{2} = sprintf('%d, %10.8f,%10.8f,%10.8f,%10.8f\n', length(toa), toaCalc(1), inLineASig, inLineBSig, 0);
+    out{2} = sprintf('%d, %10.2e,%10.2e,%10.2e,%10.3f\n', length(toa), toaCalc(1), inLineASig, inLineBSig, 0);
 end   
 if db
     fprintf('length, toaCalc, a, b, yaw\n');

@@ -6,7 +6,7 @@ figure(1)
 plot(t, data);
 %%
 % the frequency of sampling
-Fs = 125 * 10^6;
+Fs = 1 * 10^6;
 %the frequency of the pinger
 pf = 22 * 10^3;
 % the starting point of the input

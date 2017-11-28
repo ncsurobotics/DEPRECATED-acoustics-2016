@@ -21,7 +21,7 @@ t2 = t(index2:(M+index2));
 % the input read in from the hydrophone, assuming 0 offset
 signal = [cos(2 * pi * ( pf) * t1); cos(2 * pi * pf * t2)];
 %% plotting the output wave
-%figure()
+figure()
 hold on
 plot(signal(1,:))
 plot(signal(2,:));

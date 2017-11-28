@@ -12,7 +12,7 @@ end
 
 %% plotting the output wave
 if db
-    figure(3)
+    figure()
     t = 1:length(sig1);
     plot(t, sig1, t, sig2);
     t = sprintf('plot of signal %s and %s', ch1, ch2);
@@ -29,7 +29,7 @@ P1(2:end - 1, :) = 2 * P1(2:end - 1, :);
 f = Fs * (0:L/2)/L;
 range = f > (15 * 10^3) & f < 27 * 10^3;
 if db
-    figure(4)
+    figure()
     plot(f(range), P1(1, range), f(range), P1(2, range));
     title('fft');
     legend({ch1, ch2})

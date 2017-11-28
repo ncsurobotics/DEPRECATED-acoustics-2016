@@ -1,7 +1,7 @@
 %script for importing acoustics pool data reccorded on osciloscope
-filename = 'data/conf1.csv';
-outfileyaw = 'processed/conf1yaw.csv';
-outfilepitch = 'processed/conf1pitch.csv';
+filename = 'acoustics-data/T1M.csv';
+outfileyaw = 'acoustics-data/processed/T1Myaw.csv';
+outfilepitch = 'acoustics-data/processed/T1Mpitch.csv';
 outYaw = fopen(outfileyaw, 'w');
 outPitch = fopen(outfilepitch, 'w');
 fprintf(outYaw,'index, length, toaCalc, a, b, yaw\n');
@@ -15,11 +15,10 @@ plot(t, data);
 % the frequency of the pinger
 pf = 22 * 10^3;
 % the frequency of sampling
-Fs = 125 * 10^6;
+Fs = 250 * 10^6;
 % the number of periods to consider
-P = 10;
+P = 16;
 
-%figuring out the step size based on pf an Fs something here is wrong
 inputSize = Fs/pf * P;
 for i = 1:inputSize/2:(length(data) - inputSize)
     t = uint64(i:1:(i + inputSize));

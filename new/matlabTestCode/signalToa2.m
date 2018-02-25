@@ -10,7 +10,7 @@ T = 1/(Fs);
 % time axis 
 t = (0:(2*M)-1) * T;
 %% making the y axis, acoustic wave read in
-% frequency of wave from ping in hz
+% frequency of wave from ping in ohz
 pf = 22* 10^3;
 offset = round(toa/T);
 index = randi([M*.5, M]);
@@ -35,12 +35,12 @@ Y = [fft(signal(1,:));fft(signal(2,:))];
 Y(2, i(2));
 Y(1, i(1));
 calcToa = (angle(Y(2, i(2))) - angle(Y(1, i(1))))/(pf * 2 * pi);
-x = 8;
+%x = 8;
 %calcToa = round(toa * 10^x) * 10^(-1 * x);% + toa * err;
-err = ((-1)^randi([1,2])) * .05;
-calcToa = toa + toa*err;
-err = abs(toa - calcToa)/toa;
-
+%err = ((-1)^randi([1,2])) * .05;
+%calcToa = toa + toa*err;
+%err = %abs(toa - calcToa)/toa;
+err = 0;
 
 fprintf('IN: %6.2f TDOA: %6.2f, TDOA error: %6.2f%%\n', toa * 10^5, calcToa * 10^5, err * 100);
 end

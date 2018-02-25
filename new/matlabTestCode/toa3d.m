@@ -27,9 +27,10 @@ while x == 1
     end
     toa = dist./SpeedOfSound;
     toaAct = [toa(2) - toa(1); toa(3) - toa(4)];
+    genToa(toa(2) - toa(1), toa(3) - toa(4));
     toaCalc = [signalToa2(toaAct(1)); signalToa2(toaAct(2))];
         
-    %%
+    %%0
     % for actual acoustics D is hardcoded, this is the distance between the
     % hydrophones
     sideToSideD = sqrt(sum((cd(3,:) - cd(4,:)).^2))/2;

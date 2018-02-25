@@ -1,9 +1,9 @@
 % script for importing acoustics pool data reccorded on osciloscope
-filename = 'acoustics-data/T1S1.csv';
+filename = 'acoustics-data/T1M.csv';
 data = csvread(filename, 2, 00);
 % Fs is the frequency you want to downsample to
 Fdata = 250 * 10^6;
-Fs = 100 * 10^3;
+Fs = 250 * 10^6;
 
 %data = downsample(data, Fdata, Fs);
 data = data(:, 1:4);
@@ -16,7 +16,7 @@ legend({'1', '2', '3', '4'})
 %%
 % the frequency of sampling
 %the frequency of the pinger
-pf = 22 * 10^3;
+pf = 44 * 10^3;
 
 % Figure out how many periods we want to analyze to determine starting
 % points
@@ -45,7 +45,7 @@ end
 
 
 
-inputSize = round(tPeriod * 10 * Fs);
+inputSize = round(tPeriod * 10 * Fdata);
 
 % s is the start of the range
 s = tStart;

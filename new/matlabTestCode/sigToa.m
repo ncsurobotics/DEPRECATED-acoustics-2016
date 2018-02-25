@@ -27,7 +27,7 @@ P2 = abs(Y/L);
 P1 = P2(:, 1:L/2 + 1);
 P1(2:end - 1, :) = 2 * P1(2:end - 1, :);
 f = Fs * (0:L/2)/L;
-range = f > (15 * 10^3) & f < 27 * 10^3;
+range = f > (pf * 0.9) & f < (pf * 1.2);
 if db
     figure()
     plot(f(range), P1(1, range), f(range), P1(2, range));

@@ -2,7 +2,7 @@ clc
 clear
 %%
 tolerance = 13;
-step = 30;
+step = 5;
 depth = -2;
 radius = 6;
 
@@ -13,7 +13,7 @@ for deg = int64(0:step:360)
     x = radius * sind(double(deg));
     
     try
-        result = toaSimulation( x, y, depth);
+        result = toaSimulation( x, y, depth );
         if result.yaw < -.1
            yaw = result.yaw + 360;
         else

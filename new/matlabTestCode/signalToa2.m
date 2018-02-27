@@ -13,7 +13,7 @@ t = (0:(2*M)-1) * T;
 % frequency of wave from ping in ohz
 pf = 22* 10^3;
 offset = round(toa/T);
-index = randi([M*.5, M]);
+index = M * 0.5;
 index2 = round(index + offset);
 t1 = t(index:(M+index));
 t2 = t(index2:(M+index2));

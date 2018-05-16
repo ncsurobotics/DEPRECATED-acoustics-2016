@@ -1,13 +1,15 @@
 %script for importing acoustics pool data reccorded on osciloscope
-filename = 'acoustics-data/T1/T1S2.csv';
-outfileyaw = 'acoustics-data/processed/T1S2yaw.csv';
-outfilepitch = 'acoustics-data/processed/T1S2pitch.csv';
+filename = '/home/rafael/Downloads/data.csv';
+outfileyaw = 'yaw.csv';
+outfilepitch = 'pitch.csv';
 outYaw = fopen(outfileyaw, 'w');
 outPitch = fopen(outfilepitch, 'w');
 fprintf(outYaw,'index, length, toaCalc, a, b, yaw\n');
 fprintf(outPitch, 'index, length, toaCalc, a, b, pitch\n');
-data = csvread(filename, 7, 00);
-data = data(:, 1:4);
+freq = csvread(filename, 00, 00, [00, 00, 00, 0]);
+data = csvread(filename, 2, 00);
+%time = data(:, 1);
+%data = data(:, 2:end);
 t = 1:length(data);
 figure(1)
 plot(t, data);
@@ -15,7 +17,11 @@ plot(t, data);
 % the frequency of the pinger
 pf = 22 * 10^3;
 % the frequency of sampling
-Fs = 100 * 10^3;
+%plot(abs(time(2:end) - time(1:end - 1)), 'o')
+%tDiff = mean(abs(time(2:end) - time(1:end - 1))) * 10^-3;
+Fs = freq; %1/tDiff;
+%%
+
 % the number of periods to consider
 P = 15;
 

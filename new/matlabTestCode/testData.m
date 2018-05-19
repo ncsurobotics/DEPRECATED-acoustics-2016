@@ -1,5 +1,5 @@
 %script for importing acoustics pool data reccorded on osciloscope
-filename = '/home/rafael/Downloads/data.csv';
+filename = '/home/rafael/Downloads/waveform';
 outfileyaw = 'yaw.csv';
 outfilepitch = 'pitch.csv';
 outYaw = fopen(outfileyaw, 'w');

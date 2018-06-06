@@ -121,6 +121,7 @@ Returns a 2D array containing the captured values. The array has the format `arr
 Closes the picoscope. Must be called before the python program closes or else the resources will be list and the device must be unplugged.
 ### Parameters
 Parameter | Description
+--------------|-------------
 int handle | The handle value returned by `pico_init()`.
 ### Returns
 Nothing.

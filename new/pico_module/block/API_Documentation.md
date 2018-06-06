@@ -101,6 +101,7 @@ In the future, this method will be able to be called with all the available conf
 Must be called before `pico_get_data()` and `pico_close()`. Connects to and initializes the picoscope. Initialization includes allocating memory, configuring channels, and establishing the timebase (sampling rate).
 ### Parameters
 Parameter | Description
+--------------|-------------
 int debug | 0 = false. When enabled, outputs some debugging/logging information to the terminal window.
 ### Returns
 Returns the handle for the picoscope. **This must be saved in your python code in order to retrieve data and properly close the unit.**
@@ -110,6 +111,7 @@ Returns the handle for the picoscope. **This must be saved in your python code i
 Retrieves the next data sample available (whenever the next trigger occures). Can be called repeatedly between opening and closing the unit. Must call `pico_get_sample_interval()` to determine the sampling interval of the data (otherwise the data has no real meaning).
 ### Parameters
 Parameter | Description
+--------------|-------------
 int handle | The handle value returned by `pico_init()`.
 ### Returns
 Returns a 2D array containing the captured values. The array has the format `arr[CHANNEL][SAMPLE]`. 

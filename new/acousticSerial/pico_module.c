@@ -164,7 +164,7 @@ void getData
   }
   
   if ( g_triggered ) {
-   f ( debug ) printf( "%d, %d\n", nextStoreIndex, g_samplesCollected );
+   if ( debug ) printf( "%d, %d\n", nextStoreIndex, g_samplesCollected );
    g_samplesCollected += copied;
     nextStoreIndex += copied;
   }

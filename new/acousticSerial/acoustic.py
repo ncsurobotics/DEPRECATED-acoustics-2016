@@ -45,7 +45,7 @@ finally:
   
 
 def writeCSV(fname, data):
-  f = open(fname+str(time.time()) + ."csv", "w")
+  f = open(fname+str(time.time()) + ".csv", "w")
   csv.writer(f, delimeter = ',')
   wr.writerows(data)
   f.close()

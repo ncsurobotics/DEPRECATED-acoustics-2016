@@ -7,7 +7,7 @@ def find_nearest(array,value):
 
 # This replaces sigToa.m in the matlab
 def calcTDOA(sig1, sig2, ch1, ch2, Fs, pf, db=False):
-    Ts = 1 / Fs
+    Ts = 1.0 / Fs
     size = sig1.size
     
     # Generate the fourier transforms. n = size * 8 to add resolution to the plot
@@ -44,7 +44,7 @@ def calcTDOA(sig1, sig2, ch1, ch2, Fs, pf, db=False):
     
 
     if db:
-        print("TDOA: " + str(tdoa * 10 ** 5))
+        print("TDOA: " + str(tdoa * 10 ** 6) + "us")
        
        
         

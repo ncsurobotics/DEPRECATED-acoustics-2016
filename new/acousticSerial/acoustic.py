@@ -29,14 +29,15 @@ try:
     Fs = (1.0 / pm.pico_get_sample_interval()) * 10**9
     #transposing data and making numpy array
     data = np.array(zip(*dataO))
-    yaw, pitch = calcOrientation(data, Fs, pf, DB)
+    yaw, pitch, good = calcOrientation(data, Fs, pf, DB)
     out="Yaw:%s Pitch:%s FS:%s" % (str(yaw), str(pitch), Fs)
     sw.var.set("Acoustics.Pitch", pitch)
     sw.var.set("Acoustics.Yaw", yaw)
-    if DB:
+    if DB and good:
       print "++++++++++++++++++++++++++++++++++"
       print out
-      #writeCSV(out, dataO)
+      writeCSV(out, dataO)
+      raw_input("press enter to get next data set")
     
     
 #closing pico at end

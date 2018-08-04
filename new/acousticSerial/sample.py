@@ -1,7 +1,7 @@
 # sample pico python file
 import pico_module as pm
 import csv
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 
 """
 for mor info, see pico_module.c::pico_config()
@@ -55,5 +55,5 @@ with open("data.csv", "w+") as outData:
 # need to power cycle the picoscope (unplug/replug usb)
 pm.pico_close(handle)
 
-plt.plot(data)
-plt.show()
+#plt.plot(data)
+#plt.show()

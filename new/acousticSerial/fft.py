@@ -4,9 +4,11 @@ def find_nearest(array,value):
     idx = (np.abs(array-value)).argmin()
     return (idx, array[idx])
 
+MINSTD = 9.8 * 10**-5
+MINDIFF = 10
 
 # This replaces sigToa.m in the matlab
-def calcTDOA(sig1, sig2, ch1, ch2, Fs, pf, db=False):
+def calcTDOA(sig1, sig2, ch1, ch2, Fs, pf, tit = "none", db=False):
     Ts = 1.0 / Fs
     size = sig1.size
     
@@ -37,18 +39,29 @@ def calcTDOA(sig1, sig2, ch1, ch2, Fs, pf, db=False):
     index_max_1 = np.argmax(mags1)
     index_max_2 = np.argmax(mags2)
     
-    # Should experiment with different ways to do this
+    std1 = np.std(mags1)
+    std2 = np.std(mags2)
+    m1 = np.mean(mags1)
+    m2 = np.mean(mags2)
+    
+    print "STD: %10d %10d\nMEAN: %9d %10d\nMAG: %10d %10d\n\n" % (std1 * 10**-5, std2* 10**-5, m1* 10**-5, m2* 10**-5, mags1[index_max_1]* 10**-5, mags2[index_max_2]* 10**-5)
+    good = (min(std1, std2) > MINSTD and (min(mags1[index_max_1], mags2[index_max_2]) > (max(std1, std2) * MINDIFF)))
+    
+    aaa = "IS GOOD " if good else "BAD"
+    print aaa
+   
     index_max = int((index_max_1 + index_max_2) / 2)
+   
     phase_diff = (phases2[index_max_2] - phases1[index_max_1])
     tdoa = phase_diff/(2 * np.pi * pf)
     
 
-    if db:
-        print("TDOA: " + str(tdoa * 10 ** 6) + "us")
+    if db and good:
+        print(tit + " TDOA: " + str(tdoa * 10 ** 6) + "us")
        
        
         
-    return tdoa
+    return tdoa, good
 
 
 
@@ -63,8 +76,10 @@ hydrophones = np.array([[0,       -0.1,   0],
 def calcOrientation(data, Fs, pf, db=False):
 
 
-    tdoa = (calcTDOA(data[:, 1], data[:, 0], "Sig1", "Sig0", Fs, pf, db),
-          calcTDOA(data[:, 2], data[:, 3], "Sig2", "Sig3", Fs, pf, db))
+    tdoa1, good1 = calcTDOA(data[:, 1], data[:, 0], "Sig1", "Sig0", Fs, pf, "PIT",  db)
+    tdoa2, good2 = calcTDOA(data[:, 2], data[:, 3], "Sig2", "Sig3", Fs, pf, "YAW", db)
+
+    tdoa = (tdoa1, tdoa2)
 
     SPEED_OF_SOUND = 1484
 
@@ -77,12 +92,12 @@ def calcOrientation(data, Fs, pf, db=False):
     inlineA = tdoa[0] * SPEED_OF_SOUND / 2
     inlineB = np.sqrt(inlineDistance ** 2 - inlineA ** 2)
 
-    front = np.sign(inlineA)
+    front = -1 * np.sign(inlineA)
 
     yaw = np.arctan2(-sideToSideA, front * sideToSideB)
     pitch = np.arctan2(inlineA, inlineB)
 
-    return (np.rad2deg(yaw), np.rad2deg(pitch))
+    return (np.rad2deg(yaw), np.rad2deg(pitch), good1 or good2)
     
 
 

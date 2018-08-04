@@ -31,7 +31,7 @@
  *    PS2000A_50MV
  *    PS2000A_2V
  */
-#define INPUT_VOLTAGE PS2000A_200MV
+#define INPUT_VOLTAGE PS2000A_500MV
 /** Default sample interval */
 #define DEF_SAMPLE_INTERVAL 100
 /** 
@@ -49,7 +49,7 @@
 /** Direction of the trigger */
 #define DEF_DIRECTION PS2000A_RISING
 /** ADC threshold for trigger to occur */
-#define THRESHOLD 9750
+#define THRESHOLD 20000
 /** Number of samples to record before the trigger */  
 #define PRE_TRIGGER_SAMPLES 0
 /** Number of milliseconds before auto trigger */

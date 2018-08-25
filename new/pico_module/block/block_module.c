@@ -70,7 +70,7 @@ typedef struct {
   uint32_t numSamples;
   /** Input voltage */
   int inputVoltage;
-  /** How often to sample between each time unit  */
+  /** How often to sample between each time unit. Modified by program. */
   int32_t sampleInterval;
   /** Number of pre-trigger samples */
   int32_t preTriggerSamples;
@@ -87,8 +87,6 @@ static BOOL initialized = FALSE;
 /** Keeps track of whether block data is ready */
 static BOOL g_ready = FALSE;
 
-/** Keeps track of the timebase used. Assigned value is starting point */
-static int g_timebase = 35;
 /** Actual number of samples per channel */
 static int g_maxSamples = 0;
 
@@ -242,23 +240,68 @@ static PyObject* pico_config( PyObject* self, PyObject* args )
   ) ) {
     return Py_BuildValue( "s", "Unable to process configuration" );
   }
-
-  if ( *direction == "RISING" )
-    conf.direction = PS2000A_RISING;
-  else if ( *direction == "FALLING" )
-    conf.direction = PS2000A_FALLING;
-  else if ( *direction == "ABOVE" )
-    conf.direction = PS2000A_ABOVE;
-  else if ( *direction == "BELOW" )
-    conf.direction = PS2000A_BELOW;
-  else 
-    return Py_BuildValue( "s", "Invalid direction parameter" );
   
-  if ( *inputVoltage == "20MV" )
-    conf.inputVoltage = PS2000A_20MV;
-  else if ( *inputVoltage == "50MV" )
-    conf.inputVoltage = PS2000A_50MV;
+  conf.numChannels = numChannels;
+  printf( "conf.numChannels set to %d\n", conf.numChannels );
 
+  if ( *direction == "RISING" ) {
+    conf.direction = PS2000A_RISING;
+  } else if ( *direction == "FALLING" ) {
+    conf.direction = PS2000A_FALLING;
+  } else if ( *direction == "ABOVE" ) {
+    conf.direction = PS2000A_ABOVE;
+  } else if ( *direction == "BELOW" ) {
+    conf.direction = PS2000A_BELOW;
+  } else if ( *direction == "RISING_OR_FALLING" ) {
+    conf.direction = PS2000A_RISING_OR_FALLLING;
+  } else {
+    return Py_BuildValue( "s", "Invalid direction parameter" );
+  }
+  
+  printf( "conf.direction set to %d\n", conf.direction );
+  
+  conf.threshold = threshold;
+  printf( "conf.threshold set to %d\n", conf.threshold );
+
+  conf.numSamples = numSamples;
+  printf( "conf.numSamples set to %d\n", conf.numSamples );
+  
+  if ( *inputVoltage == "20MV" ) {
+    conf.inputVoltage = PS2000A_20MV;
+  } else if ( *inputVoltage == "50MV" ) {
+    conf.inputVoltage = PS2000A_50MV;
+  } else if ( *inputVoltage == "100MV" ) {
+    conf.inputVoltage = PS2000A_100MV;
+  } else if ( *inputVoltage == "200MV" ) {
+    conf.inputVoltage = PS2000A_200MV;
+  } else if ( *inputVoltage == "500MV" ) {
+    conf.inputVoltage = PS2000A_500MV;
+  } else if ( *inputVoltage == "1V" ) {
+    conf.inputVoltage = PS2000A_1V;
+  } else if ( *inputVoltage == "5V" ) {
+    conf.inputVoltage = PS2000A_5V;
+  } else if ( *inputVoltage == "10V" ) {
+    conf.inputVoltage = PS2000A_10V;
+  } else if ( *inputVoltage == "20V" ) {
+    conf.inputVoltage = PS2000A_20V;
+  } else {
+    return Py_BuildValue( "s", "Invalid input voltage parameter" );
+  }
+  
+  printf( "conf.inputVoltage set to %d\n", conf.inputVoltage );
+  
+  conf.sampleInterval = sampleInterval;
+  printf( "conf.sampleInterval set to %d\n", conf.sampleInterval );
+
+  conf.preTriggerSamples = preTriggerSamples;
+  printf( "conf.preTriggerSamples set to %d\n", conf.preTriggerSamples );
+  
+  conf.autoTrigMS = autoTrigMS;
+  printf( "conf.autoTrigMS set to %d\n", conf.autoTrigMS );
+
+  conf.timebase = timebase;
+  printf( "conf.timebase set to %d\n", conf.timebase );
+  
   return Py_BuildValue( "s", "OK" );
 }
 

@@ -17,8 +17,8 @@ this configures the pico scope for:
 """
 #this is commented out for right now. if you need to change settings,
 #change them in pico_module.c. They are the defined constants towards the top.
-#temp = pm.pico_config(1, 2, 3200, 500, 1, 1, 4)
-#print temp + "\n"
+temp = pm.pico_config(1, 2, 3200, 500, 1, 1, 4)
+print temp + "\n"
 
 # initialize the picoscope with debugging and get the unit handle
 handle = pm.pico_init(1)

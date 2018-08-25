@@ -19,9 +19,14 @@
 #include <libps2000a-1.1/PicoStatus.h>
 #endif
 
-////// These settings will be routinely modified //////
+/** The number of channels we're working with */
+#define DEF_NUM_CHANNELS 4
+/** Direction of the trigger */
+#define DEF_DIRECTION PS2000A_RISING
+/** ADC threshold for trigger to occur */
+#define DEF_THRESHOLD 6000
 /** Number of samples to record */
-#define NUM_SAMPLES 12000
+#define DEF_NUM_SAMPLES 12000
 /** 
  * The input voltage(?) With format: PS2000A_<#><units>
  * Available values/units:
@@ -31,29 +36,15 @@
  *    PS2000A_50MV
  *    PS2000A_2V
  */
-#define INPUT_VOLTAGE PS2000A_100MV
+#define DEF_INPUT_VOLTAGE PS2000A_100MV
 /** Default sample interval */
 #define DEF_SAMPLE_INTERVAL 100
-/** 
- * Specifies the untis used for sampling intervals with format: PS2000A_<units>
- * Note: Not all units may be supported. NS with sample interval set to 20 may
- *       be as low as our unit goes.
- * Available units:
- *    FS, PS, NS, US, MS, S
- */
-#define TIME_UNITS PS2000A_NS
-
-////// These settings will generally be unchanged //////
-/** The number of channels we're working with */
-#define NUM_CHANNELS 4
-/** Direction of the trigger */
-#define DEF_DIRECTION PS2000A_RISING
-/** ADC threshold for trigger to occur */
-#define THRESHOLD 6000
 /** Number of samples to record before the trigger */  
-#define PRE_TRIGGER_SAMPLES 0
+#define DEF_PRE_TRIGGER_SAMPLES 0
 /** Number of milliseconds before auto trigger */
-#define AUTO_TRIG_MS 0
+#define DEF_AUTO_TRIG_MS 0
+/** Default value for timebase. Serves as a starting point */
+#define DEF_TIMEBASE 35
 
 /** 
  * This is how picoscope does bool.
@@ -81,17 +72,18 @@ typedef struct {
   int inputVoltage;
   /** How often to sample between each time unit  */
   int32_t sampleInterval;
-  /** Unit of time for sample interval */
-  int timeUnits;
   /** Number of pre-trigger samples */
   int32_t preTriggerSamples;
+  /** Number if MS before auto trigger occurs */
+  int autoTrigMS;
+  /** Timebase. Assigned value is starting point. Driver will adjust as needed */
+  int timebase;
 } CONFIG;
 
 /** Keeps track of debug mode */
 static BOOL debug = FALSE;
 /** Keeps track of whether the picoscope has already been initialized */
 static BOOL initialized = FALSE;
-
 /** Keeps track of whether block data is ready */
 static BOOL g_ready = FALSE;
 
@@ -107,15 +99,15 @@ static int16_t **dataBuffers;
 
 /** Keeps track of configuration state */
 static CONFIG conf = {
-  // TODO: rename these constants to DEF_ (for default)
-  NUM_CHANNELS,
+  DEF_NUM_CHANNELS,
   DEF_DIRECTION,
-  THRESHOLD,
-  NUM_SAMPLES,
-  INPUT_VOLTAGE,
+  DEF_THRESHOLD,
+  DEF_NUM_SAMPLES,
+  DEF_INPUT_VOLTAGE,
   DEF_SAMPLE_INTERVAL,
-  TIME_UNITS,
-  PRE_TRIGGER_SAMPLES
+  DEF_PRE_TRIGGER_SAMPLES,
+  DEF_AUTO_TRIG_MS,
+  DEF_TIMEBASE
 };
 
 /*************ps2000aBlockReady*************
@@ -198,19 +190,14 @@ void checkStatus( PICO_STATUS status, int16_t handle )
  *
  * sampleInterval: this is the interval between samples based on the value of timeUnits
  *            
- *              Example: if timeUnits = 5 (S) and sampleInterval = 2 then:
+ *              : Move setting debug parameter from pico_init to this function and CONFIG struct
+ *
+ *              E
  *                the picoscope would collect signal data once every 2 seconds
  *
  *              Example: if timeUnits = 2 (NS) and sampleInterval = 1 then:
  *                the picoscope would collect signal data once every 1 nanosecond
  *
- * timeUnits: this is the unit of time between each sample. the valid values are:
- *              0: FS
- *              1: PS
- *              2: NS
- *              3: US
- *              4: MS
- *              5: S
  *
  * @param numChannels number of channels to record
  * @param direction (trigger) the signal direction to look for to activate the trigger (0 to 4)
@@ -223,25 +210,56 @@ void checkStatus( PICO_STATUS status, int16_t handle )
  * @return returns NULL if the arguments aren't valid, otherwise None.
  *
  * TODO: Consider returning different values based on cause of return.
- * TODO: Move setting debug parameter from pico_init to this function and CONFIG struct
  */
 static PyObject* pico_config( PyObject* self, PyObject* args )
 {
   if ( initialized ) {
-    return Py_BuildValue("");
+    return Py_BuildValue( "s", "Already initialized." );
   }
   
-  if ( !PyArg_ParseTuple( args, "iiiiiii", &conf.numChannels,
-                                           &conf.direction,
-                                           &conf.threshold,
-                                           &conf.numSamples,
-                                           &conf.inputVoltage,
-                                           &conf.sampleInterval,
-                                           &conf.timeUnits ) ) {
-    return NULL;
+  int numChannels;
+  char* direction;
+  int threshold;
+  int numSamples;
+  char* inputVoltage;
+  int sampleInterval;
+  int preTriggerSamples;
+  int autoTrigMS;
+  int timebase;
+
+  if ( !PyArg_ParseTuple( 
+      args, 
+      "isiisiiii", 
+      &numChannels,
+      &direction,
+      &threshold,
+      &numSamples,
+      &inputVoltage,
+      &sampleInterval,
+      &preTriggerSamples,
+      &autoTrigMS,
+      &timebase 
+  ) ) {
+    return Py_BuildValue( "s", "Unable to process configuration" );
   }
+
+  if ( *direction == "RISING" )
+    conf.direction = PS2000A_RISING;
+  else if ( *direction == "FALLING" )
+    conf.direction = PS2000A_FALLING;
+  else if ( *direction == "ABOVE" )
+    conf.direction = PS2000A_ABOVE;
+  else if ( *direction == "BELOW" )
+    conf.direction = PS2000A_BELOW;
+  else 
+    return Py_BuildValue( "s", "Invalid direction parameter" );
   
-  return Py_BuildValue("s", "OK");
+  if ( *inputVoltage == "20MV" )
+    conf.inputVoltage = PS2000A_20MV;
+  else if ( *inputVoltage == "50MV" )
+    conf.inputVoltage = PS2000A_50MV;
+
+  return Py_BuildValue( "s", "OK" );
 }
 
 /**
@@ -309,13 +327,13 @@ static PyObject* pico_init( PyObject* self, PyObject* args )
   
   // find a usable time interval. iterates through timebases until it finds one that is supported
   // by the unit. higher timebase = lower sampling rate
-  while ( ps2000aGetTimebase( handle, g_timebase, conf.numSamples, &conf.sampleInterval, 0, 
+  while ( ps2000aGetTimebase( handle, conf.timebase, conf.numSamples, &conf.sampleInterval, 0, 
           &g_maxSamples, 0 ) ) {
-    g_timebase++;
+    conf.timebase++;
   }
   
   if ( debug ) printf( "\ntimebase: %d | sampleInterval: %d | maxSamples: %d\n", 
-                       g_timebase, conf.sampleInterval, g_maxSamples );
+                       conf.timebase, conf.sampleInterval, g_maxSamples );
 
   return Py_BuildValue( "i", handle );
   
@@ -346,7 +364,7 @@ static PyObject* pico_get_data( PyObject* self, PyObject* args )
   // posttriggersamples, timebase, oversample (not used),
   // timeIndiposedMs, segment index, ps2000aBlockReady function pointer, pParameter
   status = ps2000aRunBlock( handle, conf.preTriggerSamples, 
-                            conf.numSamples - conf.preTriggerSamples, g_timebase, 0,
+                            conf.numSamples - conf.preTriggerSamples, conf.timebase, 0,
                             NULL, 0, getData, NULL );
   if (debug) checkStatus( status, handle );
   

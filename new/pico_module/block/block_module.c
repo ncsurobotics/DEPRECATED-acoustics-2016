@@ -244,15 +244,15 @@ static PyObject* pico_config( PyObject* self, PyObject* args )
   conf.numChannels = numChannels;
   printf( "conf.numChannels set to %d\n", conf.numChannels );
 
-  if ( *direction == "RISING" ) {
+  if ( strcmp( direction, "RISING" ) == 0 ) {
     conf.direction = PS2000A_RISING;
-  } else if ( *direction == "FALLING" ) {
+  } else if ( strcmp( direction, "FALLING" ) == 0 ) {
     conf.direction = PS2000A_FALLING;
-  } else if ( *direction == "ABOVE" ) {
+  } else if ( strcmp( direction, "ABOVE" ) == 0 ) {
     conf.direction = PS2000A_ABOVE;
-  } else if ( *direction == "BELOW" ) {
+  } else if ( strcmp( direction, "BELOW" ) == 0 ) {
     conf.direction = PS2000A_BELOW;
-  } else if ( *direction == "RISING_OR_FALLING" ) {
+  } else if ( strcmp( direction, "RISING_OR_FALLING" ) == 0 ) {
     conf.direction = PS2000A_RISING_OR_FALLLING;
   } else {
     return Py_BuildValue( "s", "Invalid direction parameter" );
@@ -266,23 +266,23 @@ static PyObject* pico_config( PyObject* self, PyObject* args )
   conf.numSamples = numSamples;
   printf( "conf.numSamples set to %d\n", conf.numSamples );
   
-  if ( *inputVoltage == "20MV" ) {
+  if ( strcmp( inputVoltage, "20MV" ) == 0 ) {
     conf.inputVoltage = PS2000A_20MV;
-  } else if ( *inputVoltage == "50MV" ) {
+  } else if ( strcmp( inputVoltage, "50MV" ) == 0 ) {
     conf.inputVoltage = PS2000A_50MV;
-  } else if ( *inputVoltage == "100MV" ) {
+  } else if ( strcmp( inputVoltage, "100MV" ) == 0 ) {
     conf.inputVoltage = PS2000A_100MV;
-  } else if ( *inputVoltage == "200MV" ) {
+  } else if ( strcmp( inputVoltage, "200MV" ) == 0 ) {
     conf.inputVoltage = PS2000A_200MV;
-  } else if ( *inputVoltage == "500MV" ) {
+  } else if ( strcmp( inputVoltage, "500MV" ) == 0 ) {
     conf.inputVoltage = PS2000A_500MV;
-  } else if ( *inputVoltage == "1V" ) {
+  } else if ( strcmp( inputVoltage, "1V" ) == 0 ) {
     conf.inputVoltage = PS2000A_1V;
-  } else if ( *inputVoltage == "5V" ) {
+  } else if ( strcmp( inputVoltage, "5V" ) == 0 ) {
     conf.inputVoltage = PS2000A_5V;
-  } else if ( *inputVoltage == "10V" ) {
+  } else if ( strcmp( inputVoltage, "10V" ) == 0 ) {
     conf.inputVoltage = PS2000A_10V;
-  } else if ( *inputVoltage == "20V" ) {
+  } else if ( strcmp( inputVoltage, "20V" ) == 0 ) {
     conf.inputVoltage = PS2000A_20V;
   } else {
     return Py_BuildValue( "s", "Invalid input voltage parameter" );

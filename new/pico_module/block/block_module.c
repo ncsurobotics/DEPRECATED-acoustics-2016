@@ -253,7 +253,7 @@ static PyObject* pico_config( PyObject* self, PyObject* args )
   } else if ( strcmp( direction, "BELOW" ) == 0 ) {
     conf.direction = PS2000A_BELOW;
   } else if ( strcmp( direction, "RISING_OR_FALLING" ) == 0 ) {
-    conf.direction = PS2000A_RISING_OR_FALLLING;
+    conf.direction = PS2000A_RISING_OR_FALLING;
   } else {
     return Py_BuildValue( "s", "Invalid direction parameter" );
   }
@@ -355,7 +355,7 @@ static PyObject* pico_init( PyObject* self, PyObject* args )
       if (debug) printf( "Setting trigger..." );
       // handle, enable, channel source, threshold, direction, delay, autoTrigger_ms
       status = ps2000aSetSimpleTrigger( handle, 1, (PS2000A_CHANNEL)(PS2000A_CHANNEL_A + i), 
-                                        conf.threshold, conf.direction, 0, AUTO_TRIG_MS );
+                                        conf.threshold, conf.direction, 0, conf.autoTrigMS );
       if (debug) checkStatus( status, handle );
     }
 

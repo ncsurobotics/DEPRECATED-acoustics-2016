@@ -86,7 +86,7 @@ Configures the picoscope based on the given parameters. If a parameter or a comb
   * `"RISING"`
   * `"FALLING"`
   * `"ABOVE"`
-  * `"BELOW"
+  * `"BELOW"`
   * `"RISING_OR_FALLING"`
 * `threshold (int)` - when the trigger should occur. `-32512 <= threshold <= 32512`
 * `numSamples (int)` - the number of samples to collect. `1 <= numSamples <= 12655` 

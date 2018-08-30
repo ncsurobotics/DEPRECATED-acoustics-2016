@@ -2,6 +2,7 @@
 import pico_module as pm
 import csv
 import matplotlib.pyplot as plt
+import sys
 
 """
 for mor info, see pico_module.c::pico_config()
@@ -17,8 +18,12 @@ this configures the pico scope for:
 """
 #this is commented out for right now. if you need to change settings,
 #change them in pico_module.c. They are the defined constants towards the top.
-#temp = pm.pico_config(1, 2, 3200, 500, 1, 1, 4)
-#print temp + "\n"
+# numChannels, direction, threshold, numSamples, inputVoltage, preTrigSamples, autoTrigMS, timebase
+temp = pm.pico_config(1, "RISING", 3200, 200, "200MV", 200, 0, 40)
+print temp + "\n"
+
+if temp != "OK":
+    sys.exit(0)
 
 # initialize the picoscope with debugging and get the unit handle
 handle = pm.pico_init(1)
@@ -47,13 +52,13 @@ data = zip(*data)
 # write to file
 with open("data.csv", "w+") as outData:
     wr = csv.writer(outData,delimiter=',')
+    wr.writerow([pm.pico_get_sample_interval()])
     wr.writerows(data)
-
-plt.plot(data)
-plt.show()
 
 # close the picoscope.
 # IF THIS STEP IS NOT DONE and you lose the handle, you will 
 # need to power cycle the picoscope (unplug/replug usb)
 pm.pico_close(handle)
 
+plt.plot(data)
+plt.show()

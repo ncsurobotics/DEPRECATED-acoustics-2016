@@ -8,8 +8,6 @@
     - [Rarely Modified](#rarely-modified)
     - [Deprecated (block)](#deprecated-block)
     - [Non-verified](#non-verified)
-  - [`g_*` variables](#g_-variables)
-    - [Rarely modified](#rarely-modified-1)
 - [Functions](#functions)
   - [`pico_config()`](#pico_config)
     - [Description](#description)
@@ -38,20 +36,19 @@ Assuming the picoscope driver libraries are properly installed, `sh build.sh` wi
 TODO: Convert to makefile.
 
 # Python
-View the `sample.py` file for an example work flow. Module is improted with `import pico_module`.
+View the `sample.py` file for an example work flow. Module is imported with `import pico_module`.
 
 # Changing Settings
 ## Notes
-Currently, settings must be changed by modifying the `#define` constants at the top of the block_module.c file and a few global `g_*` variables. Whenever the settings are changed, the file must be rebuilt. Future versions should move away from having `#define` constants used as configuration values and instead be used as default values. Configuration values should be moved either to global `g_*` variables or the `CONFIG` `struct` and handled by the `pico_config()` function.
-
-Perhaps ideally in the future all configuration variables should be moved to the `CONFIG` `struct` and set by `pico_config()`.
-
 All variables not listed here should not be modified, or modifying them has no effect on the program (IE they are set by the program).
 
 ## `#define` constants
+The `#define`'d constants specify default settings and should only be changed if the sub hardware changes. Otherwise, `pico_config` should be used.
+
 ### Frequently modified
-* `THRESHOLD` - The threshold value for a trigger to occur. Has a range of `-32512` (-100%) to `32512` (100%). `INPUT_VOLTAGE` (below) provides context for what those values mean. Example: for PS2000A_100MV -- `THRESHOLD` = `16512` means the trigger will occur at 50%, or 50mv.
-* `INPUT_VOLTAGE` - This is the voltage range for the output data. It uses named constants from `libps2000a-1.1/ps2000aApi.h`. See the table below for valid values. Note that the actual output by the driver is always the same (`-32512` to `32512`), but this setting gives it meaning (Example: for `PS2000A_100MV` -- 100mv = `32512`, -50mv = `-16256` ). The value in **bold** has been found to work in most situations for the hardware at the time of this writing (2018-06-06)
+* `DEF_THRESHOLD` - The threshold value for a trigger to occur. Has a range of `-32512` (-100%) to `32512` (100%). `INPUT_VOLTAGE` (below) provides context for what those values mean. Example: for PS2000A_100MV -- `THRESHOLD` = `16512` means the trigger will occur at 50%, or 50mv.
+* `DEF_TIMEBASE` - The starting value for searching for a timebase. Default value is **35**. See the [PS2000A API](https://www.picotech.com/download/manuals/ps2000apg.en-6.pdf) for more information on timebases.
+* `DEF_INPUT_VOLTAGE` - This is the voltage range for the output data. It uses named constants from `libps2000a-1.1/ps2000aApi.h`. See the table below for valid values. Note that the actual output by the driver is always the same (`-32512` to `32512`), but this setting gives it meaning (Example: for `PS2000A_100MV` -- 100mv = `32512`, -50mv = `-16256` ). The value in **bold** has been found to work in most situations for the hardware at the time of this writing (2018-06-06)
 
 Millivolts    | Volts
 --------------|-------------
@@ -62,12 +59,12 @@ PS2000A_200MV | PS2000A_10V
 PS2000A_500MV | PS2000A_20V
 
 ### Rarely modified
-* `NUM_SAMPLES` - In block mode, this has a soft upper limit of 48000 / number of active channels = **12000**
-* `NUM_CHANNELS` - The number of channels that the oscilloscope reads data from
+* `DEF_NUM_SAMPLES` - In block mode, this has a hard upper limit of 48000 / number of active channels = **12000**
+* `DEF_NUM_CHANNELS` - The number of channels that the oscilloscope reads data from. Generally = **4**.
 * `DEF_SAMPLE_INTERVAL` - Manually setting this in block mode has no effect. 
 * `DEF_DIRECTION` - The signal direction for a trigger to occur. Uses named constants from `libps2000a-1.1/ps2000aApi.h`. See table below for values. **Bolded** value is the one we use. See the [PS2000A API](https://www.picotech.com/download/manuals/ps2000apg.en-6.pdf) for more details on what each constant means.
 
-Constant Value  
+Option
 --------------
 **PS2000A_RISING**
 PS2000A_RISING_LOWER
@@ -75,26 +72,41 @@ PS2000A_FALLING
 PS2000A_FALLING_LOWER
 PS2000A_RISING_OR_FALLING
 
-### Deprecated (block)
-* `TIME_UNITS` - Not used for block mode
-
 ### Non-verified
-* `PRE_TRIGGER_SAMPLES` - **It has not yet been confirmed if this has any effect on the operation of the program.** It is supposed to set the number of samples recorded and returned before a trigger occures.
-* `AUTO_TRIG_MS` - **It has not yet been confirmed if this has any effect on the operation of the program.** It is supposed to automatically trigger data collection after X milliseconds have passed with no trigger (so the picoscope doesn't get 'stuck').
-
-## `g_*` variables
-### Rarely modified
-* `g_timebase` - This value 'seeds' the program with a target timebase. The picoscope driver then finds a supported timebase for the unit. Valid values are `0` to `2^32 - 1`. A lower value gives higher sampling rate. See the [PS2000A API](https://www.picotech.com/download/manuals/ps2000apg.en-6.pdf) for more details on how timebase is calculated.
+* `DEF_PRE_TRIGGER_SAMPLES` - **It has not yet been confirmed if this has any effect on the operation of the program.** It is supposed to set the number of samples recorded and returned before a trigger occures.
+* `DEF_AUTO_TRIG_MS` - **It has not yet been confirmed if this has any effect on the operation of the program.** It is supposed to automatically trigger data collection after X milliseconds have passed with no trigger (so the picoscope doesn't get 'stuck').
 
 # Functions
 ## `pico_config()`
 ### Description
-#### `pico_config(/* TODO */)`
-In the future, this method will be able to be called with all the available configuration options so the module will not need to be rebuilt each time.
+#### `pico_config(numChannels, direction, threshold, numSamples, inputVoltage, preTrigSamples, autoTrigMS, timebase)`
+Configures the picoscope based on the given parameters. If a parameter or a combination of parameters is invalid, returns a string specifiying which parameter is invalid. If all parameters are valid, returns `"OK"`.
 ### Parameters
-`/* TODO */`
+* `numChannels (int)` - the number of channels to record data from. `1 <= numChannels <= 4`
+* `direction (string)` - a string representing the signal direction for a trigger to occur. Valid options are:
+  * `"RISING"`
+  * `"FALLING"`
+  * `"ABOVE"`
+  * `"BELOW"
+  * `"RISING_OR_FALLING"`
+* `threshold (int)` - when the trigger should occur. `-32512 <= threshold <= 32512`
+* `numSamples (int)` - the number of samples to collect. `1 <= numSamples <= 12655` 
+* `inputVoltage (string)` - a string specifying the input voltage. Valid options are:
+  * `"20MV"`
+  * `"50MV"`
+  * `"100MV"`
+  * `"200MV"`
+  * `"500MV"`
+  * `"1V"`
+  * `"5V"`
+  * `"10V"`
+  * `"20V"`
+* `preTrigSamples (int)` - the number of samples to collect before the trigger occurs. `preTrigSamples <= numSamples`
+* `autoTrigMS (int)` - how long the picoscope should wait in milliseconds before auto triggering
+* `timebase (int)` - the timebase to use for data collection. affects sampling rate (lower value = higher sampling rate)
 ### Returns
-`/* TODO */`
+If all parameters are valid, returns the string `"OK"`.
+If a parameter is invalid, returns which parameter is invalid and a short description why.
 ## `pico_init()`
 #### `pico_init(int debug)`
 ### Description

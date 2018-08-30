@@ -133,7 +133,7 @@ Nothing.
 ## `pico_get_sample_interval()`
 #### pico_get_sample_interval()
 ### Description
-Returns the actual sampling interval used by the picoscope.
+Returns the actual sampling interval used by the picoscope. The returned value indicates how many nanoseconds pass between each sample.
 ### Parameters
 None.
 ### Returns

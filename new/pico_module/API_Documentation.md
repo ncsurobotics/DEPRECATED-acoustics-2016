@@ -6,7 +6,6 @@
   - [`#define` constants](#define-constants)
     - [Frequently modified](#frequently-modified)
     - [Rarely Modified](#rarely-modified)
-    - [Deprecated (block)](#deprecated-block)
     - [Non-verified](#non-verified)
 - [Functions](#functions)
   - [`pico_config()`](#pico_config)

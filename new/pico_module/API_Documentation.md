@@ -1,7 +1,7 @@
 # Table of Contents
 - [Building](#building)
 - [Python](#python)
-- [Changing Settings](#changing-settings)
+- [Default Values and Constants (block_module.c)](#default-values-and-constants-block_modulec)
   - [Notes](#notes)
   - [`#define` constants](#define-constants)
 - [Functions](#functions)

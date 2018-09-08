@@ -1,7 +1,7 @@
 function saveValues = genToa(toa1, toa2)
 
 % frequency values are read in at in hz
-Fs = 1000 * 10^3;
+Fs = 1 * 10^6;
 
 % number of values read in
 M = 1000;
@@ -27,8 +27,7 @@ t3 = t(index3:(M+index3));
 signal = [cos(2 * pi * ( pf) * t1); cos(2 * pi * pf * t2); 
           cos(2 * pi * ( pf) * t1); cos(2 * pi * pf * t3)];
 
-csvwrite("acoustics-data/simulated.csv", signal');
-saveValues = 2;
+
 
 
 end

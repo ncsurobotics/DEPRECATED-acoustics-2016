@@ -12,11 +12,11 @@ def calcTDOA(sig1, sig2, ch1, ch2, Fs, pf, db=False):
     size = sig1.size
     
     # Generate the fourier transforms. n = size * 8 to add resolution to the plot
-    sig1_fourier = np.fft.fft(sig1, n = size * 8)
-    sig2_fourier = np.fft.fft(sig2, n = size * 8)
+    sig1_fourier = np.fft.fft(sig1, n = size * 4)
+    sig2_fourier = np.fft.fft(sig2, n = size * 4)
     
     # Get the frequency values associated with each index in the fourier transforms
-    freq = np.fft.fftfreq(size * 8, d=Ts)
+    freq = np.fft.fftfreq(size * 4, d=Ts)
 
     # Get a reasonable range around the pinger frequency to plot and use for maximum
     index, value = find_nearest(freq, pf)

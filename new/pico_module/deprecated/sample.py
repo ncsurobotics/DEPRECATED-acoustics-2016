@@ -47,13 +47,13 @@ data = zip(*data)
 # write to file
 with open("data.csv", "w+") as outData:
     wr = csv.writer(outData,delimiter=',')
-    wr.writerow([pm.pico_get_sample_interval()])
     wr.writerows(data)
+
+plt.plot(data)
+plt.show()
 
 # close the picoscope.
 # IF THIS STEP IS NOT DONE and you lose the handle, you will 
 # need to power cycle the picoscope (unplug/replug usb)
 pm.pico_close(handle)
 
-plt.plot(data)
-plt.show()

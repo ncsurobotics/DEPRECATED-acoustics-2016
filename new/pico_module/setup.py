@@ -5,6 +5,6 @@ pico_module = Extension('pico_module',
                         include_dirs = ['/opt/picoscope/include/'],
                         libraries = ['ps2000a'],
                         library_dirs = ['/opt/picoscope/lib/'],
-                        sources=['pico_module.c'])
+                        sources=['block_module.c'])
 
 setup(ext_modules=[pico_module])

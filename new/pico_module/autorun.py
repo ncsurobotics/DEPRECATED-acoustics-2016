@@ -16,14 +16,16 @@ signal.signal(signal.SIGINT, signal_handler)
 handle = pm.pico_init(1)
 
 i = 0
-while (True):
+num_collect = 30
+while (i < num_collect):
   data = pm.pico_get_data(handle)
   # get the transpose (writes to file better)
   data = zip(*data)
-  plt.plot(data)
-  plt.show()
   # write to file
-  #i += 1;
-  #with open("orientation4/Test" + str(i) + ".csv", "w+") as outData:
-  #    wr = csv.writer(outData,delimiter=',')
-  #    wr.writerows(data)
+  i += 1;
+  with open("data/data" + str(i) + ".csv", "w+") as outData:
+      wr = csv.writer(outData,delimiter=',')
+      wr.writerow([pm.pico_get_sample_interval()])
+      wr.writerows(data)
+  #plt.plot(data)
+  #plt.show()
